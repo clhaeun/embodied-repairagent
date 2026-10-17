@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # GPU 0번 사용 (원하는 번호로 변경)
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import numpy as np
 from rlbench.environment import Environment
@@ -11,24 +11,24 @@ import importlib
 from rlbench.observation_config import ObservationConfig, CameraConfig
 from pyrep.const import RenderMode
 
-# 해상도 설정 (GPU 렌더링 활성화)
+
 cam_config = CameraConfig(rgb=True, depth=True, mask=True, render_mode=RenderMode.OPENGL)
 cam_config = CameraConfig(rgb=True, depth=True, mask=True, render_mode=RenderMode.OPENGL)
 cam_config.image_size = (640, 640)
 
 obs_config = ObservationConfig()
-obs_config.set_all(True)   # 모든 카메라/센서 끄기
+obs_config.set_all(True)
 obs_config.front_camera = cam_config
 obs_config.wrist_camera = cam_config
 obs_config.overhead_camera = cam_config
 obs_config.left_shoulder_camera = cam_config
 obs_config.right_shoulder_camera = cam_config
-# obs_config.set_all(True)   # 모든 카메라/센서 사용 안함
-# obs_config.front_camera.image_size = (640, 640)
-# obs_config.wrist_camera.image_size = (640, 640)
-# obs_config.overhead_camera.image_size = (640, 640)
-# obs_config.left_shoulder_camera.image_size = (640, 640)
-# obs_config.right_shoulder_camera.image_size = (640, 640)
+
+
+
+
+
+
 """
 HEADLESS_MODE = True
 
