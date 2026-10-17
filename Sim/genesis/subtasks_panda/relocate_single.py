@@ -34,12 +34,12 @@ def relocate_single(env, obj_name, target_name, pointing_to="down", height_offse
     """
     print(f"[RelocateSingle] Relocating {obj_name} to {target_name}")
 
-    # Check if object is visible
+
     if not env.is_obj_visible(obj_name):
         print(f"[RelocateSingle] Object {obj_name} not visible")
         return False
 
-    # Move to and grasp the object
+
     success = move_gripper_to(env, obj_name, pointing_to=pointing_to)
     if not success:
         print(f"[RelocateSingle] Failed to move to {obj_name}")
@@ -47,31 +47,31 @@ def relocate_single(env, obj_name, target_name, pointing_to="down", height_offse
 
     close_gripper(env)
 
-    # Lift up
+
     move_parallel(env, "up", 0.1, pointing_to=pointing_to)
 
-    # Use provided target_position or calculate from bbox
+
     if target_position is not None:
         place_pos = target_position.copy()
     else:
-        # Get target position - use center of the target area
+
         target_bbox = env.get_obj_bbox(target_name)
         if target_bbox is None:
             print(f"[RelocateSingle] Target {target_name} not found")
             open_gripper(env)
             return False
 
-        # Calculate place position at center of target
-        place_pos = (target_bbox[0] + target_bbox[1]) / 2  # center of bbox
-        place_pos[2] = target_bbox[1][2] + height_offset  # above the target surface
 
-    # Move to target
+        place_pos = (target_bbox[0] + target_bbox[1]) / 2
+        place_pos[2] = target_bbox[1][2] + height_offset
+
+
     move_to_position(env, place_pos, pointing_to=pointing_to)
 
-    # Release object
+
     open_gripper(env)
 
-    # Move up to clear
+
     move_parallel(env, "up", 0.08, pointing_to=pointing_to)
 
     print(f"[RelocateSingle] Successfully relocated {obj_name} to {target_name}")
