@@ -26,21 +26,21 @@ def pour_into_container(env, target_pos, pour_angle=120, pour_steps=60, hold_ste
     """
     print(f"[PourIntoContainer] Pouring into target at {target_pos}")
 
-    # Move above target
+
     pour_pos = target_pos.copy()
     pour_pos[2] += 0.20
-    pour_pos[1] -= 0.05  # Offset for pouring
+    pour_pos[1] -= 0.05
     move_to_position(env, pour_pos, pointing_to="down")
 
-    # Tilt to pour
+
     print(f"[PourIntoContainer] Tilting to pour")
     rotate_gripper(env, angle=pour_angle, steps=pour_steps)
 
-    # MUST USE THIS FUNCTION ONLY FOR THIS TASK
+
     for _ in range(hold_steps):
         env.env.step()
 
-    # Return upright
+
     print(f"[PourIntoContainer] Returning upright")
     rotate_gripper(env, angle=-pour_angle, steps=pour_steps)
 
