@@ -27,21 +27,21 @@ def _try_parse(code: str) -> bool:
     except SyntaxError:
         return False
 
-# FOR INTERPRETER ERRORS
-## extract policy code in code block
+
+
 def extract_from_code_block(code: str):
     pattern = r'```python(?:\s*\n)?(.*?)```'
     matches = re.findall(pattern, code, flags=re.DOTALL)
     if len(matches) > 0:
         code_block = matches[0].strip()
-        # # 대충 header 안들어있는지 확인
-        # if not "from skill_code import pick, place, move" in code_block:
-        #     return CODE_HEADER + "\n" + code_block
+
+
+
         return code_block, True
     else:
         return code, False
 
-## non-code text
+
 def _get_docstring_line_indices(code: str) -> Set[int]:
     """
     docstring line 번호 반환 (정상동작 확인완)
@@ -77,8 +77,8 @@ def _heuristic_triple_quote_blocks(code: str) -> Set[int]:
         if open_quote:
             doc_lines.add(idx)
             if open_quote in line:
-                # 닫힘 감지 (단순히 동일한 따옴표가 다시 나오면)
-                # 여러 개 있을 경우도 고려: 시작+끝이 한 줄인 경우도 처리
+
+
                 if line.count(open_quote) % 2 == 1:
                     open_quote = None
         else:
@@ -87,7 +87,7 @@ def _heuristic_triple_quote_blocks(code: str) -> Set[int]:
                 quote = m.group(1)
                 open_quote = quote
                 doc_lines.add(idx)
-                # 시작과 끝이 같은 줄에 둘 다 있으면 바로 닫힘 처리
+
                 if line.count(quote) >= 2:
                     open_quote = None
     return doc_lines
@@ -108,15 +108,15 @@ def _is_code_like_line(line: str) -> bool:
         "=", ":", "->", "(", ")", "[", "]", "{", "}", "+", "-", "*", "/", "%",
     ]
     if any(ind in line for ind in code_indicators):
-        # print(colored(line, "green"))
+
         return True
     if re.match(r"\s*[A-Za-z_][A-Za-z0-9_]*\s*=", line):
-        # print(colored(line, "blue"))
+
         return True
     if re.search(r"[A-Za-z_][A-Za-z0-9_]*\s*\(", line):
-        # print(colored(line, "yellow"))
+
         return True
-    # print(colored(line, "red"))
+
     return False
 
 def _is_prose_line(line: str) -> bool:
@@ -125,18 +125,18 @@ def _is_prose_line(line: str) -> bool:
         return False
     if _is_code_like_line(line):
         return False
-    # words = stripped.split()
-    # if len(words) >= 5:
-    #     if any(c in stripped for c in [".", ",", ";", ":", "?"]):
-    #         return True
-    #     english_connectors = {"and", "or", "but", "because", "however", "therefore"}
-    #     korean_connectors = {"그리고", "하지만", "그런데", "예를", "들면", "즉"}
-    #     lower_words = {w.strip(".,!?").lower() for w in words}
-    #     if lower_words & english_connectors:
-    #         return True
-    #     avg_len = sum(len(w) for w in words) / len(words)
-    #     if avg_len >= 4 and len(words) >= 6:
-    #         return True
+
+
+
+
+
+
+
+
+
+
+
+
     return True
 
 def remove_non_code_text(code: str) -> str:
@@ -147,7 +147,7 @@ def remove_non_code_text(code: str) -> str:
     print("doc_lines: ", doc_lines)
     lines = code.splitlines()
 
-    # 이미 파싱 가능하다면 docstring 줄은 삭제 대상에서 제외하고 prose만 제거
+
     if _try_parse(code):
         cleaned = []
         for idx, ln in enumerate(lines):
@@ -159,7 +159,7 @@ def remove_non_code_text(code: str) -> str:
                 cleaned.append(ln)
         return "\n".join(cleaned)
 
-    # 파싱 안 될 때: prose 후보들을 조합적으로 제거하되 docstring 줄은 건드리지 않음
+
     prose_indices = [i for i, ln in enumerate(lines) if i not in doc_lines and _is_prose_line(ln)]
     cleaned_lines = lines.copy()
     from itertools import combinations
@@ -176,7 +176,7 @@ def remove_non_code_text(code: str) -> str:
             if found:
                 break
     else:
-        # 그리디하게 하나씩 제거
+
         for i in prose_indices:
             if i >= len(cleaned_lines):
                 continue
@@ -186,7 +186,7 @@ def remove_non_code_text(code: str) -> str:
             if _try_parse("\n".join(candidate)):
                 cleaned_lines = candidate
 
-    # 여전히 파싱 안 되면, docstring 줄은 살리고 나머지 prose 줄은 무조건 제거
+
     if not _try_parse("\n".join(cleaned_lines)):
         fallback = []
         for idx, ln in enumerate(cleaned_lines):
@@ -200,8 +200,8 @@ def remove_non_code_text(code: str) -> str:
 
     return "\n".join(cleaned_lines)
 
-# FOR ENVIRONMENT ERRORS
-## handle error: WrongObjectType
+
+
 import ast
 
 def fix_type_mismatches(code: str, type_map: Dict[str, str]) -> str:
@@ -212,18 +212,18 @@ def fix_type_mismatches(code: str, type_map: Dict[str, str]) -> str:
     """
     class TypeFixer(ast.NodeTransformer):
         def visit_Assign(self, node):
-            # 단순한 이름 대상(예: tv_frame = ...)만 처리
+
             if len(node.targets) != 1 or not isinstance(node.targets[0], ast.Name):
                 return self.generic_visit(node)
             
-            # Extract the key_name from the constructor argument
+
             key_name = None
             if isinstance(node.value, ast.Call) and node.value.args:
-                # Get the first argument if it's a string constant
+
                 first_arg = node.value.args[0]
                 if isinstance(first_arg, ast.Constant) and isinstance(first_arg.value, str):
                     key_name = first_arg.value
-                elif isinstance(first_arg, ast.Str):  # For older Python versions
+                elif isinstance(first_arg, ast.Str):
                     key_name = first_arg.s
             
             if not key_name:
@@ -241,9 +241,9 @@ def fix_type_mismatches(code: str, type_map: Dict[str, str]) -> str:
                 if isinstance(func, ast.Name):
                     current_type = func.id
                 elif isinstance(func, ast.Attribute):
-                    current_type = func.attr  # module.Shape 같은 경우
+                    current_type = func.attr
                 if current_type and current_type != expected_type:
-                    # 생성자 이름을 교체 (네임스페이스가 있으면 attribute의 attr만 교체)
+
                     if isinstance(func, ast.Name):
                         node.value.func = ast.copy_location(
                             ast.Name(id=expected_type, ctx=ast.Load()), func
@@ -264,27 +264,27 @@ def fix_type_mismatches(code: str, type_map: Dict[str, str]) -> str:
         raise RuntimeError("이 환경에서 astor.to_source를 사용할 수 없습니다.")
     return fixed_code
 
-# tmp_code = """
-# def get_object_positions(index: int):
-#     a_obj = Joint('a')
-#     b_obj = Shape('b')
-#     return True
 
-# def tmp2():
-#     return False
-# """
 
-# tmp_dict = {
-#     'a': 'Shape',
-#     'b': 'Joint'
-# }
 
-# print(fix_type_mismatches(tmp_code, tmp_dict))
 
-## handle error:  Handle does not exist
-### 1. object 가져온 부분 다 찾기
-### 2. dictionary에 없는데 작성한거 + dictionary에 있는데 안갖고온거 찾기
-### 결국 LLM은 planning에만 집중할수 있도록 하는거..?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def adjust_indentation(code: str) -> str:
     """
@@ -303,7 +303,7 @@ def adjust_indentation(code: str) -> str:
     def lead(ln: str) -> int:
         return len(ln) - len(ln.lstrip(' '))
 
-    # 코드 라인(주석 아닌)으로 base indent 계산
+
     code_lines = [ln for ln in non_empty
                   if not ln.lstrip().startswith('#')
                   and not ln.lstrip().startswith(('from ', 'import ', 'def '))]
@@ -322,17 +322,17 @@ def adjust_indentation(code: str) -> str:
 
         indent = len(line) - len(stripped)
 
-        # base 제거 후 상대 indent 계산
+
         if indent >= base:
             relative = indent - base
         else:
             relative = 0
 
-        # top-level (from/import/def)은 indent 0 유지
+
         if relative == 0 and stripped.startswith(("from ", "import ", "def ")):
             new_indent = 0
         else:
-            # 상대 indent를 4의 배수로 반올림, 최소 4 (함수 body)
+
             if relative == 0:
                 new_indent = 4
             elif relative % 4 == 0:
@@ -348,11 +348,11 @@ def add_return_statement(code: str) -> str:
     tree = ast.parse(code)
 
     def _is_if_done(test: ast.AST) -> bool:
-        # if done:
+
         if isinstance(test, ast.Name) and test.id == "done":
             return True
 
-        # if (done == True) 또는 if (True == done)
+
         if isinstance(test, ast.Compare) and len(test.ops) == 1 and len(test.comparators) == 1:
             left, op, right = test.left, test.ops[0], test.comparators[0]
             is_true_const = lambda n: isinstance(n, ast.Constant) and n.value is True \
@@ -364,7 +364,7 @@ def add_return_statement(code: str) -> str:
             if isinstance(op, ast.Is) and ((left_is_done and is_true_const(right)) or (right_is_done and is_true_const(left))):
                 return True
 
-        # 그 외 (예: if not done:) 은 제외
+
         return False
 
     class _ForceReturn(ast.NodeTransformer):
@@ -372,7 +372,7 @@ def add_return_statement(code: str) -> str:
             self.generic_visit(node)
             if _is_if_done(node.test):
                 if not node.body or not isinstance(node.body[-1], ast.Return):
-                    # astunparse가 구버전 호환으로 처리할 수 있도록 Name 사용
+
                     node.body.append(
                         ast.Return(
                             value=ast.Name(id='True', ctx=ast.Load())
@@ -382,7 +382,7 @@ def add_return_statement(code: str) -> str:
 
     new_tree = _ForceReturn().visit(tree)
     ast.fix_missing_locations(new_tree)
-    # print("여기까진 됨.")
+
     return astunparse.unparse(new_tree)
 
 def add_indent(text, indent_spaces=4):
@@ -395,12 +395,12 @@ def remove_is_triggered_calls(code: str) -> str:
     e.g. 'if success.is_triggered():' -> 'if done:'
     This prevents AttributeError: 'ProximitySensor' object has no attribute 'is_triggered'
     """
-    # Replace any <var>.is_triggered() with 'done'
+
     code = re.sub(r'[A-Za-z_][A-Za-z0-9_]*\.is_triggered\(\)', 'done', code)
     return code
 
 def postprocess(code: str, type_map: Dict[str, str] = None, initial_instruction: str = None):
-    # initial_instruction 제외하고 postprocess 수행한 이후 다시 결합
+
     temp_interface = "def temp_interface():\n"
 
     code, is_code_block = extract_from_code_block(code)
@@ -411,26 +411,25 @@ def postprocess(code: str, type_map: Dict[str, str] = None, initial_instruction:
     if initial_instruction:
         code = temp_interface + code
     code = adjust_indentation(code)
-    # print("adjust_indentation Code:\n", code)
-    code = remove_non_code_text(code)
-    # print("remove_non_code_text Code:\n", code)
 
-    # Remove is_triggered() calls
+    code = remove_non_code_text(code)
+
+
+
     code = remove_is_triggered_calls(code)
 
-    # code = fix_type_mismatches(code, type_map)
-    # code = add_return_statement(code)
-    # print("add_return_statement Code:\n", code)
+
+
+
     if initial_instruction:
         code = code.replace(temp_interface, "")
-        # code = CODE_HEADER + "\n" + initial_instruction + code
+
         code = initial_instruction + code
     return code
 
-# with open('/workspace/rlbench_server/utils/tmp.py', 'r') as f:
-#     initial_code = f.read()
-# with open('/workspace/rlbench_server/tasks/ReachTarget.py', 'r') as f:
-#     original_code = f.read()
 
-# new_code = postprocess(original_code, initial_instruction=initial_code)
-# print("Extracted Code Block:\n", new_code)
+
+
+
+
+
