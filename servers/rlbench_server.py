@@ -1,9 +1,9 @@
-# Host/Port: 127.0.0.1:9000
-# Model: Qwen2.5-Coder-7B (base) or Qwen2.5-Coder-7B-Instruct (instruct)
-# Usage:
-#   python server.py --model-type base      # Use Qwen2.5-Coder-7B
-#   python server.py --model-type instruct  # Use Qwen2.5-Coder-7B-Instruct
-#   python server.py --model-dir /custom/path  # Use custom model path
+
+
+
+
+
+
 
 import socket
 import struct
@@ -17,9 +17,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import os
 
-# -------------------------
-# JSON framing
-# -------------------------
+
+
+
 
 def recvall(sock, n: int) -> bytes:
     data = b""
@@ -40,11 +40,11 @@ def send_json(sock, obj: Dict[str, Any]) -> None:
     data = json.dumps(obj, ensure_ascii=False).encode("utf-8")
     sock.sendall(struct.pack(">I", len(data)) + data)
 
-# -------------------------
-# Prompt builders
-# -------------------------
 
-# reference code 주석 처리 (body-only, def 줄 제외, dedent 후 # 붙이기)
+
+
+
+
 def _comment_out_run_skill_body(reference_code: str) -> str:
     """
     Extract only the body of run_skill (excluding `def run_skill(...):` line),
@@ -57,22 +57,22 @@ def _comment_out_run_skill_body(reference_code: str) -> str:
 
     lines = code.splitlines()
 
-    # Find "def run_skill" line
+
     def_idx = None
     for i, line in enumerate(lines):
         if line.lstrip().startswith("def run_skill"):
             def_idx = i
             break
 
-    # If not found, just comment out everything (body-only)
+
     if def_idx is None:
         body_lines = lines
     else:
-        # Collect only the body lines after def (indented or blank)
+
         body_lines = []
         for j in range(def_idx + 1, len(lines)):
             ln = lines[j]
-            # Stop at a new top-level (non-indented, non-blank) statement
+
             if ln.strip() != "" and not ln.startswith((" ", "\t")):
                 break
             body_lines.append(ln)
@@ -80,17 +80,17 @@ def _comment_out_run_skill_body(reference_code: str) -> str:
     if not body_lines or not any(ln.strip() for ln in body_lines):
         return "# (empty body)\n"
 
-    # Dedent: find minimum indentation of non-empty body lines
+
     non_empty = [ln for ln in body_lines if ln.strip()]
     min_indent = min(len(ln) - len(ln.lstrip()) for ln in non_empty)
 
-    # Comment out with dedented indentation
+
     out = []
     for ln in body_lines:
         if not ln.strip():
             out.append("#")
         else:
-            dedented = ln[min_indent:]  # remove base indent, keep relative
+            dedented = ln[min_indent:]
             out.append("# " + dedented.rstrip())
     return "\n".join(out).rstrip() + "\n"
 
@@ -117,7 +117,7 @@ def build_scene_description(
     """
     desc_parts = []
 
-    # Gripper 상태 묘사
+
     gripper = scene.get("gripper", {})
     gripper_pos = gripper.get("position")
     is_open = gripper.get("is_open", True)
@@ -127,7 +127,7 @@ def build_scene_description(
         gripper_desc += f"#   Position: [{gripper_pos[0]:.3f}, {gripper_pos[1]:.3f}, {gripper_pos[2]:.3f}]\n"
     gripper_desc += f"#   Gripper is {'OPEN' if is_open else 'CLOSED'}\n"
 
-    # held_object 정보 추가
+
     if gripper_state:
         held_obj = gripper_state.get("held_object")
         if held_obj:
@@ -137,7 +137,7 @@ def build_scene_description(
 
     desc_parts.append(gripper_desc)
 
-    # Objects 상태 묘사
+
     objects = scene.get("objects", [])
     if objects:
         obj_desc = "# Current object positions:\n"
@@ -151,11 +151,11 @@ def build_scene_description(
                 obj_desc += f"#   {name} ({obj_type}): position unknown\n"
         desc_parts.append(obj_desc)
 
-    # 실행된 statements 요약
+
     if executed_stmt_texts:
         exec_desc = f"# Already executed {len(executed_stmt_texts)} statement(s):\n"
         for i, stmt in enumerate(executed_stmt_texts[-5:], start=max(0, len(executed_stmt_texts)-5)+1):
-            # 마지막 5개만 표시
+
             stmt_short = stmt.strip().replace('\n', ' ')[:80]
             exec_desc += f"#   [{i}] {stmt_short}{'...' if len(stmt.strip()) > 80 else ''}\n"
         if len(executed_stmt_texts) > 5:
@@ -185,40 +185,40 @@ def _build_hypothesis_prompt(
     Returns:
         hypothesis 생성용 프롬프트 문자열
     """
-    # base_prompt에서 ## Current state / # REVISE: or # REPAIR: 블록,
-    # # Composition patterns 섹션, # RULES (IMPORTANT) 섹션 제거
+
+
     filtered_lines = []
     skip_current_state = False
     skip_composition = False
     skip_rules = False
     for line in base_prompt.splitlines():
         stripped = line.strip()
-        # "## Current state" 시작 시 스킵 시작 (# REVISE: / # REPAIR: 블록 포함)
+
         if stripped == "## Current state":
             skip_current_state = True
             continue
         if skip_current_state:
-            # '#' 로 시작하는 설명 줄은 스킵, 빈 줄도 스킵
+
             if stripped.startswith("#") or stripped == "":
                 continue
             else:
                 skip_current_state = False
-        # "# Composition patterns" 시작 시 스킵 시작
+
         if stripped.startswith("# Composition patterns"):
             skip_composition = True
             continue
-        # "# RULES (IMPORTANT)" 시작 시 스킵 시작
+
         if stripped == "# RULES (IMPORTANT)":
             skip_rules = True
             continue
-        # Composition patterns 블록 끝: 빈 줄이 아닌 새 섹션 시작
+
         if skip_composition:
-            # 주석 예제 블록이 끝나면 (비어있지 않은 줄이 # 로 시작하지 않거나, 새 섹션 마커)
+
             if stripped and not stripped.startswith("#"):
                 skip_composition = False
             else:
                 continue
-        # RULES 블록 끝: 빈 줄 후 다른 섹션
+
         if skip_rules:
             if stripped.startswith("# -") or stripped == "":
                 continue
@@ -228,25 +228,25 @@ def _build_hypothesis_prompt(
 
     filtered_base = "\n".join(filtered_lines).strip()
 
-    # parts에서 Instruction 관련 부분 제외 (이미 parts_without_instruction으로 전달됨)
+
     hyp_parts = [filtered_base]
     hyp_parts.extend(parts_without_instruction)
 
-    # Available objects / skills → ## Current state 직전에 삽입
+
     if object_names:
         obj_list_str = ", ".join(f"'{n}'" for n in object_names)
         hyp_parts.append(f"\n# Available objects: {obj_list_str}")
     if skill_list:
         hyp_parts.append(f"# Available primitive skills: {skill_list}")
 
-    # Hypothesis 생성 지시 (branch_type에 따라 다르게 구성)
+
     hyp_parts.append("\n## Current state")
 
     if branch_type == "repair":
-        # repair: 에러가 발생한 상황 - 에러 원인과 수정 방법에 집중
+
         hyp_parts.append("# HYPOTHESIS: While in this state, execution failed with an error. Your objective is to form a concise, evidence-based hypothesis about (1) why the execution failed with the specific error and (2) what should change in the code to fix it (where/what). Focus on the error signal, failed statement, and observations. Do not propose concrete code yet—output only the hypothesis statements.")
-    else:  # revise
-        # revise: 작업이 완료되지 않은 상황 - 추가로 필요한 단계에 집중
+    else:
+
         hyp_parts.append("# HYPOTHESIS: While in this state, all statements executed but the task goal was not achieved. Your objective is to form a concise, evidence-based hypothesis about (1) why the task remained incomplete and (2) what additional steps or changes are needed in the code (where/what). Use the provided observations and traces. Do not propose concrete code yet—output only the hypothesis statements.")
 
     hyp_parts.append("# Output ONLY the hypothesis as 2-3 commented lines starting with '# '.")
@@ -266,7 +266,7 @@ def _generate_hypothesis_with_llm(engine: 'LLMEngine', hypothesis_prompt: str) -
         "temperature": 0.0,
         "top_p": 1.0,
         "min_new_tokens": 20,
-        "max_new_tokens": 150,  # hypothesis는 2-3줄이면 충분
+        "max_new_tokens": 150,
     }
 
     if _DEBUG_RPC:
@@ -278,7 +278,7 @@ def _generate_hypothesis_with_llm(engine: 'LLMEngine', hypothesis_prompt: str) -
         print(f"[HYPOTHESIS_RESULT] tokens={new_tokens}, dt={dt:.2f}s")
         print(out_text)
 
-    # 생성된 텍스트에서 hypothesis 부분만 추출 (# 주석 줄만, 최대 4줄)
+
     hyp_lines = []
     for line in out_text.strip().splitlines():
         line = line.strip()
@@ -287,7 +287,7 @@ def _generate_hypothesis_with_llm(engine: 'LLMEngine', hypothesis_prompt: str) -
             if len(hyp_lines) >= 4:
                 break
         elif hyp_lines:
-            # hypothesis 줄이 끝나면 중단
+
             break
 
     if not hyp_lines:
@@ -384,7 +384,7 @@ def get_revise_prompt(
 
     control_flow_rule = "# - DO NOT use if done: / else branching or other control-flow constructs (e.g., while loops)."
 
-    # Robot-specific rules
+
     if (target_robot or "").lower() == "ur5":
         robot_specific_rules = """# - ur5_grasp_at/ur5_release_at already include moving/approach internally. Do NOT add extra ur5_move_to() unless truly needed.
 # - Unless there is a specific reason, use only 'z' or '-z' for approach['axis'] (avoid 'x'/'y' approaches) for ur5_grasp_at.
@@ -523,7 +523,7 @@ def get_repair_prompt(
 
     control_flow_rule = "# - DO NOT use if done: / else branching or other control-flow constructs (e.g., while loops)."
 
-    # Robot-specific rules
+
     if (target_robot or "").lower() == "ur5":
         robot_specific_rules = """# - ur5_grasp_at/ur5_release_at already include moving/approach internally. Do NOT add extra ur5_move_to() unless truly needed.
 # - Unless there is a specific reason, use only 'z' or '-z' for approach['axis'] (avoid 'x'/'y' approaches) for ur5_grasp_at.
@@ -571,23 +571,23 @@ def get_repair_prompt(
 
 
 
-# Example 1. pick then place (do not use sawyer_align_gripper)
-# obj = Shape('object_name'); pos = obj.get_position()
-# success = ProximitySensor('success'); success_pos = success.get_position()
-# above_place_pos = success_pos + [0.0, 0.0, 0.1]
-# obs, reward, done = sawyer_pick(env, task, target_object=obj, target_pos=pos, grasp_offset=np.array([0.0, 0.0, 0.0]))
-# obs, reward, done = sawyer_place(env, task, place_pos=above_place_pos)
-#
-# Example 2. close gripper then move(push)
-# approach_pos = pos + [0.0, 0.0, 0.1]
-# obs, reward, done = sawyer_close_gripper(env, task)
-# obs, reward, done = sawyer_move_to(env, task, target_pos=approach_pos)
-# obs, reward, done = sawyer_move_to(env, task, target_pos=pos)
 
 
-# -------------------------
-# Code patching helpers (append / replace run_skill body)
-# -------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import re
 
@@ -598,7 +598,7 @@ _CTRL_HDR_RE = re.compile(
 _DEDENT_CLAUSES = ("elif", "else:", "except", "finally:")
 
 def _indent_width(line: str) -> int:
-    # tabs는 4칸으로 취급(환경에 맞게 조정 가능)
+
     n = 0
     for ch in line:
         if ch == " ":
@@ -644,7 +644,7 @@ def fix_control_flow_indentation(code: str, indent_step: int = 4) -> str:
 
         hdr_indent = _indent_width(line)
 
-        # 다음 non-empty 줄 찾기
+
         j = i + 1
         while j < len(lines) and not lines[j].strip():
             j += 1
@@ -655,14 +655,14 @@ def fix_control_flow_indentation(code: str, indent_step: int = 4) -> str:
         next_stripped = next_line.strip()
         next_indent = _indent_width(next_line)
 
-        # 헤더 다음이 바로 else/elif/except/finally이면: 빈 블록 -> pass 삽입
+
         if next_indent == hdr_indent and _is_dedent_clause(next_stripped):
             lines.insert(j, " " * (hdr_indent + indent_step) + "pass")
-            # 삽입했으니 헤더 이후는 해결된 것으로 보고 진행
+
             i += 1
             continue
 
-        # 헤더 다음 줄이 같은/더 얕은 indent이면 -> 블록으로 보정
+
         if next_indent <= hdr_indent:
             k = j
             while k < len(lines):
@@ -673,28 +673,28 @@ def fix_control_flow_indentation(code: str, indent_step: int = 4) -> str:
                 cur_indent = _indent_width(lines[k])
                 cur_stripped = lines[k].strip()
 
-                # 블록을 벗어나는 조건: 더 얕아짐
+
                 if cur_indent < hdr_indent:
                     break
 
-                # 같은 indent에서 dedent clause 만나면 블록 종료
+
                 if cur_indent == hdr_indent and _is_dedent_clause(cur_stripped):
                     break
 
-                # 같은 indent인 "블록 내부로 들어가야 할 줄"만 한 단계 indent 추가
+
                 if cur_indent == hdr_indent:
                     lines[k] = (" " * indent_step) + lines[k]
 
-                # 이미 더 깊게 indent된 줄은 그대로 둠
+
                 k += 1
 
         i += 1
 
     return "\n".join(lines).strip("\n")
 
-# -------------------------
-# LLM Engine (single model, shared)
-# -------------------------
+
+
+
 
 def extract_function_body(code_str, func_name):
     tree = ast.parse(code_str)
@@ -702,7 +702,7 @@ def extract_function_body(code_str, func_name):
 
     for node in tree.body:
         if isinstance(node, ast.FunctionDef) and node.name == func_name:
-            # body의 첫 줄 ~ 마지막 줄
+
             start = node.body[0].lineno - 1
             end = node.body[-1].end_lineno
 
@@ -770,7 +770,7 @@ class LLMEngine:
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
 
-        # transformers 내부도 맞춰줌
+
         hf_set_seed(seed)
 
     def generate_chat(self, prompt: str, gen: Optional[Dict[str, Any]] = None) -> Tuple[str, int, float]:
@@ -784,9 +784,9 @@ class LLMEngine:
         do_sample = bool(gen.get("do_sample", False))
         temperature = float(gen.get("temperature", 0.0))
         top_p = float(gen.get("top_p", 1.0))
-        # repetition_penalty = float(gen.get("repetition_penalty", 1.05))
 
-        # Base model: raw text completion (no chat template)
+
+
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
 
         t0 = time.time()
@@ -800,7 +800,7 @@ class LLMEngine:
                     do_sample=do_sample,
                     temperature=temperature,
                     top_p=top_p,
-                    # repetition_penalty=repetition_penalty,
+
                     eos_token_id=self.tokenizer.eos_token_id,
                 )
         dt = time.time() - t0
@@ -810,29 +810,29 @@ class LLMEngine:
         gen_tokens = seq[in_len:]
         decoded = self.tokenizer.decode(gen_tokens, skip_special_tokens=True)
 
-        # decoded = extract_code_like(decoded)
-        # decoded = extract_function_body(decoded,"run_skill")
+
+
         return decoded, int(gen_tokens.shape[-1]), dt
 
-# -------------------------
-# Request handling
-# -------------------------
+
+
+
 
 def build_generate_prompt(req: Dict[str, Any]) -> str:
-    # Provider에서 prompt + reference_code + objects + descriptions 등을 보내므로
-    # 서버에서 최대한 깔끔히 조립
+
+
     prompt = str(req.get("prompt", "") or "")
     reference_code = str(req.get("reference_code", "") or "")
-    # reference_code 전처리 (단순 버전)
+
     lines = reference_code.splitlines()
 
-    # import 제거
+
     lines = [
         l for l in lines
         if not l.lstrip().startswith(("import ", "from "))
     ]
 
-    # run_skill 함수 정의부터 끝까지 사용
+
     filtered_code = []
     record = False
     for l in lines:
@@ -852,17 +852,17 @@ def build_generate_prompt(req: Dict[str, Any]) -> str:
 
     target_scene_info = req.get("target_scene_info", None)
 
-    # reference_code와 grasp_guidance를 prompt 내 "# Composition patterns" 직전에 삽입
-    # 순서: ... reference code → grasp guidance → Composition patterns ...
+
+
     if "# Composition patterns" in prompt:
         insert_block = ""
 
-        # 1) reference code 삽입
+
         if reference_code.strip():
             ref_code_safe = _comment_out_run_skill_body(reference_code)
             insert_block += "\n# REFERENCE CODE (oracle, body-only; do not copy)\n" + ref_code_safe.strip() + "\n# (end reference)\n\n"
 
-        # 2) grasp guidance 삽입 (sawyer는 제외)
+
         robot_type_for_gg = str(req.get("robot_type", "ur5")).lower()
         if grasp_guidance and grasp_guidance.strip() and robot_type_for_gg != "sawyer":
             insert_block += "            # " + grasp_guidance.strip() + "\n\n"
@@ -871,7 +871,7 @@ def build_generate_prompt(req: Dict[str, Any]) -> str:
             prompt = prompt.replace(
                 "# Composition patterns",
                 insert_block + "# Composition patterns",
-                1,  # 첫 번째 매치만
+                1,
             )
     elif reference_code.strip():
 
@@ -882,34 +882,34 @@ def build_generate_prompt(req: Dict[str, Any]) -> str:
     if prompt.strip():
         parts.append(prompt.strip())
 
-    # if descriptions.strip():
-    #     parts.append("\n# DESCRIPTIONS\n" + descriptions.strip())
 
-    # if available_objects:
-    #     parts.append("\n# AVAILABLE OBJECTS\n" + ", ".join([f"'{x}'" for x in available_objects]))
 
-    # Target scene info를 Python 주석 형태로 변환
-    # NOTE: 주석처리 — position을 프롬프트에 넣으면 LLM이 좌표를 하드코딩하여
-    #        list+list concatenation 버그 발생. Shape().get_position() 사용을 유도하기 위해 제거.
-    # if target_scene_info and isinstance(target_scene_info, list):
-    #     scene_lines = ["# Target scene objects:"]
-    #     for obj_info in target_scene_info:
-    #         if isinstance(obj_info, dict):
-    #             name = obj_info.get("name", "unknown")
-    #             pos = obj_info.get("position")
-    #             if pos and isinstance(pos, (list, tuple)) and len(pos) >= 3:
-    #                 scene_lines.append(f"#   {name}: position=[{pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}]")
-    #             else:
-    #                 scene_lines.append(f"#   {name}")
-    #     if len(scene_lines) > 1:
-    #         parts.append("\n" + "\n".join(scene_lines))
-    # elif target_scene_info and isinstance(target_scene_info, dict):
-    #     scene_lines = ["# Target scene info:"]
-    #     for k, v in target_scene_info.items():
-    #         scene_lines.append(f"#   {k}: {v}")
-    #     parts.append("\n" + "\n".join(scene_lines))
 
-    # Add instruction for Instruct model to prevent markdown code fence output
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     parts.append("\n# IMPORTANT OUTPUT FORMAT:")
     parts.append("# - Output ONLY the Python code for run_skill function body")
     parts.append("# - DO NOT use markdown code fences (```) in your output")
@@ -926,17 +926,17 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
     if rtype == "close":
         return {"type": "close_ack", "ok": True}
 
-    # -------------------------
-    # generate
-    # -------------------------
+
+
+
     if rtype == "generate":
-        # print(f"[SOCKET_SERVER] {addr} -> {rtype}")
+
 
         try:
             gen = req.get("gen", {}) or {}
             if not isinstance(gen, dict):
                 gen = {}
-            # initial generation can be a bit longer
+
             gen.setdefault("do_sample", False)
             gen.setdefault("temperature", 0.0)
             gen.setdefault("top_p", 1.0)
@@ -961,10 +961,10 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
         except Exception as e:
             return {"type": "generate_result", "ok": False, "error": str(e)}
 
-    # -------------------------
-    # revise (unfinished / step revise)
-        # rlbench_loop: repair_on_not_finished
-    # -------------------------
+
+
+
+
     if rtype == "revise":
         try:
             task_name = str(req.get("task_name", "unknown_task"))
@@ -980,7 +980,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
 
             current_code = str(inputs.get("current_code", "") or "")
 
-            # gate 먼저
+
             need_more_steps = bool(last_step.get("need_more_steps", False))
             if not need_more_steps:
                 return {"type": "revise_result", "ok": True, "code": current_code, "num_tokens": 0}
@@ -1000,8 +1000,8 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
 
             confirmed_state = last_step.get("confirmed_state", {}) or {}
 
-            # --- Base model: 코드 완성 패턴으로 프롬프트 구성 ---
-            # 1) Rules + skill shapes (이미 전부 # 주석 형태)
+
+
             base_prompt = get_revise_prompt(
                 task_name=task_name,
                 target_robot=robot_type,
@@ -1012,7 +1012,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             )
             parts = [base_prompt.strip()]
 
-            # 2) Reference code (oracle) — body-only, dedent 후 # 주석
+
             reference_code = str(inputs.get("reference_code", "") or "")
             if reference_code.strip():
                 ref_commented = _comment_out_run_skill_body(reference_code)
@@ -1020,7 +1020,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                     if len(ref_commented) > 20000:
                         ref_commented = ref_commented[:20000] + "\n# ... (truncated)"
 
-                    # MeatOffGrill 태스크일 때 reference code 주석 강화
+
                     if task_name.lower() in ["meatoffgrill", "meatongrill"]:
                         parts.append("\n# ========================================")
                         parts.append("# CRITICAL: You MUST follow the exact pattern in the reference code below.")
@@ -1029,15 +1029,15 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                     else:
                         parts.append("\n# REFERENCE CODE (oracle, body-only; do not copy)\n" + ref_commented.strip() + "\n# (end reference)")
 
-            # 3) Grasp guidance — # 주석 (sawyer는 제외)
+
             grasp_guidance = inputs.get("grasp_guidance", None)
             if grasp_guidance and str(grasp_guidance).strip() and robot_type.lower() != "sawyer":
                 parts.append(f"\n# Grasp guidance: {grasp_guidance}")
 
-            # 4) Error context (revise: task incomplete)
+
             parts.append(f"\n# ERROR: All {len(executed_stmt_texts)} statements were executed, but the task did not succeed.")
 
-            # 5) 실행된 코드
+
             executed_block = "\n".join(str(s) for s in executed_stmt_texts).strip()
 
             if executed_block:
@@ -1047,7 +1047,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                     if line:
                         parts.append(f"# {line}")
 
-            # 6) Scene description - 간결하게 (물체 좌표)
+
             gripper = scene.get("gripper", {})
             gripper_pos = gripper.get("position")
             is_open = gripper.get("is_open", True)
@@ -1071,17 +1071,17 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             if compact_scene:
                 parts.append("\n" + "\n".join(compact_scene))
 
-            # 7) Exploration observation (hypothesis 직전에 배치)
+
             exploration_obs = inputs.get("exploration_obs", None)
             if exploration_obs and isinstance(exploration_obs, dict):
                 import json
-                # recommendation은 별도 힌트로 분리 (JSON 크기 절약)
+
                 recommendation = exploration_obs.pop("recommendation", None)
                 obs_json = json.dumps(exploration_obs, ensure_ascii=False, separators=(',', ':'))
                 if len(obs_json) > 600:
                     obs_json = obs_json[:600] + "...}"
                 parts.append(f"\n# Observation: {obs_json}")
-                # recommendation이 있으면 자연어 힌트로 추가
+
                 if recommendation and isinstance(recommendation, dict):
                     hint = recommendation.get("hint", "")
                     place_pos = recommendation.get("place_pos", [])
@@ -1090,8 +1090,8 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                     if place_pos:
                         parts.append(f"# Use success sensor position {place_pos} as place target.")
 
-            # 7.5) LLM-based hypothesis generation
-            # parts_without_instruction = Instruction/함수시그니처 제외한 현재까지의 parts
+
+
             _skill_map = {
                 "ur5": "ur5_move_to, ur5_grasp_at, ur5_release_at, ur5_align_gripper, close_ur5_ee, open_ur5_ee",
                 "jaco": "jaco_move_linear, jaco_move_arc, jaco_rotate_gripper, jaco_open_gripper, jaco_close_gripper, jaco_align_gripper",
@@ -1100,18 +1100,18 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             _hyp_skill_list = _skill_map.get((robot_type or "").lower(), "move, pick, place, push, open_gripper, close_gripper, align_to_quaternion, align_two_axes")
             hypothesis_prompt = _build_hypothesis_prompt(
                 base_prompt=base_prompt,
-                parts_without_instruction=parts[1:],  # base_prompt 제외한 나머지 (ref code, scene, executed code 등)
+                parts_without_instruction=parts[1:],
                 branch_type="revise",
                 object_names=object_names,
                 skill_list=_hyp_skill_list,
             )
             hypothesis = _generate_hypothesis_with_llm(engine, hypothesis_prompt)
-            _hypothesis_prompt = hypothesis_prompt  # meta에 저장용
-            _hypothesis_response = hypothesis       # meta에 저장용
+            _hypothesis_prompt = hypothesis_prompt
+            _hypothesis_response = hypothesis
             if hypothesis:
                 parts.append(f"\n{hypothesis}")
 
-            # 6) Instruction + 빈 함수 시그니처 (프롬프트 마지막)
+
             parts.append("\n# INSTRUCTION: Generate ONLY executable Python code to complete the task.")
             parts.append("# The previously executed code FAILED. Write CORRECTED code that fixes the issue.")
             parts.append("# DO NOT output comments, DO NOT copy the scene description above.")
@@ -1127,7 +1127,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             gen.setdefault("temperature", 0.0)
             gen.setdefault("top_p", 1.0)
             gen.setdefault("min_new_tokens", 80)
-            gen.setdefault("max_new_tokens", 512)  # Increased for more code generation
+            gen.setdefault("max_new_tokens", 512)
 
             if _DEBUG_RPC:
                 print("\n[PROMPT_TO_LLM] rtype=", rtype)
@@ -1138,7 +1138,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             return {
                 "type": "revise_result",
                 "ok": True,
-                "code": out_text,  # current_code에 붙일 "추가 statement들"만
+                "code": out_text,
                 "code_format": "run_skill_body_cont",
                 "num_tokens": new_tokens,
                 "meta": {
@@ -1151,10 +1151,10 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
         except Exception as e:
             return {"type": "revise_result", "ok": False, "error": str(e)}
 
-    # -------------------------
-    # repair (failure)
-        # rlbench_loop: repair_on_failure
-    # -------------------------
+
+
+
+
     if rtype == "repair":
         try:
             task_name = str(req.get("task_name", "unknown_task"))
@@ -1186,8 +1186,8 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                 objs = []
             object_names = [o.get("name", "") for o in objs if isinstance(o, dict) and o.get("name")]
 
-            # --- Base model: 코드 완성 패턴으로 프롬프트 구성 ---
-            # 1) Rules + skill shapes (이미 전부 # 주석 형태)
+
+
             base_prompt = get_repair_prompt(
                 task_name=task_name,
                 target_robot=robot_type,
@@ -1201,7 +1201,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             )
             parts = [base_prompt.strip()]
 
-            # 2) Reference code (oracle) — body-only, dedent 후 # 주석
+
             reference_code = str(inputs.get("reference_code", "") or "")
             if reference_code.strip():
                 ref_commented = _comment_out_run_skill_body(reference_code)
@@ -1209,7 +1209,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                     if len(ref_commented) > 20000:
                         ref_commented = ref_commented[:20000] + "\n# ... (truncated)"
 
-                    # MeatOffGrill 태스크일 때 reference code 주석 강화
+
                     if task_name.lower() in ["meatoffgrill", "meatongrill"]:
                         parts.append("\n# ========================================")
                         parts.append("# CRITICAL: For MeatOffGrill, you MUST follow the exact pattern in the reference code below.")
@@ -1218,12 +1218,12 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                     else:
                         parts.append("\n# REFERENCE CODE (oracle, body-only; do not copy)\n" + ref_commented.strip() + "\n# (end reference)")
 
-            # 3) Grasp guidance — # 주석 (sawyer는 제외)
+
             grasp_guidance = inputs.get("grasp_guidance", None)
             if grasp_guidance and str(grasp_guidance).strip() and robot_type.lower() != "sawyer":
                 parts.append(f"\n# Grasp guidance: {grasp_guidance}")
 
-            # 4) Error info - 간결하게
+
             error_type = error_payload.get("error_type", "Exception") if isinstance(error_payload, dict) else "Exception"
             error_msg = error_payload.get("error", str(error_payload)) if isinstance(error_payload, dict) else str(error_payload)
             if len(error_msg) > 150:
@@ -1236,11 +1236,11 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                     failed_short = failed_short[:80] + "..."
                 parts.append(f"# Failed statement: {failed_short}")
 
-            # PathOutOfWorkspace 에러 시 워크스페이스 가이드 추가
+
             if "PathOutOfWorkspace" in error_type or "path planning" in error_msg.lower():
                 parts.append("# WORKSPACE HINT: The target position is outside the robot's reachable workspace (~0.8m radius).")
                 parts.append("# Use positions closer to the scene objects. Avoid large offsets (> 0.15m in x/y) from object positions.")
-                # scene에서 object 위치 범위를 계산하여 힌트 제공
+
                 objs = scene.get("objects", []) or []
                 if objs:
                     positions = [o.get("position") for o in objs if o.get("position")]
@@ -1253,7 +1253,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                         parts.append(f"# Scene object range: x=[{x_range[0]:.2f},{x_range[1]:.2f}], y=[{y_range[0]:.2f},{y_range[1]:.2f}], z=[{z_range[0]:.2f},{z_range[1]:.2f}]")
                         parts.append("# Keep ALL target positions within or near this range.")
 
-            # 5) 실행된 코드
+
             executed_block = "\n".join(str(s) for s in executed_stmt_texts).strip()
 
             if executed_block:
@@ -1263,7 +1263,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                     if line:
                         parts.append(f"# {line}")
 
-            # 6) Scene description - 간결하게 (물체 좌표)
+
             gripper = scene.get("gripper", {})
             gripper_pos = gripper.get("position")
             is_open = gripper.get("is_open", True)
@@ -1284,17 +1284,17 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             if compact_scene:
                 parts.append("\n" + "\n".join(compact_scene))
 
-            # 6.5) Exploration observation
+
             exploration_obs = inputs.get("exploration_obs", None)
             if exploration_obs and isinstance(exploration_obs, dict):
                 import json
-                # recommendation은 별도 힌트로 분리 (JSON 크기 절약)
+
                 recommendation = exploration_obs.pop("recommendation", None)
                 obs_json = json.dumps(exploration_obs, ensure_ascii=False, separators=(',', ':'))
                 if len(obs_json) > 600:
                     obs_json = obs_json[:600] + "...}"
                 parts.append(f"\n# Observation: {obs_json}")
-                # recommendation이 있으면 자연어 힌트로 추가
+
                 if recommendation and isinstance(recommendation, dict):
                     hint = recommendation.get("hint", "")
                     place_pos = recommendation.get("place_pos", [])
@@ -1303,7 +1303,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                     if place_pos:
                         parts.append(f"# Use success sensor position {place_pos} as place target.")
 
-            # 6.6) LLM-based hypothesis generation
+
             _skill_map = {
                 "ur5": "ur5_move_to, ur5_grasp_at, ur5_release_at, ur5_align_gripper, close_ur5_ee, open_ur5_ee",
                 "jaco": "jaco_move_linear, jaco_move_arc, jaco_rotate_gripper, jaco_open_gripper, jaco_close_gripper, jaco_align_gripper",
@@ -1312,18 +1312,18 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             _hyp_skill_list = _skill_map.get((robot_type or "").lower(), "move, pick, place, push, open_gripper, close_gripper, align_to_quaternion, align_two_axes")
             hypothesis_prompt = _build_hypothesis_prompt(
                 base_prompt=base_prompt,
-                parts_without_instruction=parts[1:],  # base_prompt 제외한 나머지
+                parts_without_instruction=parts[1:],
                 branch_type="repair",
                 object_names=object_names,
                 skill_list=_hyp_skill_list,
             )
             hypothesis = _generate_hypothesis_with_llm(engine, hypothesis_prompt)
-            _hypothesis_prompt = hypothesis_prompt  # meta에 저장용
-            _hypothesis_response = hypothesis       # meta에 저장용
+            _hypothesis_prompt = hypothesis_prompt
+            _hypothesis_response = hypothesis
             if hypothesis:
                 parts.append(f"\n{hypothesis}")
 
-            # 7) Instruction + 빈 함수 시그니처 (프롬프트 마지막)
+
             parts.append("\n# INSTRUCTION: Fix the error and generate ONLY executable Python code.")
             parts.append("# The previously executed code FAILED. Write CORRECTED code that fixes the issue.")
             parts.append("# DO NOT output comments, DO NOT copy the error message or scene description.")
@@ -1339,7 +1339,7 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             gen.setdefault("temperature", 0.0)
             gen.setdefault("top_p", 1.0)
             gen.setdefault("min_new_tokens", 80)
-            gen.setdefault("max_new_tokens", 512)  # Increased for more code generation
+            gen.setdefault("max_new_tokens", 512)
 
             if _DEBUG_RPC:
                 print("\n[PROMPT_TO_LLM] rtype=", rtype)
@@ -1365,9 +1365,9 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
 
     return {"type": "error", "ok": False, "error": f"unknown type: {rtype}"}
 
-# -------------------------
-# Client handler
-# -------------------------
+
+
+
 
 _DEBUG_RPC = os.environ.get("RPC_DEBUG", "0") == "1"
 
@@ -1407,7 +1407,7 @@ def handle_client(conn, addr, engine: LLMEngine):
             req = recv_json(conn)
             _debug_print_req(req, addr=addr)
             rtype = req.get("type")
-            # print(f"{addr} -> {rtype}")
+
 
             resp = handle_request(engine, req, addr=addr)
             send_json(conn, resp)
@@ -1420,9 +1420,9 @@ def handle_client(conn, addr, engine: LLMEngine):
         except Exception:
             pass
 
-# -------------------------
-# Server loop
-# -------------------------
+
+
+
 
 def serve(host: str, port: int, engine: LLMEngine):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -1435,9 +1435,9 @@ def serve(host: str, port: int, engine: LLMEngine):
             conn, addr = s.accept()
             threading.Thread(target=handle_client, args=(conn, addr, engine), daemon=True).start()
 
-# -------------------------
-# Entry
-# -------------------------
+
+
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -1450,7 +1450,7 @@ def main():
     parser.add_argument("--seed", type=int, default=42, help="Random seed for deterministic LLM generation (default: 42)")
     args = parser.parse_args()
 
-    # Determine model directory
+
     if args.model_dir:
         model_dir = args.model_dir
     else:
