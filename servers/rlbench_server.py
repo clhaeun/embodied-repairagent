@@ -270,7 +270,7 @@ def _generate_hypothesis_with_llm(engine: 'LLMEngine', hypothesis_prompt: str) -
     }
 
     if _DEBUG_RPC:
-        print("\n[HYPOTHESIS_PROMPT]\n", hypothesis_prompt)
+
 
     out_text, new_tokens, dt = engine.generate_chat(hypothesis_prompt, gen)
 
@@ -945,9 +945,9 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
 
             prompt = build_generate_prompt(req)
             if _DEBUG_RPC:
-                print("\n[PROMPT_TO_LLM] rtype=", rtype)
-                print("[PROMPT_FULL]\n", prompt)
-                print("... (len=", len(prompt), ")")
+
+
+
 
             out_text, new_tokens, dt = engine.generate_chat(prompt, gen)
 
@@ -1130,9 +1130,9 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             gen.setdefault("max_new_tokens", 512)
 
             if _DEBUG_RPC:
-                print("\n[PROMPT_TO_LLM] rtype=", rtype)
-                print("[PROMPT_FULL]\n", prompt)
-                print("... (len=", len(prompt), ")")
+
+
+
             out_text, new_tokens, dt = engine.generate_chat(prompt, gen)
 
             return {
@@ -1342,9 +1342,9 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             gen.setdefault("max_new_tokens", 512)
 
             if _DEBUG_RPC:
-                print("\n[PROMPT_TO_LLM] rtype=", rtype)
-                print("[PROMPT_FULL]\n", prompt)
-                print("... (len=", len(prompt), ")")
+
+
+
             out_text, new_tokens, dt = engine.generate_chat(prompt, gen)
 
             return {
