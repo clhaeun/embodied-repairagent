@@ -32,7 +32,7 @@ def pick_and_place_object(env, obj_name, target_pos, place_height=0.01, spread_o
         place_pos = target_pos.copy()
         place_pos[0] += spread_offset
 
-    place_pos[2] = target_pos[2] + 0.12  # Above target
+    place_pos[2] = target_pos[2] + 0.12
 
     move_to_position(env, place_pos, pointing_to="down")
 
