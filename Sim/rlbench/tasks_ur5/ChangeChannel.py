@@ -1,0 +1,5 @@
+(obs, reward, done) = ur5_move_to(env, task, target_pos=button0_position + [0.0, 0.0, 0.1], timeout_s=10.0)
+(obs, reward, done) = ur5_align_gripper(env, task, reference_quat=button0_object.get_quaternion(), yaw_mode='perpendicular', approach_direction='down', timeout_s=10.0)
+(obs, reward, done) = ur5_grasp_at(env, task, grasp_pos=button0_position, approach={'axis': 'z', 'distance': 0.05}, timeout_s=10.0)  
+(obs, reward, done) = ur5_move_to(env, task, target_pos=button0_position + [0.0, 0.0, 0.1], timeout_s=10.0)
+(obs, reward, done) = ur5_release_at(env, task, place_pos=button0_position, approach={'axis': 'z', 'distance': 0.05}, timeout_s=10.0)

@@ -1,0 +1,4 @@
+tasks:
+  - id: task_001
+    difficulty: all
+    episodes: [PickAndLift, MeatOffGrill, LampOff, LampOn, MeatOnGrill, WipeDesk, ChangeChannel, PutUmbrellaInUmbrellaStand, PutMoneyInSafe, CloseBox, ReachAndDrag, HitBallWithQueue]

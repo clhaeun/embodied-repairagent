@@ -1,0 +1,4 @@
+tasks:
+  - id: task_LampOff
+    difficulty: all
+    episodes: [LampOff]

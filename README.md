@@ -14,14 +14,30 @@ The historical experiment configurations use `model=code_agent` as an **agent mo
 
 ## Repository contents
 
-- `examples/oracle_skills/`: seven historical RLBench task-policy examples reported as authored by the maintainer. These are **not standalone runnable examples**; they depend on simulator and robot-skill libraries that are not copied here.
-- `results/`: compact tables of *archived* results, without large raw traces or generated code.
-- `SOURCE_PROVENANCE.md`: pinned source commits, limitations, and source links.
-- `ATTRIBUTION_REVIEW.md`: collaborative authorship and redistribution review.
+- `Sim/rlbench/`: archived RLBench experiment driver (`rlbench_exp.py`), AST-based execution and repair loop (`rlbench_loop.py`), LLM policy provider, robot primitive implementations, task definitions, prompts, utilities and run scripts.
+- `Sim/rlbench/RLBench/`: Git submodule pointing to [clhaeun/RLBench](https://github.com/clhaeun/RLBench) at pinned commit `5aba50f8`. Initialize with `git submodule update --init --recursive`.
+- `Sim/genesis/`: archived Genesis experiment driver (`genesis_experiment.py`), subtask execution loop (`genesis_loop.py`), LLM policy provider, task definitions, prompts, configuration and environment helpers.
+- `servers/rlbench_server.py`: RLBench inference server copied from the RLBench home backup (original name: `server.py`).
+- `servers/genesis_server.py`: Genesis inference server copied from the Genesis home backup (original name: `server.py`).
+- `examples/oracle_skills/`: seven user-identified original robot task-policy examples.
+- `results/`: condensed archival experimental summary CSVs, *not* full raw result sets.
+- `SOURCE_PROVENANCE.md`, `ATTRIBUTION_REVIEW.md`: pinned origins, caveats, and collaboration attribution.
+- `RUNTIME_NOTES.md`: current dependency and reproduction caveats.
 
-### Code pending provenance clearance
+The **top-level `skill_codes/` is intentionally excluded** as requested. The similarly named `Sim/rlbench/skill_code*.py` and `Sim/genesis/skill_code.py` are included because the simulation loops import their robot control primitives.
 
-The original research implementation connects RLBench `rlbench_exp.py` → `rlbench_loop.py` → `policy_provider.py` → an inference server, and Genesis `genesis_experiment.py` → `genesis_loop.py` → `policy_provider.py`. These were developed in a collaborative setting and **are intentionally not copied here yet**. The historical source is linked in the provenance document. Neither pipeline has been independently reproduced in a fresh environment.
+### How to retrieve the historical runtime
+
+```bash
+git clone --recurse-submodules https://github.com/clhaeun/embodied-repairagent.git
+cd embodied-repairagent
+# or, if already cloned:
+git submodule update --init --recursive
+```
+
+**Not a verified turn-key reproduction:** The Genesis simulator scene/robot meshes and other original `Sim/genesis/assets/` resources (approximately 199 MB) have **not** been copied. They may be required at runtime and must be obtained from their original location with appropriate redistribution rights. Historical command scripts also contain environment-specific file paths and host addresses. The runtime, simulator/LLM checkpoints, model weights, and old environment are not independently available or tested. See `RUNTIME_NOTES.md`.
+
+This is a curated collaborative research archive, **not a claim that every copied module was authored solely by the maintainer**. Keep original credits and review redistribution licenses before relying on these files.
 
 ## Archived experimental evidence (not final paper results)
 

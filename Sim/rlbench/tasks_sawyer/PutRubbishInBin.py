@@ -1,0 +1,10 @@
+above_grasp_pos = rubbish.get_position() + [0.0, 0.0, 0.15]
+q = rubbish.get_quaternion()
+obs, reward, done = sawyer_move_to(env, task, target_pos=above_grasp_pos, timeout_s=10.0)
+obs, reward, done = sawyer_align_gripper(env, task, approach_direction='down', reference_quat=q, yaw_mode='parallel', timeout_s=10.0)
+obs, reward, done = sawyer_pick(env, task, target_object=rubbish, target_pos=rubbish.get_position(), grasp_offset=[0.0, 0.0, 0.0], timeout_s=10.0)
+bin_pos = bin.get_position()
+obs, reward, done = sawyer_move_to(env, task, target_pos=bin_pos, timeout_s=10.0)
+obs, reward, done = sawyer_place(env, task, place_pos=bin_pos, place_offset=[0.0, 0.0, 0.0], timeout_s=10.0)
+(obs, reward, done) = sawyer_open_gripper(env, task, amount=1.0, velocity=0.2)
+return (obs, reward, done)
