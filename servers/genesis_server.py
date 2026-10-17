@@ -256,7 +256,7 @@ def preprocess_reference_code(code: str) -> str:
     try:
         tree = ast.parse(src)
     except Exception:
-        # AST가 깨진 경우: 기존처럼 라인 기반 fallback (간단)
+
         return _fallback_extract_body_only(src)
 
     fn = None
