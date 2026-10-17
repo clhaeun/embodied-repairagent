@@ -54,7 +54,7 @@ class Feedback:
 
         return f"Failure reason: {failure_reason}\nFeedback: {feedback_message}"
         
-        # convert to json
+
         data = {
             "robot_pos": [round(x, 3) for x in self.robot_pos] if self.robot_pos is not None else None,
             "objects": {k: [round(x, 3) for x in v] for k, v in self.object_positions.items()} if self.object_positions else None,
@@ -74,14 +74,14 @@ class FeedbackWithError(Feedback):
     error_message: str = "An error occurred during the skill execution."
 
     def __str__(self):
-        # 기본 Feedback 데이터 준비
+
         if self.task and self.robot_pos is None:
             self.robot_pos = self.task.get_observation().gripper_pose
 
         if self.task and (self.object_positions is None or len(self.object_positions) == 0):
             self.object_positions = get_all_object_positions(self.task)
 
-        # TODO: 필요시 반환하는 값에 robot position 등 주요 정보 전달
+
         if self.waypoints is not None:
             failure_reason, feedback_message = analyze_skill_failure(
                 is_skill_done=False,
@@ -99,7 +99,7 @@ class FeedbackWithError(Feedback):
         else:
             return self.error_message
 
-        # JSON 데이터 준비
+
         data = {
             "robot_pos": [round(x, 3) for x in self.robot_pos] if self.robot_pos is not None else None,
             "objects": {k: [round(x, 3) for x in v] for k, v in self.object_positions.items()} if self.object_positions else None,
