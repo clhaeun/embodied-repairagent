@@ -1,4 +1,4 @@
-# tasks/put_knife_on_chopping_board.py - done
+
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from pyrep.objects.shape import Shape
@@ -16,17 +16,17 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
     knife_sizes, _ = get_bbox_sizes(knife_object)
     l = float(np.max(knife_sizes))
     
-    # Pick knife handle
+
     knife_handle_pos = knife_position.copy()
     knife_handle_pos[2] += l / 4.0
     obs, reward, done = pick(env, task, target_pos=knife_handle_pos, approach_distance=0.15, approach_axis='z', timeout=10.0)
 
-    # Move to safe_z
+
     knife_pos = knife_handle_pos.copy()
     knife_pos[2] += l
     obs, reward, done = move(env, task, target_pos=knife_pos, timeout=10.0)
 
-    # Place on knife_board
+
     hover_pos = chopping_board_position.copy()
     hover_pos[2] += l
     obs, reward, done = place(env, task, target_pos=hover_pos, approach_distance=0.15, approach_axis='z', timeout=10.0)
