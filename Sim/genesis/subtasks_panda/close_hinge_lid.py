@@ -26,26 +26,26 @@ def close_hinge_lid(env, handle_name="hinge_handle", lid_name="hinge_lid"):
     """
     print(f"[CloseHingeLid] Closing hinge lid")
 
-    # Move to handle
+
     success = move_gripper_to(env, handle_name, pointing_to="down")
     if not success:
         print(f"[CloseHingeLid] Failed to move to handle")
         return False
 
-    # Grasp the handle
+
     move_gripper_to(env, handle_name, pointing_to="down")
     move_parallel(env, "back", 0.02, pointing_to="down")
     close_gripper(env)
 
     for _ in range(3):
-        # Pull to close the lid
+
         move_parallel(env, "back", 0.05, pointing_to="down")
         move_parallel(env, "down", 0.05, pointing_to="down")
 
-    # Release handle
+
     release_handle(env)
 
-    # Move up to clear
+
     move_parallel(env, "up", 0.1, pointing_to="down")
 
     print(f"[CloseHingeLid] Successfully closed hinge lid")
