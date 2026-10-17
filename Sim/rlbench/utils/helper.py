@@ -223,7 +223,7 @@ def object_names_with_noise(env: TaskEnvironment, task_name: str = "", noise_pro
             
             print(f"INFO: Noise Added - Added {num_to_add} object(s): {objects_to_add} to task '{task_name}'.")
 
-        # --- 수정된 REMOVE 로직 ---
+
         elif action == 'remove' and objects_info:
             initial_count = len(objects_info)
             # 제거 후 최소 2개의 객체가 남아야 하므로, 최대로 제거 가능한 개수는 (현재 개수 - 2)
