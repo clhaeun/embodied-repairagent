@@ -24,13 +24,13 @@ def pick_single(env, obj_name, pointing_to="down"):
     """
     print(f"[PickSingle] Picking {obj_name}")
 
-    # Move gripper to object
+
     success = move_gripper_to(env, obj_name, pointing_to=pointing_to)
     if not success:
         print(f"[PickSingle] Failed to move to {obj_name}")
         return False
 
-    # Close gripper to grasp
+
     close_gripper(env)
 
     print(f"[PickSingle] Successfully picked {obj_name}")
