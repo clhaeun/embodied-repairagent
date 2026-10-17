@@ -33,7 +33,7 @@ def generate_code_with_local_llm(prompt: str, model_name="Qwen/Qwen2.5-Coder-7B-
 
     output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
-    # assistant 이후만 추출
+
     if "assistant" in output_text:
         output_text = output_text.split("assistant", 1)[-1].strip()
 
