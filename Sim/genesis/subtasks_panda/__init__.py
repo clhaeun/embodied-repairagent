@@ -36,13 +36,13 @@ __all__ = [
     "open_box_lid",
     "open_drawer",
     "close_drawer",
-    # pick_place_2 variants
+
     "pick_and_place_object",
-    # insert_slot
+
     "remove_from_slot",
     "place_beside_slot",
     "insert_into_slot",
-    # pour_liquid
+
     "grasp_container",
     "pour_into_container",
     "release_container",
