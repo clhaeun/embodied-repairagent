@@ -27,11 +27,11 @@ def remove_from_slot(env, obj_name, lift_height=0.15, **kwargs):
     """
     print(f"[RemoveFromSlot] Removing {obj_name}")
 
-    # Move to object and pick
+
     move_gripper_to(env, obj_name, pointing_to="down")
     close_gripper(env)
 
-    # Lift up
+
     move_parallel(env, "up", lift_height, pointing_to="down")
 
     print(f"[RemoveFromSlot] Successfully removed {obj_name}")
