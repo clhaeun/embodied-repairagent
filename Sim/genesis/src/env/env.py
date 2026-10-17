@@ -98,7 +98,7 @@ class GenesisEnv(gym.Env):
                 ),
             )
         elif self.lmp_wrapper.ee_type == "robotiq85":
-            self.num_dof = 8  # 7 arm + 1 finger_joint (mimic joints handled automatically)
+            self.num_dof = 8
             self.franka = self.scene.add_entity(
                 gs.morphs.URDF(
                     file="./assets/franka/robotiq85/franka_robotiq85.urdf",
@@ -107,7 +107,7 @@ class GenesisEnv(gym.Env):
                 ),
                 vis_mode="visual",
             )
-        else:  # suction
+        else:
             self.num_dof = 7
             self.franka = self.scene.add_entity(
                 gs.morphs.URDF(
@@ -155,7 +155,7 @@ class GenesisEnv(gym.Env):
             dofs_idx_local=np.arange(self.num_dof),
         )
 
-        # Select initial DOF position based on end-effector type
+
         if self.lmp_wrapper.ee_type == "robotiq85":
             initial_dof_pos = INITIAL_DOF_POSITION_ROBOTIQ85
         else:
