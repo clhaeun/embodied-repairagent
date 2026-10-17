@@ -14,14 +14,14 @@ from typing import Optional, Dict, List, Tuple, Literal, Any
 
 def _debug_print_prompt(full_prompt: str, tag: str, head_n: int = 100, tail_n: int = 50):
     lines = full_prompt.splitlines()
-    print(f"\n[DEBUG][PROMPT][{tag}] chars={len(full_prompt)}, lines={len(lines)}")
-    print(f"\n[DEBUG][PROMPT][{tag}] head:\n" + "\n".join(lines))
 
 
 
-# =========================
-# JSON framing
-# =========================
+
+
+
+
+
 
 def recvall(sock, n):
     data = b""
@@ -47,8 +47,8 @@ def send_json(sock, obj):
 
 def _normalize_robot_type(rt: str) -> str:
     rt = (rt or "").strip().lower()
-    # 서버 내부에서 filter_invalid_params가 기대하는 키로 맞추세요.
-    # (예: 'robotiq'로 관리한다면 robotiq85 -> robotiq로)
+
+
     if rt in ["robotiq85", "robotiq_85", "robotiq-85"]:
         return "robotiq"
     if rt in ["gripper", "panda"]:
@@ -56,9 +56,9 @@ def _normalize_robot_type(rt: str) -> str:
     return rt or "panda"
 
 
-# =========================
-# Genesis Skill Definitions
-# =========================
+
+
+
 
 GENESIS_SKILLS = {
     "panda": {
@@ -116,7 +116,7 @@ GENESIS_SKILLS = {
     }
 }
 
-# Subtask descriptions for repair/revise prompts
+
 SUBTASK_DESCRIPTIONS = {
     "open_box_lid": "Open the box lid FULLY by grasping the handle and lifting it completely. The lid must be opened wide enough to access objects inside.",
     "open_hinge_lid": "Open the hinged lid FULLY by grasping the handle and lifting it completely. The lid must be opened wide enough to access objects inside.",
@@ -130,7 +130,7 @@ SUBTASK_DESCRIPTIONS = {
 
 }
 
-# Available primitives by robot type
+
 ROBOT_PRIMITIVES = {
     "panda": "move_gripper_to, move_to_position, move_parallel, open_gripper, close_gripper, grasp_handle, release_handle",
     "robotiq": "move_gripper_to, move_to_position, move_parallel, open_robotiq85, close_robotiq85, grasp_handle_robotiq85, release_handle_robotiq85",
@@ -144,7 +144,7 @@ def get_skills_hint(robot_type: str) -> str:
     return ", ".join(skills)
 
 
-# def _get_skills_hint(target_robot: str) -> str:
+
     """
     Get available skills hint based on robot type.
 
@@ -154,18 +154,18 @@ def get_skills_hint(robot_type: str) -> str:
     Returns:
         Skills hint string
     """
-    # if target_robot == "panda":
-    #     return "move_gripper_to, move_to_position, move_parallel, open_gripper, close_gripper, pick, place, rotate_gripper, grasp_handle, release_handle"
-    # elif target_robot == "robotiq":
-    #     return "move_gripper_to, move_to_position, move_parallel, open_robotiq85, close_robotiq85, pick_robotiq85, place_robotiq85, grasp_handle_robotiq85, release_handle_robotiq85"
-    # else:  # suction
-    #     return "move_gripper_to, move_to_position, move_parallel, activate_vacuum, deactivate_vacuum, attach_vacuum_handle, detach_vacuum_handle"
 
 
 
-# =========================
-# Scene
-# =========================
+
+
+
+
+
+
+
+
+
 
 def build_scene_description(
     scene: Dict[str, Any],
@@ -187,7 +187,7 @@ def build_scene_description(
     """
     desc_parts = []
 
-    # Gripper 상태 묘사
+
     gripper = scene.get("gripper", {})
     gripper_pos = gripper.get("position")
     is_open = gripper.get("is_open", True)
@@ -197,7 +197,7 @@ def build_scene_description(
         gripper_desc += f"#   Position: [{gripper_pos[0]:.3f}, {gripper_pos[1]:.3f}, {gripper_pos[2]:.3f}]\n"
     gripper_desc += f"#   Gripper is {'OPEN' if is_open else 'CLOSED'}\n"
 
-    # held_object 정보 추가
+
     if gripper_state:
         held_obj = gripper_state.get("held_object")
         if held_obj:
@@ -207,7 +207,7 @@ def build_scene_description(
 
     desc_parts.append(gripper_desc)
 
-    # Objects 상태 묘사
+
     objects = scene.get("objects", [])
     if objects:
         obj_desc = "# Current object positions:\n"
@@ -221,11 +221,11 @@ def build_scene_description(
                 obj_desc += f"#   {name} ({obj_type}): position unknown\n"
         desc_parts.append(obj_desc)
 
-    # 실행된 statements 요약
+
     if executed_skill_texts:
         exec_desc = f"# Already executed {len(executed_skill_texts)} statement(s):\n"
         for i, stmt in enumerate(executed_skill_texts[-5:], start=max(0, len(executed_skill_texts)-5)+1):
-            # 마지막 5개만 표시
+
             stmt_short = stmt.strip().replace('\n', ' ')[:80]
             exec_desc += f"#   [{i}] {stmt_short}{'...' if len(stmt.strip()) > 80 else ''}\n"
         if len(executed_skill_texts) > 5:
@@ -236,9 +236,9 @@ def build_scene_description(
 
 
 
-# =========================
-# Prompt Builders (comment-style, concise)
-# =========================
+
+
+
 
 
 def preprocess_reference_code(code: str) -> str:
@@ -272,12 +272,12 @@ def preprocess_reference_code(code: str) -> str:
     end = fn.body[-1].end_lineno
     body = "".join(lines[start:end])
 
-    # body를 "그대로" 쓰되, 최소 들여쓰기만 제거해서 깔끔하게
+
     return textwrap.dedent(body).rstrip()
 
 
 def _fallback_extract_body_only(src: str) -> str:
-    # ast.parse 실패 시: 가장 단순한 라인 기반 추출
+
     lines = src.splitlines()
     in_def = False
     def_indent = 0
@@ -289,7 +289,7 @@ def _fallback_extract_body_only(src: str) -> str:
                 in_def = True
                 def_indent = len(ln) - len(stripped)
             continue
-        # 함수 바디: def_indent보다 깊은 줄만 수집
+
         cur_indent = len(ln) - len(stripped)
         if stripped == "":
             out.append("")
@@ -308,7 +308,7 @@ def extract_docstring_from_ref(processed_ref: str) -> str:
     if not processed_ref:
         return ""
 
-    # Find triple quotes (either """ or ''')
+
     for quote in ['"""', "'''"]:
         start = processed_ref.find(quote)
         if start != -1:
@@ -320,7 +320,7 @@ def extract_docstring_from_ref(processed_ref: str) -> str:
 
 
 
-# 최종 INITIAL prompt
+
 def build_generate_prompt(req: dict) -> str:
     """Build initial code generation prompt for Genesis."""
     prompt = req.get("prompt", "")
@@ -328,24 +328,24 @@ def build_generate_prompt(req: dict) -> str:
     scene_info = req.get("target_scene_info", [])
     robot_type = req.get("target_robot", req.get("robot_type", "panda"))
 
-    # Handle case where scene_info is a list (take first element if it's a dict)
+
     if isinstance(scene_info, list):
-        # 리스트는 "objects 리스트"로 간주
+
         scene_info = {"objects": scene_info}
     elif not isinstance(scene_info, dict):
         scene_info = {}
 
-    # Build reference code section
+
     processed_ref = ""
     if reference_code:
         processed_ref = preprocess_reference_code(reference_code)
 
-    # Build scene context
+
     scene_context = ""
     if scene_info:
         scene_lines = []
 
-        # Gripper state
+
         gripper = scene_info.get("gripper", {})
         if gripper:
             gripper_open = gripper.get("is_open", True)
@@ -353,16 +353,16 @@ def build_generate_prompt(req: dict) -> str:
             pos_str = [round(p, 3) for p in gripper_pos] if gripper_pos else "N/A"
             scene_lines.append(f"# gripper: is_open={gripper_open}, pos={pos_str}")
 
-        # Object positions - REMOVED to prevent LLM from hardcoding object names
-        # The LLM should use env.get_obj_pos(obj_name) instead
-        # objects = scene_info.get("objects", [])
-        # if objects:
-        #     scene_lines.append("# objects:")
-        #     for obj in objects[:10]:
-        #         name = obj.get("name", "")
-        #         pos = obj.get("position", [])
-        #         if name and pos:
-        #             scene_lines.append(f"#   {name}: pos={[round(p, 3) for p in pos]}")
+
+
+
+
+
+
+
+
+
+
         """
         # Graspable objects with recommended approach
         graspable = scene_info.get("graspable_objects", [])
@@ -381,7 +381,7 @@ def build_generate_prompt(req: dict) -> str:
                             approach_str = f", recommended_approach={{axis:'{local_axis}', dir:'{world_dir}'}}"
                     scene_lines.append(f"#   {obj_name}: can_grasp={can_grasp}{approach_str}")
         """
-        # [CURRENT SCENE] 뒷부분에 REFERENCE CODE도 넣어주기
+
         if processed_ref and processed_ref.strip():
             scene_lines.append(f"\n# [REFERENCE CODE (TASK LOGIC SPEC)]")
             scene_lines.append(f"# CRITICAL: You MUST follow this reference code's logic and helper functions EXACTLY.")
@@ -393,34 +393,34 @@ def build_generate_prompt(req: dict) -> str:
         if scene_lines:
             scene_context = "\n# [CURRENT SCENE]\n" + "\n".join(scene_lines) + "\n"
 
-    # Insert scene context before "# HARD CONSTRAINTS"
+
     def_pos = prompt.find("# HARD CONSTRAINTS")
     if def_pos != -1 and scene_context:
         prompt = prompt[:def_pos] + scene_context + "\n" + prompt[def_pos:]
     full_prompt = prompt
 
-    # Insert reference docstring into def run_task's docstring (after first """ in def run_task)
+
     if processed_ref:
         ref_docstring = extract_docstring_from_ref(processed_ref)
         if ref_docstring:
-            # Find def run_task first, then find """ after it
+
             run_task_pos = full_prompt.find("def run_task")
             if run_task_pos != -1:
-                # Find the first """ after def run_task
+
                 first_quote_pos = full_prompt.find('"""', run_task_pos)
                 if first_quote_pos != -1:
-                    # Insert the docstring right after the first """
+
                     insert_pos = first_quote_pos + 3
-                    # Insert without extra indentation
+
                     full_prompt = full_prompt[:insert_pos] + "\n" + ref_docstring + "\n" + full_prompt[insert_pos:]
 
     if req.get("debug_prompt", False):
 
 
-        print(f"\n[DEBUG][PROMPT][GENERATE] chars={len(full_prompt)}, lines={len(full_prompt.splitlines())}")
-        # 특정 섹션이 들어갔는지 빠르게 체크
+
+
         for k in ["[REFERENCE CODE", "[CURRENT SCENE]", "[GRASP GUIDANCE]", "# RULES", "def run_task"]:
-            print(f"[DEBUG][PROMPT][GENERATE] contains({k})={k in full_prompt}")
+
         print("")
 
     return full_prompt
@@ -631,18 +631,18 @@ def get_base_prompt(
 # release_handle(env)
 """
 
-    # subtask_desc = SUBTASK_DESCRIPTIONS.get(subtask_name, "")
-    subtask_desc = ""  # Temporarily disabled
+
+    subtask_desc = ""
 
     repair_baseprompt = f"""# EXECUTION FAILURE - REPAIR NEEDED
 # MANDATORY: Use these EXACT objects and skills. NO placeholders!"""
 
-    # if subtask_desc:
-    #     repair_baseprompt += f"\n# Subtask: {subtask_name} - {subtask_desc}"
+
+
     if subtask_name:
         repair_baseprompt += f"\n# Subtask: {subtask_name}"
 
-    # Add special instruction for opening subtasks
+
     opening_instruction = ""
     if subtask_name in ["open_box_lid", "open_hinge_lid", "open_drawer"]:
         opening_instruction = """
@@ -695,15 +695,15 @@ def get_base_prompt(
 """
     if mode == "repair":
         return repair_baseprompt
-    else:  # mode == "revise"
+    else:
         return revise_baseprompt
 
 
-# - DO NOT create obj_positions / positions dicts like: obj_positions = {{obj: env.get_obj_pos(obj) for obj in env.get_obj_names()}}
 
 
 
-# 최종 REPAIR prompt
+
+
 def build_repair_prompt(req: dict) -> str:
     """Build repair prompt for failed execution in Genesis."""
 
@@ -712,7 +712,7 @@ def build_repair_prompt(req: dict) -> str:
         inputs = {}
 
 
-    # ---- basics ----
+
     task_name = str(req.get("task_name", "unknown_task"))
     skill_name = str(req.get("skill_name", ""))
     robot_type = str(req.get("target_robot", req.get("robot_type", "panda")))
@@ -740,7 +740,7 @@ def build_repair_prompt(req: dict) -> str:
     constraints["executed_prefix_count"] = len(executed_skills)
 
 
-    # ---- error payload ----
+
     error = inputs.get("error", {}) or {}
     if not isinstance(error, dict):
         error = {"message": str(error)}
@@ -749,16 +749,16 @@ def build_repair_prompt(req: dict) -> str:
     error_msg = str(error.get("error", "") or error.get("error_message", "") or error.get("message", ""))
 
 
-    # 1) BASE
+
     base_prompt = get_base_prompt(mode="repair", task_name=task_name, target_robot=robot_type, obj_list_str=obj_list_str, scene=scene, subtask_name=skill_name)
     parts = [base_prompt.strip()]
 
-    # 2) SKILL LIST
+
     skills_hint = get_skills_hint(robot_type)
-    # parts.append(skills_hint)
 
 
-    # 3) REFERENCE CODE (oracle)
+
+
     reference_code = str(inputs.get("reference_code", "") or "")
     processed_ref = ""
     if reference_code:
@@ -772,7 +772,7 @@ def build_repair_prompt(req: dict) -> str:
         parts.append(processed_ref)
         parts.append("# [REFERENCE CODE] end\n")
 
-    # 4) SCENE DESC, EXECUTED STMTS
+
     scene_desc = build_scene_description(
         scene=scene,
         gripper_state=inputs.get("gripper_state"),
@@ -783,15 +783,15 @@ def build_repair_prompt(req: dict) -> str:
             scene_desc = scene_desc[:9000] + "\n# ... (truncated)"
         parts.append("\n# SCENE DESCRIPTION (IMPORTANT)\n" + scene_desc.strip() + "\n")
 
-    # parts.append("[EXECUTED_STATEMENTS_BEGIN]")
-    # parts.append(f"COUNT={len(executed_skills)}")
-    # if executed_skills:
-        # 빈 줄 없이, stmt들을 그대로 이어붙임 (stmt 내부의 줄바꿈은 유지됨)
-    #     parts.append("\n".join(str(s).rstrip("\n") for s in executed_skills))
-    # parts.append("[EXECUTED_STATEMENTS_END]")
+
+
+
+
+
+
     
 
-    # 5) FAILED STMT, ERROR_MSG, CONSTRAINTS
+
     """
     if failed_stmt.strip():
         fs = failed_stmt.strip()
@@ -830,7 +830,7 @@ def build_repair_prompt(req: dict) -> str:
     """
 
 
-    # 6) 마지막 CONSTRAINTS 재강조 + 트리거
+
     parts.append(
         "\n# CONSTRAINTS:\n"
         "# The first N executed statements are already executed. DO NOT reprint the prefix. Only output new statements.\n"
@@ -849,13 +849,13 @@ def build_repair_prompt(req: dict) -> str:
     return repair_prompt
 
 
-        # DO NOT output anything from blocks:\n"
-        #   [FAILED_STATEMENT_BEGIN]..[FAILED_STATEMENT_END]\n"
-        #   [REFERENCE ...]\n"
 
 
 
-# 최종 REVISE prompt
+
+
+
+
 def build_revise_prompt(req: dict) -> str:
     """Build revise prompt for step-by-step refinement in Genesis."""
 
@@ -869,7 +869,7 @@ def build_revise_prompt(req: dict) -> str:
     obj_list_str = ", ".join(f"'{n}'" for n in available_objects) if available_objects else "(none)"
 
     
-    # ---- basics ----
+
     task_name = str(req.get("task_name", "unknown_task"))
     skill_name = str(req.get("skill_name", ""))
     robot_type = str(req.get("target_robot", req.get("robot_type", "panda")))
@@ -893,17 +893,17 @@ def build_revise_prompt(req: dict) -> str:
     # constraints["executed_prefix_count"] = len(executed_skills)
     """
 
-    # last step payload
 
-    # 1) BASE
+
+
     base_prompt = get_base_prompt(mode="revise", task_name=task_name, target_robot=robot_type, obj_list_str=obj_list_str, scene=scene, subtask_name=skill_name)
     parts = [base_prompt.strip()]
 
-    # 2) SKILL LIST
+
     skills_hint = get_skills_hint(robot_type)
     parts.append(skills_hint)
 
-    # 3) REFERENCE CODE (oracle)
+
     reference_code = str(inputs.get("reference_code", "") or "")
     processed_ref = ""
     if reference_code:
@@ -919,7 +919,7 @@ def build_revise_prompt(req: dict) -> str:
     parts.append("# OUTPUT ONLY VALID PYTHON CODE. NO JSON, NO MARKDOWN, NO EXPLANATIONS.\n")
 
 
-    # 4) SCENE DESC, EXECUTED STMTS
+
     scene_desc = build_scene_description(
         scene=scene,
         gripper_state=inputs.get("gripper_state"),
@@ -930,15 +930,15 @@ def build_revise_prompt(req: dict) -> str:
             scene_desc = scene_desc[:9000] + "\n# ... (truncated)"
         parts.append("\n# SCENE DESCRIPTION\n" + scene_desc.strip() + "\n")
 
-    # Executed statements section (without confusing markers)
+
     if executed_skills:
         parts.append("\n# [ALREADY EXECUTED - DO NOT REPEAT]")
         parts.append("\n".join(str(s).rstrip("\n") for s in executed_skills))
         parts.append("# [END OF EXECUTED CODE]\n")
     
 
-    # 5) LAST STEP, CONSTRAINTS
-    # LAST_STEP JSON을 주석으로 표시하여 LLM이 코드로 착각하지 않도록 함
+
+
     try:
         last_step_str = json.dumps(last_step, ensure_ascii=False, indent=2)
     except Exception:
@@ -946,7 +946,7 @@ def build_revise_prompt(req: dict) -> str:
     if last_step_str.strip():
         if len(last_step_str) > 6000:
             last_step_str = last_step_str[:6000] + "\n# ... (truncated)"
-        # 각 줄 앞에 # 추가하여 주석 처리
+
         commented_last_step = "\n".join("# " + line for line in last_step_str.strip().splitlines())
         parts.append("\n# LAST_STEP (for context only, DO NOT output this JSON):\n" + commented_last_step + "\n")
 
@@ -962,7 +962,7 @@ def build_revise_prompt(req: dict) -> str:
     """
 
 
-    # 6) 마지막 트리거 - 간결하게
+
     parts.append(
 "\n# CONSTRAINTS:\n"
 "# - The following statements have already been executed successfully.\n"
@@ -979,9 +979,9 @@ def build_revise_prompt(req: dict) -> str:
     return revise_prompt
 
 
-# =========================
-# LLM Backend (Abstract)
-# =========================
+
+
+
 
 class LLMBackend(ABC):
     @abstractmethod
@@ -994,9 +994,9 @@ class LLMBackend(ABC):
         pass
 
 
-# =========================
-# Lower Backend (Qwen local)
-# =========================
+
+
+
 
 class LowerBackend(LLMBackend):
     def __init__(self, model_id: str = "Qwen/Qwen2.5-Coder-7B"):
@@ -1042,9 +1042,9 @@ class LowerBackend(LLMBackend):
 
 
 
-# =========================
-# Upper Backend (OpenAI API)
-# =========================
+
+
+
 
 class UpperBackend(LLMBackend):
     def __init__(self, model: str = "gpt-4o-mini"):
@@ -1119,16 +1119,16 @@ class UpperBackend(LLMBackend):
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                #temperature=0.0,
-                #top_p=1.0,
+
+
                 max_completion_tokens=1024,
             )
         else:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                #temperature=0.0,
-                #top_p=1.0,
+
+
                 max_tokens=1024,
             )
 
@@ -1136,7 +1136,7 @@ class UpperBackend(LLMBackend):
         code = self._strip_markdown(raw)
         code = self._uncomment_code(code)
 
-        # Extract token count from response
+
         num_tokens = response.usage.completion_tokens if response.usage else 0
 
         return code, num_tokens
@@ -1145,17 +1145,17 @@ class UpperBackend(LLMBackend):
         pass
 
 
-# =========================
-# Global Backend Instance
-# =========================
+
+
+
 
 _BACKEND: Optional[LLMBackend] = None
 _BACKEND_TYPE: str = "none"
 
 
-# =========================
-# Parameter Filtering
-# =========================
+
+
+
 
 def filter_invalid_params(generated_code: str, robot_type: str = "panda") -> str:
     """
@@ -1173,7 +1173,7 @@ def filter_invalid_params(generated_code: str, robot_type: str = "panda") -> str
             if func_name not in line:
                 continue
 
-            # Extract function call with balanced parentheses
+
             func_idx = line.find(func_name)
             if func_idx == -1:
                 continue
@@ -1182,7 +1182,7 @@ def filter_invalid_params(generated_code: str, robot_type: str = "panda") -> str
             if paren_start == -1:
                 continue
 
-            # Find matching closing paren
+
             paren_depth = 1
             i = paren_start + 1
             while i < len(line) and paren_depth > 0:
@@ -1199,7 +1199,7 @@ def filter_invalid_params(generated_code: str, robot_type: str = "panda") -> str
             args_str = line[paren_start + 1:paren_end - 1]
             valid_params = set(signatures[func_name])
 
-            # Parse keyword arguments with proper nesting handling
+
             filtered_args = []
             current_arg = ""
             paren_depth = 0
@@ -1258,16 +1258,16 @@ def init_backend(backend_type: str, model: str = None):
         print(f"[WARN] Unknown backend type: {backend_type}, running in dummy mode")
 
 
-# =========================
-# Client handler
-# =========================
+
+
+
 
 def handle_client(conn, addr):
     try:
-        print(f"[DEBUG] Client connected from {addr}")
+
         try:
             msg = recv_json(conn)
-            print(f"[DEBUG] Received message: {msg}")
+
         except Exception as e:
             print(f"[ERROR] Failed to receive/parse JSON from {addr}: {e}")
             import traceback
@@ -1277,7 +1277,7 @@ def handle_client(conn, addr):
         if msg.get("type") != "hello":
             print(f"[ERROR] Expected 'hello', got '{msg.get('type')}'. Closing connection.")
             return
-        print(f"[DEBUG] Sending hello_ack to {addr}")
+
         send_json(conn, {"type": "hello_ack"})
 
         while True:
@@ -1285,11 +1285,11 @@ def handle_client(conn, addr):
             rtype = req.get("type")
             print(f"{addr} -> {rtype}")
 
-            # Generate(INITIAL) Handler
+
             if rtype == "generate":
                 try:
                     robot_type = _normalize_robot_type(req.get("target_robot") or req.get("robot_type") or "panda")
-                    # robot_type = req.get("robot_type", "panda")
+
                     num_tokens = 0
 
                     if _BACKEND is not None:
@@ -1298,16 +1298,16 @@ def handle_client(conn, addr):
                         print(f"[Generate] Robot: {robot_type}, Prompt length: {len(full_prompt)}")
                         if req.get("debug_prompt", False):
                             lines = full_prompt.splitlines()
-                            print("\n[DEBUG][PROMPT][GENERATE]:\n" + "\n".join(lines))
-                            print(f"\n[DEBUG][PROMPT][GENERATE] chars={len(full_prompt)}, lines={len(lines)}\n")
+
+
 
                         code, num_tokens = _BACKEND.generate(full_prompt)
                         print("[Generated code] \n", code)
-                        # Filter invalid parameters
+
                         code = filter_invalid_params(code, robot_type)
                         print("[Filtered code] \n", code)
                     else:
-                        # Dummy response for testing
+
                         code = "    pass  # Dummy response"
 
                     send_json(conn, {
@@ -1411,9 +1411,9 @@ def handle_client(conn, addr):
     finally:
         conn.close()
 
-# =========================
-# Server loop
-# =========================
+
+
+
 
 def serve(port: int = 9000):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -1431,9 +1431,9 @@ def serve(port: int = 9000):
             ).start()
 
 
-# =========================
-# Entry
-# =========================
+
+
+
 
 def main():
     global _USE_DEFAULT_LLM, _DEFAULT_SOURCE_ROBOT, _DEFAULT_TARGET_ROBOT
@@ -1485,10 +1485,10 @@ def main():
     _DEFAULT_SOURCE_ROBOT = args.source_robot
     _DEFAULT_TARGET_ROBOT = args.target_robot
 
-    # if _USE_DEFAULT_LLM:
-    #     init_default_llm()
 
-    # Initialize infilling LLM at server start
+
+
+
     print(f"[Genesis Server] Source robot: {_DEFAULT_SOURCE_ROBOT}")
     print(f"[Genesis Server] Target robot: {_DEFAULT_TARGET_ROBOT}")
  
@@ -1537,8 +1537,7 @@ if __name__ == "__main__":
     main()
 """
 
-    # reference_section = f"\n# [REFERENCE CODE (TASK LOGIC SPEC)]\n{processed_ref}\n\n"
-    # Find insertion point for reference code (before "# RULES")
-    # rules_pos = prompt.find("# RULES")
-    # if rules_pos != -1 and reference_section:
-    #     prompt = prompt[:rules_pos] + reference_section + prompt[rules_pos:]
+
+
+
+
