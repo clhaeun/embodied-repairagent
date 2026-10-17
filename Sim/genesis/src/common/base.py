@@ -26,7 +26,7 @@ class BaseTask(ABC):
         self.reflect_y = False
         self.scene_objects = {}
 
-        # Goal tracking
+
         self.goal_achieve_seq = []
         self.goal_achieve_seq_label = []
         self.goal_achieve_timesteps = []
