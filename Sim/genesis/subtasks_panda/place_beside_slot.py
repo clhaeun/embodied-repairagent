@@ -35,20 +35,20 @@ def place_beside_slot(env, obj_name=None, target_name=None, slot_pos=None, offse
         else:
             raise ValueError("Either slot_pos or target_name must be provided")
 
-    # Calculate aside position
+
     aside_pos = slot_pos.copy()
     aside_pos[0] += offset_x
     aside_pos[2] += 0.1
 
-    # Move to aside position
+
     move_to_position(env, aside_pos, pointing_to="down")
 
-    # Lower and release
+
     aside_pos[2] = slot_pos[2] + 0.02
     move_to_position(env, aside_pos, pointing_to="down")
     open_gripper(env)
 
-    # Move up to clear
+
     move_parallel(env, "up", 0.1, pointing_to="down")
 
     print(f"[PlaceBesideSlot] Successfully placed {obj_name}")
