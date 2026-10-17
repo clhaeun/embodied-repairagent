@@ -1,0 +1,78 @@
+# Genesis Experiment Tasks Configuration
+# Each task runs once (unlike RLBench which has multiple episodes per task)
+
+tasks:
+  # -------------------------
+  # EASY - Basic pick and place
+  # -------------------------
+  - id: task_000
+    difficulty: easy
+    task_name: pick_place
+    description: "Place cube blocks into the toy box"
+
+  - id: task_001
+    difficulty: easy
+    task_name: sweep
+    description: "Sweep chess pieces into their corresponding boxes"
+
+  # -------------------------
+  # EASY - Pick Place 2 variants (normal tray)
+  # -------------------------
+  - id: task_002
+    difficulty: easy
+    task_name: pick_place_ball
+    description: "Place all balls into the tray"
+
+  - id: task_003
+    difficulty: easy
+    task_name: pick_place_cube
+    description: "Place all cubes into the tray"
+
+  - id: task_004
+    difficulty: easy
+    task_name: pick_place_cylinder
+    description: "Place all cylinders into the tray"
+
+  # -------------------------
+  # MEDIUM - Articulated objects
+  # -------------------------
+  - id: task_005
+    difficulty: medium
+    task_name: put_in_hinge
+    description: "Put fruits into the hinge box (may need to open lid first)"
+
+  - id: task_006
+    difficulty: medium
+    task_name: put_in_prismatic
+    description: "Place cylinder blocks into the prismatic drawer"
+
+  # -------------------------
+  # MEDIUM - Pick Place 2 inverse variants (flipped tray, no walls)
+  # -------------------------
+  - id: task_007
+    difficulty: medium
+    task_name: pick_place_inverse_ball
+    description: "Place all balls onto the inverted tray (no walls)"
+
+  - id: task_008
+    difficulty: medium
+    task_name: pick_place_inverse_cube
+    description: "Place all cubes onto the inverted tray (no walls)"
+
+  - id: task_009
+    difficulty: medium
+    task_name: pick_place_inverse_cylinder
+    description: "Place all cylinders onto the inverted tray (no walls)"
+
+  # -------------------------
+  # HARD - Complex manipulation
+  # -------------------------
+  - id: task_010
+    difficulty: hard
+    task_name: insert_slot
+    description: "Remove blocking object and insert target into the slot"
+
+  - id: task_011
+    difficulty: hard
+    task_name: pour_liquid
+    description: "Pour liquid from beaker into the mug without spilling"

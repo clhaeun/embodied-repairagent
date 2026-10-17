@@ -1,0 +1,17 @@
+ cube_obj = Shape('cube')
+     stick_obj = Shape('stick')
+     target0_obj = Shape('target0')
+     cube_pos = cube_obj.get_position()
+     stick_pos = stick_obj.get_position()
+     target0_pos = target0_obj.get_position()
+     stick_hover = stick_pos + np.array([0.0, 0.0, 0.2])
+     grasp_end = stick_pos + np.array([0.0, 0.0, 0.0])
+     (obs, reward, done) = sawyer_move_to(env, task, target_pos=stick_hover)
+     (obs, reward, done) = sawyer_pick(env, task, target_object=stick_obj, target_pos=grasp_end, grasp_offset=[0.0, 0.0, 0.0])
+     drag_dir = (target0_pos - cube_pos).astype(np.float64)
+     drag_dir[2] = 0.0
+     drag_dir = normalize_vector(drag_dir)
+     prep_drag = grasp_end - 0.05 * drag_dir  # Adjusted to stay within workspace
+     (obs, reward, done) = sawyer_move_to(env, task, target_pos=prep_drag)
+     drag_pos = target0_pos + np.array([0.0, 0.2, 0.0])
+     (obs, reward, done) = sawyer_place(env, task, place_pos=drag_pos, place_offset=[0.0, 0.0, 0.0])

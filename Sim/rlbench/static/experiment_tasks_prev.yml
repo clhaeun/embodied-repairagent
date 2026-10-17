@@ -1,0 +1,89 @@
+tasks:
+  # -------------------------
+  # EASY (13)
+  # -------------------------
+  - id: task_000
+    difficulty: easy
+    episodes: [PickAndLift, MeatOffGrill, LampOn, BasketballInHoop]
+
+  - id: task_001
+    difficulty: easy
+    episodes: [LampOff, LampOn, BasketballInHoop, PhoneOnBase]
+
+  - id: task_002
+    difficulty: easy
+    episodes: [PhoneOnBase, BasketballInHoop, LampOn, PickAndLift]
+
+  - id: task_003
+    difficulty: easy
+    episodes: [PushButton, BasketballInHoop, PickAndLift, MeatOffGrill]
+
+  - id: task_004
+    difficulty: easy
+    episodes: [MeatOffGrill, PhoneOnBase, LampOff, PushButton]
+
+  - id: task_005
+    difficulty: easy
+    episodes: [BasketballInHoop, MeatOffGrill, PushButton, LampOn]
+
+  - id: task_006
+    difficulty: easy
+    episodes: [PhoneOnBase, PickAndLift, LampOff, BasketballInHoop]
+
+  - id: task_007
+    difficulty: easy
+    episodes: [PickAndLift, LampOn, PhoneOnBase, PushButton]
+
+  - id: task_008
+    difficulty: easy
+    episodes: [PickAndLift, PhoneOnBase, PushButton, LampOff]
+
+  - id: task_009
+    difficulty: easy
+    episodes: [LampOff, LampOn, PushButton, PhoneOnBase]
+
+  - id: task_010
+    difficulty: easy
+    episodes: [LampOn, PickAndLift, BasketballInHoop, PushButton]
+
+  - id: task_011
+    difficulty: easy
+    episodes: [PickAndLift, LampOn, MeatOffGrill, LampOff]
+
+  - id: task_012
+    difficulty: easy
+    episodes: [PhoneOnBase, LampOff, BasketballInHoop, PushButton]
+
+  # -------------------------
+  # MEDIUM (4)
+  # -------------------------
+  - id: task_013
+    difficulty: medium
+    episodes: [UnplugCharger, MeatOnGrill, WipeDesk, LampOn]
+
+  - id: task_014
+    difficulty: medium
+    episodes: [WipeDesk, MeatOnGrill, ChangeChannel, PutUmbrellaInUmbrellaStand]
+
+  - id: task_015
+    difficulty: medium
+    episodes: [MeatOnGrill, WipeDesk, UnplugCharger, LampOff]
+
+  - id: task_016
+    difficulty: medium
+    episodes: [UnplugCharger, ChangeChannel, MeatOnGrill, PhoneOnBase]
+
+  # -------------------------
+  # HARD (3)
+  # -------------------------
+  - id: task_017
+    difficulty: hard
+    episodes: [PutMoneyInSafe, CloseBox, ReachAndDrag, PutUmbrellaInUmbrellaStand, MeatOnGrill]
+
+  - id: task_018
+    difficulty: hard
+    episodes: [PutUmbrellaInUmbrellaStand, HitBallWithQueue, ReachAndDrag, PickAndLift]
+
+  - id: task_019
+    difficulty: hard
+    episodes: [PutMoneyInSafe, HitBallWithQueue, CloseBox]

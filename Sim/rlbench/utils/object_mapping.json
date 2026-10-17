@@ -1,0 +1,185 @@
+{
+    "tasks": {
+        "ReachTarget": ["target", "distractor0", "distractor1", "success"],
+        "LampOn": ["push_button_target"],
+        "LampOff": ["push_button_target"],
+        "SlideBlockToTarget": ["target", "block", "success"],
+        "BasketballInHoop": ["basket_ball_hoop_respondable", "success", "ball"],
+        "LiftNumberedBlock": ["block1", "block2", "block3", "success"],
+        "PickAndLift": ["pick_and_lift_target", "pick_and_lift_success"],
+        "PickAndLiftSmall": ["pick_and_lift_success", "cube_grasp_point", "star_grasp_point", "moon_grasp_point", "moon_grasp_point", "cylinder_grasp_point", "triangular_prism_grasp_point"],
+        "PickUpCup": ["success", "cup2", "cup1"],
+        "PushButton": ["push_button_target", "target_button_joint"],
+        "PlayJenga": ["target_cuboid", "original_detector"],
+        "PutGroceriesInCupboard": ["chocolate_jello", "strawberry_jello", "soup", "tuna", "spam", "sugar", "coffee", "mustard", "crackers", "cupboard", "success"],
+        "PutRubbishInBin": ["rubbish", "bin", "success"],
+        "Hockey": ["hockey_stick", "success", "hockey_goal", "hockey_ball"],
+        "CloseLaptopLid": ["laptop_holder", "joint", "lid"],
+        "CloseBox": ["box_joint", "box_lid"],
+        "UnplugCharger": ["charger", "plug", "charger_success"],
+        "ToiletSeatDown": ["toilet_seat_up_seat"],
+        "PutAllGroceriesInCupboard": ["chocolate_jello", "strawberry_jello", "soup", "tuna", "spam", "sugar", "coffee", "mustard", "crackers", "cupboard", "success"],
+        "WipeDesk": ["sponge", "sponge_sensor", "dirt_boundary"],
+        "TakeUsbOutOfComputer": ["tip", "success", "usb"],
+        "StackBlocks": ["stack_blocks_target0", "stack_blocks_target_plane", "stack_blocks_target1", "stack_blocks_target2", "stack_blocks_distractor0", "stack_blocks_distractor1", "stack_blocks_distractor2", "stack_blocks_distractor3", "stack_blocks_success"],
+        "MeatOnGrill": ["chicken", "steak", "success"],
+        "MeatOffGrill": ["chicken", "steak", "success"],
+        "PushButtons": ["push_buttons_target0", "push_buttons_target1", "push_buttons_target2"],
+        "TakeOffWeighingScales": ["pepper0", "pepper1", "pepper2", "success_detector"],
+        "ChangeChannel": ["tv_remote", "target_button_joint1", "target_button_joint2"]
+    },
+    "orientation_dependent_objects": ["chocolate_jello", "strawberry_jello", "spam", "sugar", "mustard", "crackers", "target_cuboid", "hockey_stick", "lid", "box_lid", "charger", "toilet_seat_up_seat", "tip"],
+    "bounding_box_objects": ["computer", "lid", "box_lid", "boundary"],
+    "check_important_objects": ["PutGroceriesInCupboard", "PutAllGroceriesInCupboard", "PickAndLiftSmall", "LiftNumberedBlock"],
+    "descriptions": {
+        "ReachTarget": ["Touch the red ball with the panda gripper. Reach the red sphere"],
+        "LampOn": ["Turn on the light. Press the button to turn on the lamp. Press the light switch. Turn the lamp on. Close the gripper and press on the button until the light turns on"],
+        "LampOff": ["Press the button to turn off the lamp. Press the light switch. Turn the lamp off. Close the gripper and press on the button until the light turns off"],
+        "SlideBlockToTarget": ["Slide the block onto the target. Push the block until it is sitting on top of the target. Slide the block towards the green target. Cover the target with the block by pushing the block in its direction."],
+        "BasketballInHoop": ["Play basketball. Shoot the ball through the net. Pick up the basketball and put it in the hoop. Throw the basketball through the hoop. Place the basket ball through the hoop."],
+        "LiftNumberedBlock": ["Pick up the block with the number 1. Grasp the 1 numbered block and lift. Lift the 1 numbered block."],
+        "PickAndLift": ["Pick up the red block and lift it up to the target. Grasp the red block to the target. Lift the red block up to the target."],
+        "PickAndLiftSmall": ["Pick up the cube and lift it up to the target. Grasp the blue cube to the target. Lift the blue cube up to the target."],
+        "PickUpCup": ["Grasp the red cup and lift it. Lift the red cup."],
+        "PushButton": ["Push down the maroon button. Press the button with the maroon base. Press the maroon button."],
+        "PlayJenga": ["Play jengaTake the protruding block out of the jenga tower without the tower toppling. Keeping the tower from tumbling, remove the protruding jenga block. Ensuring the jenga tower remains in place, slide the protruding block out."],
+        "PutGroceriesInCupboard": ["Put the crackers in the cupboard. Pick up the crackers and place it in the cupboard. Move the crackers to the bottom shelf. Put away the crackers in the cupboard."],
+        "PutRubbishInBin": ["Drop the rubbish into the bin. Pick up the rubbish and leave it in the trash can. Throw away the trash, leaving any other objects alone. Chuck way any rubbish on the table rubbish."],
+        "Hockey": ["Hit the ball into the net. Use the stick to push the hockey ball into the goal. Pick up the hockey stick, then swing at the ball in the direction of the net. Score a hockey goal. Grasping one end of the hockey stick, swing it such that the other end collides with the ball such that the ball goes into the goal."],
+        "CloseLaptopLid": ["Close the laptop. Shut the laptop lid."],
+        "UnplugCharger": ["Take the charger out of the wall. Grip the black charger and pull it out of its socket. Slide the plug out from the wall. Remove the charger from the mains. Get the charger from the wall plug."],
+        "ToiletSeatDown": ["Put the toilet seat down. Grasping the top of the lid, close the toilet seat. Put the toilet lid down. Leave the toilet seat down. Close the lid on the toilet. Leave the toilet seat down. Lower the toilet seat. Grip the edge of the toilet lid and lower it flat on the toilet seat."],
+        "PutAllGroceriesInCupboard": ["Put all of the groceries in the cupboard. Pick up all of the groceries and place them in the cupboard. Move the groceries to the shelves. Put the groceries on the table into the cupboard. Put away the groceries in the cupboard."],
+        "WipeDesk": ["Wipe dirt off the desk. Use the sponge to clean up the desk. Remove the dirt from the desk. Grip the sponge and wipe it back and forth over any dirt you see. Clean up the mess. Wipe the dirt up."],
+        "TakeUsbOutOfComputer": ["Take usb out of computer. Remove the usb stick from its port. Retrieve the usb stick. Grasp the usb stick and slide it out of the pc. Get a hold of the usb stick and pull it out of the desktop computer."],
+        "StackBlocks": ["Stack 2 red blocks. Place 2 of the red cubes on top of each other. Pick up and set down 2 red blocks on top of each other. Build a tall tower out of 2 red cubes. Arrange 2 red blocks in a vertical stack on the table top. Set 2 red cubes on top of each other."]
+    },
+    "weird_descriptions_level1": {
+        "ReachTarget": ["Touch the blue ball with the panda gripper. Reach the sphere."],
+        "LampOn": ["Turn on the lamp. Press the green button until the light turns on."],
+        "LampOff": ["Turn off the lamp. Push the orange switch."],
+        "SlideBlockToTarget": ["Slide the block onto the blue target area."],
+        "BasketballInHoop": ["Shoot the green basketball into the hoop."],
+        "LiftNumberedBlock": ["Pick up the block with number 2."],
+        "PickAndLift": ["Pick up the blue block and lift it to the target."],
+        "PickAndLiftSmall": ["Lift the red cube to the target."],
+        "PickUpCup": ["Grab the blue cup and lift it."],
+        "PushButton": ["Press the silver button."],
+        "PlayJenga": ["Remove the top block from the Jenga tower."],
+        "PutGroceriesInCupboard": ["Put the biscuits in the cupboard."],
+        "PutRubbishInBin": ["Throw the rubbish into the blue bin."],
+        "Hockey": ["Hit the red hockey ball into the net."],
+        "CloseLaptopLid": ["Close the tablet lid."],
+        "UnplugCharger": ["Unplug the white charger from the wall."],
+        "ToiletSeatDown": ["Lower the green toilet seat."],
+        "PutAllGroceriesInCupboard": ["Put all groceries into the fridge."],
+        "WipeDesk": ["Use the cloth to wipe the desk."],
+        "TakeUsbOutOfComputer": ["Remove the blue USB stick."],
+        "StackBlocks": ["Stack 3 red blocks."]
+    },
+    "weird_descriptions_level2": {
+        "ReachTarget": ["Touch both the red and green spheres with the panda gripper."],
+        "LampOn": ["Turn on the desk fan. Press the two buttons until it lights up."],
+        "LampOff": ["Turn off the lamp and the monitor. Push the switch on the left side."],
+        "SlideBlockToTarget": ["Slide two blocks into the target zone."],
+        "BasketballInHoop": ["Throw two basketballs into the hoop at the same time."],
+        "LiftNumberedBlock": ["Lift the blocks with numbers 1 and 3 together."],
+        "PickAndLift": ["Pick up both the red and blue blocks and lift them to the target."],
+        "PickAndLiftSmall": ["Lift the three small cubes to the shelf."],
+        "PickUpCup": ["Grab the two cups and place them on the table."],
+        "PushButton": ["Press both the maroon and the silver buttons together."],
+        "PlayJenga": ["Remove two blocks from the tower without toppling it."],
+        "PutGroceriesInCupboard": ["Put the crackers and milk carton into the fridge."],
+        "PutRubbishInBin": ["Throw away two bottles into the recycling bin."],
+        "Hockey": ["Hit two hockey balls into the goal."],
+        "CloseLaptopLid": ["Close the laptop and the tablet."],
+        "UnplugCharger": ["Remove the two chargers from the socket."],
+        "ToiletSeatDown": ["Lower the lids of both toilets."],
+        "PutAllGroceriesInCupboard": ["Place the groceries into two cupboards."],
+        "WipeDesk": ["Use the sponge to clean both desks."],
+        "TakeUsbOutOfComputer": ["Remove the two USB sticks from the computer."],
+        "StackBlocks": ["Stack 4 red blocks into a tower."]
+    },
+    "weird_descriptions_level3": {
+        "ReachTarget": ["Touch the yellow cube with the panda gripper. Reach both the red and blue spheres."],
+        "LampOn": ["Turn on the ceiling fan. Press the two green buttons together until the fan lights up."],
+        "LampOff": ["Switch off the desk lamp and the TV. Push the orange switch on the left side."],
+        "SlideBlockToTarget": ["Slide three blocks into the blue triangle zone. Push the cubes until all cover the circle target."],
+        "BasketballInHoop": ["Play basketball with two balls. Throw both the orange and purple balls through the hoop at the same time."],
+        "LiftNumberedBlock": ["Pick up the block with number 7. Lift the blocks numbered 5 and 7 together."],
+        "PickAndLift": ["Pick up the green sphere and lift it to the target. Raise both the red and blue blocks together."],
+        "PickAndLiftSmall": ["Lift the three small cubes at once. Place the yellow cube onto the target."],
+        "PickUpCup": ["Grab the two cups and stack them. Lift the blue cup and place it inside the red mug."],
+        "PushButton": ["Press the silver and golden buttons simultaneously. Push down on the rectangular lever."],
+        "PlayJenga": ["Remove two blocks from the top row of the Jenga tower. Place the middle piece on the roof of the tower."],
+        "PutGroceriesInCupboard": ["Put the crackers and milk carton into the fridge. Place all four grocery bags on the upper shelf."],
+        "PutRubbishInBin": ["Throw away three bottles into the recycling bin. Drop the rubbish into both the blue and yellow bins."],
+        "Hockey": ["Hit two hockey balls into two nets. Use the stick to score both red balls at once."],
+        "CloseLaptopLid": ["Close both laptops on the desk. Shut the screen of the tablet as well."],
+        "UnplugCharger": ["Remove the two chargers from the socket. Pull out the red charger cable from the wall."],
+        "ToiletSeatDown": ["Close both lids of the two toilets. Lower the transparent toilet cover."],
+        "PutAllGroceriesInCupboard": ["Place the groceries into three cupboards. Move the bread, milk, and fruit into the fridge."],
+        "WipeDesk": ["Use the mop to clean both desks. Wipe the glass table and the keyboard."],
+        "TakeUsbOutOfComputer": ["Remove the three USB sticks and the SD card from the computer. Pull the blue USB from the right side."],
+        "StackBlocks": ["Stack 4 red blocks and 2 green ones into a tower. Place three cubes on top of each other in a pyramid shape."]
+    },
+    "object_additional_info": {
+        "PutGroceriesInCupboard": {
+            "chocolate_jello": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [], "prepos_offset": [0.0, 0.0, 0.3]},
+            "strawberry_jello": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [], "prepos_offset": [0.0, 0.0, 0.3]},
+            "spam": {"approach_dir": "down", "yaw_align": "parallel", "approach_offset": [], "prepos_offset": [0.0, 0.0, 0.3]},
+            "sugar": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [0.0, 0.0, 0.05], "prepos_offset": [0.0, 0.0, 0.3]},
+            "mustard": {"approach_dir": "", "yaw_align": "", "approach_offset": [], "prepos_offset": [0.0, 0.0, 0.3]},
+            "crackers": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [0.0, 0.0, 0.4], "prepos_offset": [0.0, 0.0, 0.3]},
+            "cupboard": {"approach_dir": "left", "yaw_align": "parallel", "approach_offset": [-0.08, 0.0, -0.15], "prepos_offset": [-0.5, 0.0, 0.0], "approach_dist": 0.01}
+        },
+        "PickUpCup": {
+            "cup1": {"approach_dir": "down", "yaw_align": "", "approach_offset": [0.0, 0.03, 0.04], "prepos_offset": []},
+            "cup2": {"approach_dir": "down", "yaw_align": "", "approach_offset": [0.0, 0.03, 0.04], "prepos_offset": []}
+        },
+        "PlayJenga": {
+            "target_cuboid": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [0.0, 0.06, 0.0], "prepos_offset": [0.0, 0.15, 0.3], "approach_dist": 0.05},
+            "original_detector": {"approach_dir": "up", "yaw_align": "", "approach_offset": [0.0, 0.0, 0.2], "prepos_offset": [0.0, 0.35, 0.11], "approach_dist": 0.05}
+        },
+        "Hockey": {
+            "hockey_stick": {"approach_dir": "", "yaw_align": "", "approach_offset": [0.055, 0.035, 0.05], "prepos_offset": []},
+            "hockey_ball": {"approach_dir": "", "yaw_align": "", "approach_offset": [0.0, -0.01, 0.1], "prepos_offset": []}
+        },
+        "PutAllGroceriesInCupboard": {
+            "chocolate_jello": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [], "prepos_offset": [0.0, 0.0, 0.3]},
+            "strawberry_jello": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [], "prepos_offset": [0.0, 0.0, 0.3]},
+            "spam": {"approach_dir": "down", "yaw_align": "parallel", "approach_offset": [], "prepos_offset": [0.0, 0.0, 0.3]},
+            "sugar": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [0.0, 0.0, 0.05], "prepos_offset": [0.0, 0.0, 0.3]},
+            "mustard": {"approach_dir": "", "yaw_align": "", "approach_offset": [], "prepos_offset": [0.0, 0.0, 0.3]},
+            "crackers": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [0.0, 0.0, 0.4], "prepos_offset": [0.0, 0.0, 0.3]},
+            "cupboard": {"approach_dir": "left", "yaw_align": "parallel", "approach_offset": [-0.08, 0.0, -0.15], "prepos_offset": [-0.5, 0.0, 0.0], "approach_dist": 0.01}
+        },
+        "PutGroceriesInCupboardEdited": {
+            "chocolate_jello": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [], "prepos_offset": [0.0, 0.0, 0.3]},
+            "strawberry_jello": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [], "prepos_offset": [0.0, 0.0, 0.3]},
+            "spam": {"approach_dir": "down", "yaw_align": "parallel", "approach_offset": [], "prepos_offset": [-0.1, 0.0, 0.3]},
+            "sugar": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [0.0, 0.0, 0.05], "prepos_offset": [0.0, 0.0, 0.3]},
+            "mustard": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [0.0, 0.0, 0.06], "prepos_offset": [0.0, 0.0, 0.3]},
+            "crackers": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [0.0, 0.0, 0.4], "prepos_offset": [0.0, 0.0, 0.3]},
+            "cupboard": {"approach_dir": "left", "yaw_align": "parallel", "approach_offset": [-0.08, 0.0, -0.15], "prepos_offset": [-0.4, 0.0, -0.2], "approach_dist": 0.01},
+            "tuna": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [0.0, 0.0, 0.0], "prepos_offset": [-0.1, 0.0, 0.2]},
+            "soup": {"approach_dir": "down", "yaw_align": "perpendicular", "approach_offset": [0.0, 0.0, 0.03], "prepos_offset": [-0.1, 0.0, 0.3]}
+        },
+        "PutRubbishInBin": {
+            "bin": {"approach_dir": "", "yaw_align": "", "approach_offset": [0.0, 0.0, 0.3], "prepos_offset": [0.0, 0.1, 0.3]}
+        },
+        "TakeUsbOutOfComputer": {
+            "tip": {"approach_dir": "down", "yaw_align": "parallel", "approach_offset": [0.0, 0.06, 0.01], "prepos_offset": [0.0, 0.1, 0.3]},
+            "success": {"approach_dir": "front", "yaw_align": "", "approach_offset": [0.0, 0.05, 0.0], "prepos_offset": [0.0, 0.2, 0.3]}
+        },
+        "SlideBlockToTarget": {
+            "target": {"approach_dir": "", "yaw_align": "", "approach_offset": [], "prepos_offset": [], "approach_axis": "-y"}
+        },
+        "MeatOnGrill": {
+            "success": {"approach_dir": "", "yaw_align": "", "approach_offset": [0.0, 0.0, 0.2], "prepos_offset": []}
+        },
+        "MeatOffGrill": {
+            "success": {"approach_dir": "", "yaw_align": "", "approach_offset": [0.0, 0.0, 0.2], "prepos_offset": []}
+        }
+    }
+}

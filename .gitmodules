@@ -1,0 +1,4 @@
+[submodule "Sim/rlbench/RLBench"]
+	path = Sim/rlbench/RLBench
+	url = https://github.com/clhaeun/RLBench.git
+	branch = chaeun-local-changes

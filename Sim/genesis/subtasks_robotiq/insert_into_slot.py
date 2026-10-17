@@ -1,0 +1,37 @@
+import numpy as np
+
+from skill_code import (
+    move_gripper_to,
+    move_to_position,
+    move_parallel,
+    open_robotiq85,
+    close_robotiq85,
+    pick_robotiq85,
+    place_robotiq85,
+    rotate_gripper,
+    grasp_handle_robotiq85,
+    release_handle_robotiq85,
+)
+
+def insert_into_slot(env, obj_name, slot_pos=None, target_name=None, insert_height=0.05, **kwargs):
+    obj_pos = env.get_obj_pos(obj_name)
+    slot_pos = env.get_obj_pos(target_name)
+
+    move_gripper_to(env, obj_name, pointing_to="down")
+    close_robotiq85(env)
+
+    move_parallel(env, "up", 0.15, pointing_to="down")
+
+    insert_pos = slot_pos.copy()
+    insert_pos[2] += 0.15
+    move_to_position(env, insert_pos, pointing_to="down")
+
+    insert_pos[2] = slot_pos[2] + insert_height
+    move_to_position(env, insert_pos, pointing_to="down")
+
+    open_robotiq85(env)
+
+    move_parallel(env, "up", 0.1, pointing_to="down")
+
+    print(f"[InsertIntoSlot] Successfully inserted {obj_name}")
+    return True

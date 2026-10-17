@@ -1,0 +1,21 @@
+ bulb = Shape('light_bulb')
+     bulb_pos = bulb.get_position()
+     cable = Shape('cable')
+     cable_pos = cable.get_position()
+     push_button_target = Joint('target_button_joint')
+     push_button_target_pos = push_button_target.get_position()
+     above_button_pos = push_button_target_pos + [0.0, 0.0, 0.1]
+     obs, reward, done = sawyer_pick(env, task, target_object=cable, target_pos=cable_pos, grasp_offset=[0.0, 0.0, 0.0])
+     obs, reward, done = sawyer_place(env, task, place_pos=above_button_pos)
+     obs, reward, done = sawyer_pick(env, task, target_object=bulb, target_pos=bulb_pos, grasp_offset=[0.0, 0.0, 0.0])
+     obs, reward, done = sawyer_place(env, task, place_pos=push_button_target_pos)
+     obs, reward, done = sawyer_pick(env, task, target_object=cable, target_pos=cable_pos, grasp_offset=[0.0, 0.0, 0.0])
+     obs, reward, done = sawyer_place(env, task, place_pos=bulb_pos)
+     obs, reward, done = sawyer_pick(env, task, target_object=bulb, target_pos=bulb_pos, grasp_offset=[0.0, 0.0, 0.0])
+     obs, reward, done = sawyer_place(env, task, place_pos=push_button_target_pos)
+     obs, reward, done = sawyer_pick(env, task, target_object=cable, target_pos=cable_pos, grasp_offset=[0.0, 0.0, 0.0])
+     obs, reward, done = sawyer_place(env, task, place_pos=bulb_pos)
+     obs, reward, done = sawyer_pick(env, task, target_object=bulb, target_pos=bulb_pos, grasp_offset=[0.0, 0.0, 0.0])
+     obs, reward, done = sawyer_place(env, task, place_pos=push_button_target_pos)
+     return obs, reward, done
+```
