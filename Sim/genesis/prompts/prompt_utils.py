@@ -6,8 +6,8 @@ Provides prompt templates for code generation based on robot type.
 
 from textwrap import dedent
 
-# Hardcoded subtask signatures for all possible subtasks
-# Format: {subtask_name: (signature_line, description)}
+
+
 SUBTASK_SIGNATURES = {
     "close_drawer": (
         'def close_drawer(env, drawer_type="bottom"):',
@@ -91,10 +91,10 @@ SUBTASK_SIGNATURES = {
     ),
 }
 
-# Robot types in Genesis:
-# - "panda": Franka Panda with parallel jaw gripper for pick/place
-# - "robotiq": Franka arm with Robotiq85 gripper for pick/place
-# - "suction": Franka arm with vacuum gripper for handling surfaces
+
+
+
+
 
 initial_prompt_dict = {
     "CODE_AGENT": {
@@ -377,8 +377,8 @@ def get_prompt(
     obj_list_str = _quote_obj_list(object_names)
     descriptions = descriptions or ""
 
-    # Get subtask signature from hardcoded dictionary
-    subtask_signature = "def run_task(env, task, descriptions=None, obs=None):"  # Default fallback
+
+    subtask_signature = "def run_task(env, task, descriptions=None, obs=None):"
     if subtask_name and subtask_name in SUBTASK_SIGNATURES:
         subtask_signature = SUBTASK_SIGNATURES[subtask_name][0]
         print(f"[DEBUG][get_prompt] Using hardcoded signature for {subtask_name}: {subtask_signature}")
@@ -392,8 +392,8 @@ def get_prompt(
         subtask_signature=subtask_signature,
     )
 
-    # if grasp_guidance:
-    #     prompt = prompt + f"\n\n            # {grasp_guidance}"
+
+
 
     return prompt
 
@@ -412,7 +412,7 @@ def _get_skills_hint(target_robot: str) -> str:
         return "move_gripper_to, move_to_position, move_parallel, open_gripper, close_gripper, pick, place, rotate_gripper, grasp_handle, release_handle"
     elif target_robot == "robotiq":
         return "move_gripper_to, move_to_position, move_parallel, open_robotiq85, close_robotiq85, grasp_handle_robotiq85, release_handle_robotiq85"
-    else:  # suction
+    else:
         return "move_gripper_to, move_to_position, move_parallel, activate_vacuum, deactivate_vacuum, attach_vacuum_handle, detach_vacuum_handle, rotate_gripper"
 
 
@@ -443,7 +443,7 @@ def get_regenerate_prompt_on_failure(
     error_type = error_info.get("error_type", "Unknown")
     error_msg = error_info.get("error_message", "")
 
-    # Format scene info
+
     gripper = scene_info.get("gripper", {})
     gripper_pos = gripper.get("position", [])
     gripper_open = gripper.get("is_open", True)
@@ -456,7 +456,7 @@ def get_regenerate_prompt_on_failure(
         if name and pos:
             obj_lines.append(f"#   {name}: {[round(p, 3) for p in pos]}")
 
-    # Skills based on robot type
+
     skills_hint = _get_skills_hint(target_robot)
 
     prompt = f"""# [REPAIR TASK] Fix the failed statement and continue.
@@ -526,7 +526,7 @@ def get_regenerate_prompt_on_not_finished(
     Returns:
         Formatted revise prompt string
     """
-    # Format last step info
+
     step_idx = 0
     skill_name = ""
     success = False
@@ -535,7 +535,7 @@ def get_regenerate_prompt_on_not_finished(
         skill_name = last_step_info.get("skill_name", "")
         success = last_step_info.get("success", False)
 
-    # Format scene info
+
     gripper = scene_info.get("gripper", {})
     gripper_pos = gripper.get("position", [])
     gripper_open = gripper.get("is_open", True)
@@ -548,7 +548,7 @@ def get_regenerate_prompt_on_not_finished(
         if name and pos:
             obj_lines.append(f"#   {name}: {[round(p, 3) for p in pos]}")
 
-    # Skills based on robot type
+
     skills_hint = _get_skills_hint(target_robot)
 
     prompt = f"""# [REVISE TASK] Task not finished - add more steps to complete.
