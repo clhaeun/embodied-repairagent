@@ -1,0 +1,4 @@
+source_branch,experiment_start,target_robot,source_robot,folder_label,seed_verified,task_successes,total_tasks,subtask_successes,total_subtasks,model_mode,actual_model_checkpoint,notes
+chaeun/home-backup-2026-05-01,2026-02-11T01:04:18.789569,sawyer,panda,sawyertemp42,NO,9,20,46,74,code_agent,UNKNOWN,Seed inferred from label only; JSON lacks seed
+chaeun/home-backup-2026-05-01,2026-02-11T05:02:58.810632,sawyer,panda,sawyertemp123,NO,9,20,43,74,code_agent,UNKNOWN,Seed inferred from label only; JSON lacks seed
+chaeun/home-backup-2026-05-01,2026-02-11T06:20:57.788091,sawyer,panda,sawyertemp2024,NO,9,20,43,74,code_agent,UNKNOWN,run_newtemp.sh entry for this label passes --seed 123
