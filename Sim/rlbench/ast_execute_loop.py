@@ -134,7 +134,7 @@ class ASTExecuteLoop:
         task_name: str,
         robot_type: str,
         provider: PolicyProvider,
-        mode: str,  # "step"|"failure"
+        mode: str,
         max_skill_calls: Optional[int] = None,
         max_repairs: int = 10,
     ):
@@ -191,7 +191,7 @@ class ASTExecuteLoop:
             try:
                 self._exec_one_stmt(stmt)
 
-                # executed prefix 기록 (이 prefix는 절대 바뀌면 안 됨)
+
                 self.executed_stmt_texts.append(stmt_text)
 
                 if is_skill:
@@ -223,7 +223,7 @@ class ASTExecuteLoop:
                         })
                         return
 
-                    # ---- 필수: step마다 수정 요청 ----
+
                     new_code = self.provider.revise_on_step(
                         current_code=bundle.code,
                         executed_stmt_texts=self.executed_stmt_texts,
@@ -236,7 +236,7 @@ class ASTExecuteLoop:
                         new_bundle = parse_code_bundle(new_code)
                         self._ensure_helpers_compiled(new_bundle)
 
-                        # prefix 정렬(방어)
+
                         prefix = common_prefix_len(self.executed_stmt_texts, new_bundle.run_stmt_texts)
                         idx = prefix
                         bundle = new_bundle
@@ -263,7 +263,7 @@ class ASTExecuteLoop:
                 if repairs > self.max_repairs:
                     raise RuntimeError(f"Exceeded max_repairs={self.max_repairs}")
 
-                # ---- 필수: failure 시 재생성/수정 요청 ----
+
                 new_code = self.provider.repair_on_failure(
                     current_code=bundle.code,
                     executed_stmt_texts=self.executed_stmt_texts,
@@ -298,7 +298,7 @@ class ASTExecuteLoop:
                 if repairs > self.max_repairs:
                     raise RuntimeError(f"Exceeded max_repairs={self.max_repairs}")
 
-                # ---- 필수: error도 repair로 처리 ----
+
                 new_code = self.provider.repair_on_failure(
                     current_code=bundle.code,
                     executed_stmt_texts=self.executed_stmt_texts,
@@ -316,7 +316,7 @@ class ASTExecuteLoop:
 
     def _ensure_helpers_compiled(self, bundle: CodeBundle):
         if self._compiled_helper_hash == bundle.helper_hash:
-            return  # helper unchanged
+            return
 
         for _, fn_node in bundle.helper_nodes.items():
             mod = ast.Module(body=[fn_node], type_ignores=[])
