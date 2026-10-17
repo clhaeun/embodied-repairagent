@@ -46,7 +46,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
     print(f"[PickPlace2] Distractor objects: {task.distractor_names}")
     print(f"[PickPlace2] Inverse mode: {task.inverse}")
 
-    # Step 1: Open box lid first
+
     print(f"\n[PickPlace2] Opening box lid first")
     try:
         result = provider.execute_subtask(
@@ -64,28 +64,28 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
         if skip.result is not None:
             subtask_results.append(skip.result)
 
-    # Step 2: Move gripper up and left to clear the box before picking
+
     from skill_code import move_parallel
     print(f"\n[PickPlace2] Moving gripper up and left to clear box")
     move_parallel(env, "up", 0.2, pointing_to="down")
     move_parallel(env, "left", 0.1, pointing_to="down")
     move_parallel(env, "down", 0.2, pointing_to="down")
 
-    # Get tray position
+
     tray_pos = env.get_obj_pos("tray")
     print(f"[PickPlace2] Tray position: {tray_pos}")
 
-    # Determine place height based on tray type
+
     place_height = 0.05
 
-    # Track successfully placed objects for smart placement
+
     placed_objects = []
 
-    # Pick and place each target object
+
     for idx, obj_name in enumerate(task.target_names):
         print(f"\n[PickPlace2] Processing target {idx + 1}/{len(task.target_names)}: {obj_name}")
 
-        # Calculate spread offset (fallback for non-smart placement)
+
         spread_offset = (idx - (len(task.target_names) - 1) / 2) * 0.05
 
         try:
@@ -100,18 +100,18 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
                 place_height=place_height,
                 spread_offset=spread_offset,
                 placed_objects=placed_objects,
-                use_smart_placement=task.inverse,  # Enable smart placement for inverse mode
+                use_smart_placement=task.inverse,
                 _subtask_results=subtask_results,
             )
             subtask_results.append(result)
-            placed_objects.append(obj_name)  # Track placed object
+            placed_objects.append(obj_name)
         except SubtaskSkip as skip:
             print(f"[PickPlace2] Skipping pick_and_place for {obj_name}")
             if skip.result is not None:
                 subtask_results.append(skip.result)
             continue
 
-    # Check result
+
     result = env.check_result()
     print(f"\n[PickPlace2] Task completed with result: {result}")
     return result
