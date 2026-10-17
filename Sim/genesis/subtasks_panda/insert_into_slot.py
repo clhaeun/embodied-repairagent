@@ -34,26 +34,26 @@ def insert_into_slot(env, obj_name, slot_pos=None, target_name=None, insert_heig
     if slot_pos is None:
         slot_pos = env.get_obj_pos(target_name)
 
-    # Pick up the object
+
     move_gripper_to(env, obj_name, pointing_to="down")
     close_gripper(env)
 
-    # Lift up
+
     move_parallel(env, "up", 0.15, pointing_to="down")
 
-    # Move above slot
+
     insert_pos = slot_pos.copy()
     insert_pos[2] += 0.15
     move_to_position(env, insert_pos, pointing_to="down")
 
-    # Lower into slot
+
     insert_pos[2] = slot_pos[2] + insert_height
     move_to_position(env, insert_pos, pointing_to="down")
 
-    # Release
+
     open_gripper(env)
 
-    # Move up to clear
+
     move_parallel(env, "up", 0.1, pointing_to="down")
 
     print(f"[InsertIntoSlot] Successfully inserted {obj_name}")
