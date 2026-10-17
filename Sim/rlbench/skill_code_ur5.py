@@ -22,9 +22,9 @@ def _timeout_handler(signum, frame):
     raise StepTimeoutError("task.step() timed out")
 
 
-# =========================================================
-# Utils (KEEP) — safe_step / camera / quaternion helpers
-# =========================================================
+
+
+
 
 def save_camera_image(obs: Observation, cam_name, save_path, use_cv2=False):
     cam_map = {
@@ -80,7 +80,7 @@ def safe_step(env, task, action, skill_type,
         step_timeout_s: Timeout in seconds for a single task.step() call (default 30s).
                         Set to 0 or None to disable timeout.
     """
-    # Set up signal-based timeout for task.step()
+
     use_timeout = step_timeout_s and step_timeout_s > 0
     if use_timeout:
         old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
@@ -144,7 +144,7 @@ def safe_step(env, task, action, skill_type,
         )
         raise PathOutOfWorkspace(fd_error)
 
-    # Cancel the alarm on success
+
     if use_timeout:
         signal.alarm(0)
         signal.signal(signal.SIGALRM, old_handler)
@@ -152,12 +152,12 @@ def safe_step(env, task, action, skill_type,
     return obs, reward, done
 
 
-# =========================================================
-# Quaternion math for UR5 alignment (robust + compatible intent)
-# =========================================================
+
+
+
 
 def _quat_mul(q1, q2):
-    # (x, y, z, w)
+
     x1, y1, z1, w1 = q1
     x2, y2, z2, w2 = q2
     return np.array([
@@ -172,12 +172,12 @@ def _quat_from_euler(roll, pitch, yaw):
     cr = math.cos(roll/2);  sr = math.sin(roll/2)
     cp = math.cos(pitch/2); sp = math.sin(pitch/2)
     cy = math.cos(yaw/2);   sy = math.sin(yaw/2)
-    # XYZ (roll, pitch, yaw) → quaternion (x,y,z,w)
+
     return np.array([
-        sr*cp*cy - cr*sp*sy,   # x
-        cr*sp*cy + sr*cp*sy,   # y
-        cr*cp*sy - sr*sp*cy,   # z
-        cr*cp*cy + sr*sp*sy    # w
+        sr*cp*cy - cr*sp*sy,
+        cr*sp*cy + sr*cp*sy,
+        cr*cp*sy - sr*sp*cy,
+        cr*cp*cy + sr*sp*sy
     ], dtype=float)
 
 
@@ -189,7 +189,7 @@ def _yaw_from_quat(q):
 
 
 _flip_dict = {
-    'down':  np.array([1.0, 0.0, 0.0, 0.0], dtype=float),  # 180deg about X
+    'down':  np.array([1.0, 0.0, 0.0, 0.0], dtype=float),
     'right': _quat_from_euler(0.0, math.radians(90), 0.0),
     'left':  _quat_from_euler(0.0, math.radians(-90), 0.0),
     'front': _quat_from_euler(math.radians(-90), 0.0, 0.0),
@@ -198,18 +198,18 @@ _flip_dict = {
 
 _axis_flip_fallback = {
     'z':  _flip_dict['down'],
-    '-z': _quat_from_euler(0.0, 0.0, 0.0),  # identity
+    '-z': _quat_from_euler(0.0, 0.0, 0.0),
     'x':  _flip_dict['right'],
     '-x': _flip_dict['left'],
     'y':  _flip_dict['front'],
     '-y': _flip_dict['back'],
 }
 
-# Target z-axis directions for each approach direction
+
 _approach_target_z = {
-    'down':  np.array([0.0, 0.0, -1.0]),   # gripper z points down
+    'down':  np.array([0.0, 0.0, -1.0]),
     'z':     np.array([0.0, 0.0, -1.0]),
-    '-z':    np.array([0.0, 0.0, 1.0]),    # gripper z points up
+    '-z':    np.array([0.0, 0.0, 1.0]),
     'right': np.array([1.0, 0.0, 0.0]),
     'x':     np.array([1.0, 0.0, 0.0]),
     'left':  np.array([-1.0, 0.0, 0.0]),
@@ -223,7 +223,7 @@ _approach_target_z = {
 
 def _get_gripper_z_axis(quat: np.ndarray) -> np.ndarray:
     """Get the gripper's z-axis direction in world frame from quaternion (xyzw)."""
-    rot = R.from_quat(quat)  # scipy uses xyzw
+    rot = R.from_quat(quat)
     z_local = np.array([0.0, 0.0, 1.0])
     return rot.apply(z_local)
 
@@ -235,13 +235,13 @@ def _needs_flip(current_quat: np.ndarray, approach_direction: str, threshold: fl
     threshold: dot product threshold (0.5 = 60 degrees, 0.0 = 90 degrees)
     """
     if approach_direction not in _approach_target_z:
-        return True  # unknown direction, apply flip by default
+        return True
 
     target_z = _approach_target_z[approach_direction]
     current_z = _get_gripper_z_axis(current_quat)
 
     dot = np.dot(current_z, target_z)
-    # If dot > threshold, gripper is already pointing in roughly the right direction
+
     return dot < threshold
 
 
@@ -255,20 +255,20 @@ def _get_flip_quat(approach_direction: str) -> np.ndarray:
 
 def _get_gripper_state(obs, gripper: float):
     """gripper: 1.0 open, -1.0 close, None -> keep current"""
-    # if gripper is None:
+
     return float(getattr(obs, 'gripper_open', 1.0))
-    # return float(gripper)
 
 
-# =========================================================
-# UR5 Skills (NO WRAPPERS)
-# =========================================================
+
+
+
+
 
 def ur5_move_to(
     env, task,
     target_pos: np.ndarray,
-    target_quat: np.ndarray = None,   # None -> keep current orientation
-    gripper: float = None,            # None -> keep current gripper state
+    target_quat: np.ndarray = None,
+    gripper: float = None,
     n_waypoints: int = 10,
     pos_tol: float = 0.01,
     max_steps_per_wp: int = 100,
@@ -311,7 +311,7 @@ def ur5_move_to(
         step_count = 0
         start_time = time.time()
         while step_count < max_steps_per_wp:
-            # Check timeout BEFORE step execution
+
             if time.time() - start_time > timeout_s:
                 fd_error = FeedbackWithError(
                     env=env, task=task, skill_type="ur5_move_to",
@@ -384,8 +384,8 @@ def ur5_move_to(
 def ur5_grasp_at(
     env, task,
     grasp_pos: np.ndarray,
-    grasp_quat: np.ndarray = None,     # None -> keep current orientation
-    approach: dict = None,             # {"axis":..., "distance":..., "n_waypoints_approach":..., "n_waypoints_descend":...}
+    grasp_quat: np.ndarray = None,
+    approach: dict = None,
     gripper_close: float = 0.0,
     settle_steps: int = 5,
     close_steps: int = 10,
@@ -442,13 +442,13 @@ def ur5_grasp_at(
         waypoints.append(approach_pos + a * (grasp_pos - approach_pos))
 
     action = np.zeros(env.action_shape, dtype=float)
-    action[-1] = 1.0  # open while approaching
+    action[-1] = 1.0
 
     for i, wp in enumerate(waypoints):
         step_count = 0
         start_time = time.time()
         while step_count < max_steps_per_wp:
-            # Check timeout BEFORE step execution
+
             if time.time() - start_time > timeout_s:
                 fd_error = FeedbackWithError(
                     env=env, task=task, skill_type="ur5_grasp_at",
@@ -532,7 +532,7 @@ def ur5_grasp_at(
                 waypoints=waypoints,
                 original_pos=original_pos,
                 threshold=pos_tol,
-                step_timeout_s=5  # Reduce timeout to 5s for close steps
+                step_timeout_s=5
             )
             print(f"      -> Close step {close_step + 1}/{close_steps} done. gripper_open={getattr(obs, 'gripper_open', 'N/A')}")
             success_close_count += 1
@@ -540,9 +540,9 @@ def ur5_grasp_at(
                 print(f"[ur5_grasp_at] Task done during close phase at step {close_step + 1}.")
                 return obs, reward, done
         except (SkillFailure, PathOutOfWorkspace) as e:
-            # If gripper can't close further due to object contact, that's OK
+
             print(f"      -> Close step {close_step + 1}/{close_steps} failed (object blocking): {e.feedback.error_message if hasattr(e, 'feedback') else str(e)}")
-            # If we had at least some successful closes, break. Otherwise continue trying
+
             if success_close_count >= 3:
                 print(f"[ur5_grasp_at] Gripper closed {success_close_count} times, object blocking further close. Continuing...")
                 break
@@ -597,12 +597,12 @@ def ur5_release_at(
     if axis not in approach_dir_map:
         raise ValueError(f"Unknown approach axis: {axis}")
 
-    # For release, approach from above (same as grasp) - move to approach_pos first, then descend to place_pos
-    # E.g., if axis='z' and dist=0.1, approach_pos = place_pos + [0,0,0.1] (above the place location)
+
+
     approach_pos = place_pos + approach_dir_map[axis] * dist
 
-    # Calculate waypoint count based on distance (max 2cm per waypoint)
-    max_wp_spacing = 0.02  # 2cm
+
+    max_wp_spacing = 0.02
     dist_to_approach = np.linalg.norm(approach_pos - start_pos)
     dist_to_place = np.linalg.norm(place_pos - approach_pos)
 
@@ -626,10 +626,10 @@ def ur5_release_at(
         waypoints.append(approach_pos + a * (place_pos - approach_pos))
 
     action = np.zeros(env.action_shape, dtype=float)
-    # Keep current gripper state while moving - use gripper_open directly as action value
-    # gripper_open: 1.0 = open, 0.0 = closed. Action: 1.0 = open, -1.0 = closed
+
+
     current_gripper_state = float(getattr(obs, 'gripper_open', 1.0))
-    # Convert gripper_open (0-1) to action (-1 to 1): action = 2 * gripper_open - 1
+
     gripper_action = 2.0 * current_gripper_state - 1.0
     action[-1] = gripper_action
 
@@ -640,7 +640,7 @@ def ur5_release_at(
         step_count = 0
         start_time = time.time()
         while step_count < max_steps_per_wp:
-            # Check timeout BEFORE step execution
+
             if time.time() - start_time > timeout_s:
                 fd_error = FeedbackWithError(
                     env=env, task=task, skill_type="ur5_release_at",
@@ -672,7 +672,7 @@ def ur5_release_at(
             )
             step_count += 1
 
-            # preserve your original place behavior on done
+
             if done:
                 print(f"[ur5_release_at] Task done detected at waypoint {i}.")
                 return obs, reward, done
@@ -695,7 +695,7 @@ def ur5_release_at(
     for settle_step in range(max(0, int(settle_steps))):
         action[:3] = place_pos
         action[3:7] = use_quat
-        # Keep current gripper state during settle (don't force close)
+
         action[-1] = gripper_action
         obs, reward, done = safe_step(
             env, task, action,
@@ -731,7 +731,7 @@ def ur5_release_at(
                 print(f"[ur5_release_at] Task done during open phase at step {open_step + 1}.")
                 return obs, reward, done
         except (SkillFailure, PathOutOfWorkspace) as e:
-            # If gripper can't open further due to object contact, that's OK - just continue
+
             print(f"      -> Open step {open_step + 1}/{open_steps} failed (object blocking): {e.feedback.error_message if hasattr(e, 'feedback') else str(e)}")
             print(f"[ur5_release_at] Gripper blocked by object at open step {open_step + 1}, continuing...")
             break
@@ -768,9 +768,9 @@ def _select_best_config_for_neutral(configs: np.ndarray, neutral_joints: np.ndar
     if len(configs) == 1:
         return configs[0]
 
-    # Score each config by distance to neutral (weighted by joint importance)
-    # Joints closer to base typically have more impact on overall pose
-    weights = np.array([1.0, 1.0, 0.8, 0.6, 0.4, 0.3])  # UR5 has 6 joints
+
+
+    weights = np.array([1.0, 1.0, 0.8, 0.6, 0.4, 0.3])
     if len(neutral_joints) != len(weights):
         weights = np.ones(len(neutral_joints))
 
@@ -778,9 +778,9 @@ def _select_best_config_for_neutral(configs: np.ndarray, neutral_joints: np.ndar
     best_score = float('inf')
 
     for config in configs:
-        # Angular distance with joint wrapping consideration
+
         diff = np.abs(config - neutral_joints)
-        # Handle circular joints (wrap around 2*pi)
+
         diff = np.minimum(diff, 2*np.pi - diff)
         score = np.sum(weights[:len(diff)] * diff)
 
@@ -791,19 +791,19 @@ def _select_best_config_for_neutral(configs: np.ndarray, neutral_joints: np.ndar
     return best_config
 
 
-# UR5 neutral/home joint configuration (in radians)
-# These values represent a "ready" pose where arm is not twisted
+
+
 UR5_NEUTRAL_JOINTS = np.array([0.0, -np.pi/2, np.pi/2, -np.pi/2, -np.pi/2, 0.0])
 
 
 def ur5_align_gripper(
     env, task,
     reference_quat: np.ndarray,
-    approach_direction: str = "down",          # 'down','right','left','front','back' (also 'x','-x','y','-y','z','-z')
-    yaw_mode: str = "parallel",               # 'parallel' or 'perpendicular'
+    approach_direction: str = "down",
+    yaw_mode: str = "parallel",
     yaw_offset_rad: float = 0.0,
-    pos_hold: np.ndarray = None,        # None -> hold current position
-    gripper: float = None,              # None -> keep current gripper
+    pos_hold: np.ndarray = None,
+    gripper: float = None,
     ori_tol: float = 1e-3,
     max_steps: int = 100,
     timeout_s: float = 30.0
@@ -829,7 +829,7 @@ def ur5_align_gripper(
 
     yaw_quat = _quat_from_euler(0.0, 0.0, yaw + yaw_extra)
 
-    # Check if flip is needed based on current gripper orientation
+
     needs_flip = _needs_flip(current_quat, str(approach_direction))
     print(f"[ur5_align_gripper] current gripper z-axis: {_get_gripper_z_axis(current_quat)}")
     print(f"[ur5_align_gripper] needs_flip: {needs_flip}")
@@ -838,12 +838,12 @@ def ur5_align_gripper(
         flip_quat = _get_flip_quat(str(approach_direction))
         target_quat = normalize_quaternion(_quat_mul(yaw_quat, flip_quat))
     else:
-        # No flip needed - keep current pitch/roll, just adjust yaw
-        # Extract current pitch from gripper orientation
-        current_euler = R.from_quat(current_quat).as_euler('xyz', degrees=False)
-        current_pitch = current_euler[1]  # Y-axis rotation (pitch)
 
-        # Build target: yaw from reference + current pitch + 180 roll (to point down)
+
+        current_euler = R.from_quat(current_quat).as_euler('xyz', degrees=False)
+        current_pitch = current_euler[1]
+
+
         target_euler = np.array([math.pi, current_pitch, yaw + yaw_extra])
         target_quat = normalize_quaternion(R.from_euler('xyz', target_euler).as_quat())
 
@@ -858,7 +858,7 @@ def ur5_align_gripper(
     start_time = time.time()
     step = 0
     while True:
-        # Check timeout BEFORE step execution
+
         if time.time() - start_time > timeout_s:
             print(f"[ur5_align_gripper] Timeout after {timeout_s}s at step {step}.")
             return obs, 0.0, False
@@ -917,9 +917,9 @@ def ur5_align_gripper(
     print("[ur5_align_gripper] Done.")
     return obs, reward, done
 
-# =========================================================
-# UR5 Skills (0103 added)
-# =========================================================
+
+
+
 
 def close_ur5_ee(
     env, task,
@@ -946,7 +946,7 @@ def close_ur5_ee(
     if gripper_close > 1.0:
         gripper_close = 1.0
 
-    # Access gripper directly
+
     if hasattr(task, '_robot'):
         gripper = task._robot.gripper
     elif hasattr(task, '_task') and hasattr(task._task, 'robot'):
@@ -954,7 +954,7 @@ def close_ur5_ee(
     else:
         raise RuntimeError("Cannot access robot gripper")
 
-    # Actuate gripper until done
+
     done_gripper = False
     while not done_gripper:
         done_gripper = gripper.actuate(gripper_close, velocity=velocity)
@@ -988,7 +988,7 @@ def open_ur5_ee(
     print("========== [open_ur5_ee] START ==========")
     print(f"[open_ur5_ee] gripper_open: {gripper_open}, velocity: {velocity}")
 
-    # Access gripper directly
+
     if hasattr(task, '_robot'):
         gripper = task._robot.gripper
     elif hasattr(task, '_task') and hasattr(task._task, 'robot'):
@@ -996,7 +996,7 @@ def open_ur5_ee(
     else:
         raise RuntimeError("Cannot access robot gripper")
 
-    # Actuate gripper until done
+
     done_gripper = False
     while not done_gripper:
         done_gripper = gripper.actuate(gripper_open, velocity=velocity)
