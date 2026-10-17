@@ -1,62 +1,50 @@
-# Embodied RepairAgent — Robot Code Repair in Simulation
+# RepairAgent for Robot Skill Transfer
 
-Research-code archive for iterative repair of generated robot-control programs in **RLBench** and **Genesis**. The work was performed in a collaborative research setting; this repository is a curated portfolio snapshot, **not a verified reproduction package** or a claim of sole authorship of every included module.
+Code generation and repair for transferring robot manipulation skills between different robot embodiments. Experiments were conducted in RLBench and Genesis.
 
-## Approach
+Given a source-robot skill and a target scene, the agent generates Python control code for the target robot. The generated code is executed in simulation and updated when an action fails or the task remains incomplete.
 
-1. Generate a task policy as Python code from a source-robot reference and environment observations.
-2. Execute the policy in a target-robot simulator.
-3. Detect execution or task-completion failures and extract error/scene context.
-4. Request code repair or additional steps from the LLM, and retry within configured limits.
-5. Record per-task/subtask outcomes and inference timings.
+## Execution
 
-The historical experiment configurations use `model=code_agent` as an **agent mode**. This does **not** identify the LLM checkpoint, and the checkpoint used for the archived runs has not been confirmed.
+The `code_agent` path uses three LLM requests:
 
-## Repository contents
+- **Generate:** produce initial target-robot code from the source code and scene information.
+- **Repair:** update the code after an execution error or skill failure, using the failure information and current scene.
+- **Revise:** generate additional code when execution ends before the task is completed.
 
-- `Sim/rlbench/`: archived RLBench experiment driver (`rlbench_exp.py`), AST-based execution and repair loop (`rlbench_loop.py`), LLM policy provider, robot primitive implementations, task definitions, prompts, utilities and run scripts.
-- `Sim/rlbench/RLBench/`: Git submodule pointing to [clhaeun/RLBench](https://github.com/clhaeun/RLBench) at pinned commit `5aba50f8`. Initialize with `git submodule update --init --recursive`.
-- `Sim/genesis/`: archived Genesis experiment driver (`genesis_experiment.py`), subtask execution loop (`genesis_loop.py`), LLM policy provider, task definitions, prompts, configuration and environment helpers.
-- `servers/rlbench_server.py`: RLBench inference server copied from the RLBench home backup (original name: `server.py`).
-- `servers/genesis_server.py`: Genesis inference server copied from the Genesis home backup (original name: `server.py`).
-- `examples/oracle_skills/`: seven user-identified original robot task-policy examples.
-- `results/`: condensed archival experimental summary CSVs, *not* full raw result sets.
-- `SOURCE_PROVENANCE.md`, `ATTRIBUTION_REVIEW.md`: pinned origins, caveats, and collaboration attribution.
-- `RUNTIME_NOTES.md`: current dependency and reproduction caveats.
+Execution uses a bounded repair loop. RLBench runs generated statements through an AST-based executor; Genesis applies the same generate–repair–revise workflow at the subtask level. The code also contains an `ours` branch, but the experimental runs listed below used `code_agent`.
 
-The **top-level `skill_codes/` is intentionally excluded** as requested. The similarly named `Sim/rlbench/skill_code*.py` and `Sim/genesis/skill_code.py` are included because the simulation loops import their robot control primitives.
+## Code
 
-### How to retrieve the historical runtime
+| Component | Main files |
+|---|---|
+| RLBench experiment runner | [`rlbench_exp.py`](Sim/rlbench/rlbench_exp.py) |
+| RLBench execution and repair | [`rlbench_loop.py`](Sim/rlbench/rlbench_loop.py), [`policy_provider.py`](Sim/rlbench/policy_provider.py) |
+| Genesis experiment runner | [`genesis_experiment.py`](Sim/genesis/genesis_experiment.py) |
+| Genesis subtask execution and repair | [`genesis_loop.py`](Sim/genesis/genesis_loop.py), [`policy_provider.py`](Sim/genesis/policy_provider.py) |
+| Inference servers | [RLBench](servers/rlbench_server.py), [Genesis](servers/genesis_server.py) |
+| Task code and prompts | `Sim/rlbench/tasks_*/`, `Sim/genesis/subtasks_*/`, `Sim/*/prompts/` |
 
-```bash
-git clone --recurse-submodules https://github.com/clhaeun/embodied-repairagent.git
-cd embodied-repairagent
-# or, if already cloned:
-git submodule update --init --recursive
-```
+## Experiments
 
-**Not a verified turn-key reproduction:** The Genesis simulator scene/robot meshes and other original `Sim/genesis/assets/` resources (approximately 199 MB) have **not** been copied. They may be required at runtime and must be obtained from their original location with appropriate redistribution rights. Historical command scripts also contain environment-specific file paths and host addresses. The runtime, simulator/LLM checkpoints, model weights, and old environment are not independently available or tested. See `RUNTIME_NOTES.md`.
+The following figures are from the saved February 2026 experiment logs, not the final paper evaluation.
 
-This is a curated collaborative research archive, **not a claim that every copied module was authored solely by the maintainer**. Keep original credits and review redistribution licenses before relying on these files.
+| Simulator | Transfer | Agent / execution mode | Task success | Subtask success |
+|---|---|---|---|---|
+| RLBench (Feb 11) | Panda → Sawyer | `code_agent`, `failure` | 9/20 in each of 3 runs | 46/74, 43/74, 43/74 |
+| Genesis (Feb 27) | Panda → Robotiq | `code_agent`, failure-based repair | 7/12 for seeds 42, 123, 2024 | 47/64, 48/64, 48/64 |
+| Genesis (Feb 27) | Panda → Suction | `code_agent`, failure-based repair | 6/12 for seeds 42, 123, 2024 | 38/48, 38/48, 37/48 |
 
-## Archived experimental evidence (not final paper results)
+All these runs used `remote_llm`. Both archived inference-server implementations default to `Qwen/Qwen2.5-Coder-7B`, but the result files do not identify which LLM checkpoint was actually loaded. The RLBench result files also omit the seed; their directory labels should not be treated as verified seeds.
 
-| Simulator / transfer | Recorded runs | Recorded task success | Recorded subtask success |
-|---|---|---|---|
-| RLBench, Panda → Sawyer (Feb 11, 2026) | 3 runs (seeds unverified) | 9/20 in each run | 46/74, 43/74, 43/74 |
-| Genesis, Panda → Robotiq (Feb 27, 2026) | seeds 42, 123, 2024 | 7/12 in each run | 47/64, 48/64, 48/64 |
-| Genesis, Panda → Suction (Feb 27, 2026) | seeds 42, 123, 2024 | 6/12 in each run | 38/48, 38/48, 37/48 |
+See [RLBench results](results/rlbench_archived_runs.csv) and [Genesis results](results/genesis_archived_runs.csv) for the individual run records.
 
-**Important qualifications:** The RLBench `final_result.json` files do not store the random seed. One archived script even labels an output directory `sawyertemp2024` but passes `--seed 123`. The exact LLM checkpoint and runtime commit are not recorded in the sampled results. May 1 code backups should not be treated as proven identical to the code running in February. These numbers are archived observations, **not** controlled reproducibility claims or final ICML paper metrics.
+## Dependencies
 
-Evidence:
-- [RLBench archival results](https://github.com/clhaeun/CaP_RepairAgent_new/tree/chaeun/home-backup-2026-05-01/Sim/rlbench/results_newtemp)
-- [RLBench run script](https://github.com/clhaeun/CaP_RepairAgent_new/blob/chaeun/home-backup-2026-05-01/Sim/rlbench/run_newtemp.sh)
-- [Genesis archival results](https://github.com/clhaeun/CaP_RepairAgent_new/tree/CaP_RepairAgent_genesis-home-backup-2026-05-01/Sim/genesis/results_0227_2)
-- [Genesis run script](https://github.com/clhaeun/CaP_RepairAgent_new/blob/CaP_RepairAgent_genesis-home-backup-2026-05-01/Sim/genesis/run_exp0227.sh)
+- **RLBench / PyRep / CoppeliaSim:** the modified [RLBench fork](https://github.com/clhaeun/RLBench) is pinned as a Git submodule at `Sim/rlbench/RLBench`.
+- **Genesis:** the experiment code uses `genesis-world`; robot models and simulator assets are external dependencies and are not bundled.
+- **LLM server:** separate inference processes are implemented under `servers/`.
 
-## Provenance, collaborators, and reproducibility
+The source files were collected from the May 1, 2026 research backups. See [source versions](SOURCE_PROVENANCE.md) and [runtime notes](RUNTIME_NOTES.md) for their origins and environment details.
 
-Selected historical files originate from [clhaeun/CaP_RepairAgent_new](https://github.com/clhaeun/CaP_RepairAgent_new), which includes contributions from other researchers and SkillCache-related work. The other researcher's separate `baseline/` directory is not republished here. A clean simulator environment, asset licenses, exact LLM model, and complete dependency set have **not** been independently verified. See the provenance and attribution notes before reusing code.
-
-No general open-source license has been granted for this curated code archive; repository visibility alone does not establish permission to reuse third-party code.
+This code was developed and tested during a collaborative research project; some simulator integrations and supporting utilities were shared within the team.
