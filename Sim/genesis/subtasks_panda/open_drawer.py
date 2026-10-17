@@ -25,25 +25,25 @@ def open_drawer(env, drawer_type="bottom"):
     """
     print(f"[OpenDrawer] Opening {drawer_type} drawer")
 
-    # Get handle name based on drawer type
+
     handle_name = "top_drawer_handle" if drawer_type == "top" else "bottom_drawer_handle"
 
-    # Move to handle (approach from right side)
+
     success = move_gripper_to(env, handle_name, pointing_to="right")
     if not success:
         print(f"[OpenDrawer] Failed to move to handle")
         return False
 
-    # Grasp the handle
+
     grasp_handle(env, handle_name)
 
-    # Pull to open (left direction)
+
     move_parallel(env, "left", 0.12, pointing_to="right")
 
-    # Release handle
+
     release_handle(env)
 
-    # Move back to clear
+
     move_parallel(env, "left", 0.05, pointing_to="right")
 
     print(f"[OpenDrawer] Successfully opened {drawer_type} drawer")
