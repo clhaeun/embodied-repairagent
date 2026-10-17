@@ -30,23 +30,23 @@ import yaml
 from genesis_loop import run_task_episode, EpisodeResult
 
 
-# ============================================================================
-# Seed Setup
-# ============================================================================
+
+
+
 
 def set_seed(seed: int):
     """Set random seed for reproducibility."""
     random.seed(seed)
     np.random.seed(seed)
 
-    # Try to set torch seed if available
+
     try:
         import torch
         torch.manual_seed(seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed(seed)
             torch.cuda.manual_seed_all(seed)
-            # For deterministic behavior (may impact performance)
+
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
     except ImportError:
@@ -55,9 +55,9 @@ def set_seed(seed: int):
     print(f"[SEED] Random seed set to: {seed}")
 
 
-# ============================================================================
-# NumPy Type Conversion
-# ============================================================================
+
+
+
 
 def convert_numpy_types(obj: Any) -> Any:
     """Convert NumPy types to JSON-serializable Python types."""
@@ -76,9 +76,9 @@ def convert_numpy_types(obj: Any) -> Any:
     return obj
 
 
-# ============================================================================
-# Result Data Structures
-# ============================================================================
+
+
+
 
 class TaskResult:
     """Task execution result."""
@@ -94,7 +94,7 @@ class TaskResult:
         self.total_llm_tokens: int = 0
         self.error: Optional[str] = None
         self.error_type: Optional[str] = None
-        self.subtask_results: List[Dict[str, Any]] = []  # List of SubtaskResult.to_dict()
+        self.subtask_results: List[Dict[str, Any]] = []
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -151,11 +151,11 @@ class ExperimentResult:
         if not self.tasks:
             return
 
-        # Task success rate (SR)
+
         success_count = sum(1 for t in self.tasks if t.success)
         self.overall_success_rate = success_count / len(self.tasks)
 
-        # Subtask success rate (GC)
+
         total_subtasks = 0
         successful_subtasks = 0
         for task in self.tasks:
@@ -187,9 +187,9 @@ class ExperimentResult:
         }
 
 
-# ============================================================================
-# File I/O
-# ============================================================================
+
+
+
 
 def load_experiment_tasks(yaml_path: str) -> List[Dict[str, Any]]:
     """Load experiment_tasks.yml file."""
@@ -239,9 +239,9 @@ def load_checkpoint(checkpoint_path: str) -> Optional[ExperimentResult]:
     return None
 
 
-# ============================================================================
-# LLM Call Logger
-# ============================================================================
+
+
+
 
 class LLMCallLogger:
     """Real-time LLM call logging."""
@@ -250,7 +250,7 @@ class LLMCallLogger:
         self.log_file = log_file
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
-        # Write header
+
         with open(self.log_file, "w", encoding="utf-8") as f:
             f.write("timestamp,task,action,duration_sec,num_tokens\n")
 
@@ -269,9 +269,9 @@ class LLMCallLogger:
         print(f"[LLM_CALL] {task} - {action}: {duration:.2f}s{tokens_str}")
 
 
-# ============================================================================
-# Experiment Runner
-# ============================================================================
+
+
+
 
 def run_experiment(
     tasks_config: List[Dict[str, Any]],
@@ -290,8 +290,8 @@ def run_experiment(
     skip_env: bool = False,
     code_gen_only: bool = False,
     seed: Optional[int] = None,
-    # enable_background_validation: bool = True,
-    # enable_code_cache: bool = False,
+
+
 ) -> ExperimentResult:
     """
     Main experiment execution function.
@@ -317,25 +317,25 @@ def run_experiment(
     Returns:
         ExperimentResult: Experiment results
     """
-    # Set random seed if provided
+
     if seed is not None:
         set_seed(seed)
 
-    # Generate experiment ID
+
     experiment_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # Setup output directory
+
     os.makedirs(output_dir, exist_ok=True)
 
-    # File paths
+
     checkpoint_path = os.path.join(output_dir, "checkpoint.json")
     final_result_path = os.path.join(output_dir, "final_result.json")
     llm_log_path = os.path.join(output_dir, "llm_calls.csv")
 
-    # Create LLM logger
+
     llm_logger = LLMCallLogger(llm_log_path)
 
-    # Try to load checkpoint
+
     result = None
     completed_tasks = set()
 
@@ -352,7 +352,7 @@ def run_experiment(
         result.experiment_id = experiment_id
         result.start_time = datetime.now().isoformat()
 
-    # Save config
+
     result.config = {
         "source_robot": source_robot,
         "target_robot": target_robot,
@@ -366,7 +366,7 @@ def run_experiment(
         "seed": seed,
     }
 
-    # Filter tasks
+
     filtered_tasks = tasks_config
     if task_ids:
         filtered_tasks = [t for t in filtered_tasks if t.get("id") in task_ids]
@@ -383,14 +383,14 @@ def run_experiment(
     print(f"[EXPERIMENT] Output directory: {output_dir}")
     print(f"{'='*60}\n")
 
-    # Execute each task
+
     for task_idx, task_config in enumerate(filtered_tasks):
         task_id = task_config.get("id", f"task_{task_idx:03d}")
         task_name = task_config.get("task_name", "")
         task_difficulty = task_config.get("difficulty", "unknown")
         task_description = task_config.get("description", "")
 
-        # Skip already completed tasks
+
         if task_id in completed_tasks:
             print(f"[SKIP] Task {task_id} already completed")
             continue
@@ -408,7 +408,7 @@ def run_experiment(
         task_result.description = task_description
 
         try:
-            # Run task episode
+
             episode_result: EpisodeResult = run_task_episode(
                 task_name=task_name,
                 source_robot=source_robot,
@@ -422,11 +422,11 @@ def run_experiment(
                 llm_call_logger=llm_logger.log,
                 code_gen_only=code_gen_only,
                 skip_env=skip_env,
-                # enable_background_validation=enable_background_validation,
-                # enable_code_cache=enable_code_cache,
+
+
             )
 
-            # Copy results
+
             task_result.success = episode_result.success
             task_result.execution_time_sec = episode_result.execution_time
             task_result.llm_calls = episode_result.llm_calls
@@ -436,12 +436,12 @@ def run_experiment(
             task_result.total_llm_tokens = episode_result.total_llm_tokens
             task_result.error = episode_result.error
             task_result.error_type = episode_result.error_type
-            # Copy subtask results
+
             task_result.subtask_results = [
                 s.to_dict() for s in episode_result.subtask_results
             ]
 
-            # Save grounded task code
+
             if episode_result.final_code:
                 grounded_tasks_dir = os.path.join(output_dir, f"tasks_{target_robot}")
                 os.makedirs(grounded_tasks_dir, exist_ok=True)
@@ -470,15 +470,15 @@ def run_experiment(
 
         result.tasks.append(task_result)
 
-        # Save checkpoint after each task
+
         save_result_json(result.to_dict(), checkpoint_path)
 
-    # Save final result
+
     result.end_time = datetime.now().isoformat()
     result.compute_metrics()
     save_result_json(result.to_dict(), final_result_path)
 
-    # Print summary
+
     print(f"\n{'='*60}")
     print("[EXPERIMENT COMPLETE]")
     print(f"  - Overall success rate: {result.overall_success_rate:.2%}")
@@ -489,9 +489,9 @@ def run_experiment(
     return result
 
 
-# ============================================================================
-# Main
-# ============================================================================
+
+
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -606,12 +606,12 @@ def main():
 
     args = parser.parse_args()
 
-    # Setup output directory
+
     if args.output_dir is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         args.output_dir = f"./results/exp_{timestamp}"
 
-    # Load YAML file
+
     if not os.path.exists(args.yaml_path):
         print(f"[ERROR] YAML file not found: {args.yaml_path}")
         sys.exit(1)
@@ -619,7 +619,7 @@ def main():
     tasks_config = load_experiment_tasks(args.yaml_path)
     print(f"[INFO] Loaded {len(tasks_config)} tasks from {args.yaml_path}")
 
-    # Run experiment
+
     run_experiment(
         tasks_config=tasks_config,
         output_dir=args.output_dir,
