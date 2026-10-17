@@ -44,7 +44,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
 
     print(f"[PutInPrismatic] Starting task with objects: {task.object_names}")
 
-    # Step 1: Close top drawer if open (obst_level=2)
+
     if is_drawer_already_closed(env, "top") is False:
         print("[PutInPrismatic] Closing top drawer first")
         try:
@@ -62,7 +62,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
             if skip.result is not None:
                 subtask_results.append(skip.result)
 
-    # Step 2: Open bottom drawer if closed (obst_level>=1)
+
     if is_drawer_already_open(env, "bottom") is False:
         print("[PutInPrismatic] Opening bottom drawer")
         try:
@@ -80,11 +80,11 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
             if skip.result is not None:
                 subtask_results.append(skip.result)
 
-    # Step 3: Pick and place each cylinder into the drawer
+
     for obj_name in task.object_names:
         print(f"\n[PutInPrismatic] Processing: {obj_name}")
 
-        # Pick the cylinder
+
         try:
             result = provider.execute_subtask(
                 subtask_name="pick_single",
@@ -100,7 +100,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
                 subtask_results.append(skip.result)
             continue
 
-        # Place into bottom drawer
+
         try:
             result = provider.execute_subtask(
                 subtask_name="place_single",
@@ -118,7 +118,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
                 subtask_results.append(skip.result)
             continue
 
-    # Step 4: Close the bottom drawer
+
     print("\n[PutInPrismatic] Closing bottom drawer")
     try:
         result = provider.execute_subtask(
@@ -135,7 +135,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
         if skip.result is not None:
             subtask_results.append(skip.result)
 
-    # Check result
+
     result = env.check_result()
     print(f"\n[PutInPrismatic] Task completed with result: {result}")
     return result
