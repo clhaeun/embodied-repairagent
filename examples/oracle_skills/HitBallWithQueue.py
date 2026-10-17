@@ -1,4 +1,4 @@
-# tasks/hit_ball_with_queue.py - done
+
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from pyrep.objects.shape import Shape
@@ -17,12 +17,12 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
     ball_sizes, _ = get_bbox_sizes(ball_object)
     r = float(np.max(ball_sizes)) / 2.0
 
-    # Move to hover position - 그리퍼가 아래를 보고 있고, 회전할 수 있게 여유공간 확보
+
     hover_pos = queue_position.copy()
     hover_pos[2] += 0.15
     obs, reward, done = move(env, task, target_pos=hover_pos, timeout=10.0)
 
-    # Perpendicular to queue
+
     gripper_quat = normalize_quaternion(obs.gripper_pose[3:7])
     queue_quat = normalize_quaternion(queue_object.get_quaternion())
     queue_y = R.from_quat(queue_quat).apply([0.0, 1.0, 0.0])
@@ -30,17 +30,17 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
     yaw = np.arctan2(queue_y[1], queue_y[0])
     yaw = 0.5*yaw
     q_yaw = np.array([0.0, 0.0, np.sin(yaw/2), np.cos(yaw/2)], dtype=np.float64)
-        # 아래보기 유지 + yaw만 반영
+
     target_quat = normalize_quaternion(quat_mul(q_yaw, gripper_quat))
     obs, reward, done = align_to_quaternion(env, task, target_quat=target_quat, tol_rad=1e-3, timeout=10.0)
     
-    # Pick the queue
-    # queue_position[0] -= 0.02
+
+
     queue_position[1] -= 0.08
     obs, reward, done = pick(env, task, target_pos=queue_position, approach_distance=0.01, approach_axis='z', timeout=10.0)
-    # obs, reward, done = move(env, task, target_pos)
+
     
-    # Move the queue to safe_y, z and prepare(backoff) to hit tha ball
+
     queue_pos = queue_position.copy()
     queue_pos[1] -= l + r + 0.08
     queue_pos[2] = 0.77
@@ -49,7 +49,7 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
     queue_pos[0] += ball_position[0] - queue_position[0] + r
     obs, reward, done = move(env, task, target_pos=queue_pos, timeout=10.0)
 
-    # Push, Hit the ball
+
     obs, reward, done = push(env, task, target_pos=ball_position, approach_distance=0.01, approach_axis='y', timeout=10.0)
 
 
