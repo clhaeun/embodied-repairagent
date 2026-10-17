@@ -1,5 +1,5 @@
-# Grasp Alignment Test Executor
-# grasp_info.py의 alignment guidance 기능을 테스트하기 위한 executor
+
+
 
 import argparse
 import importlib
@@ -91,13 +91,13 @@ def print_grasp_info(task, task_name: str, robot_type: str):
     print("GRASP ALIGNMENT INFO")
     print("="*60)
 
-    # Gripper 정보
+
     print(f"\n[Gripper Status]")
     print(f"  Position: {[f'{x:.3f}' for x in gripper_info['position']]}")
     print(f"  Quaternion: {[f'{x:.3f}' for x in gripper_info['quaternion']]}")
     print(f"  Is Open: {gripper_info['is_open']}")
 
-    # Graspable objects 정보
+
     grasp_infos, grasp_guidance_text = get_graspable_objects_info(
         objects_info, task_name, robot_type
     )
@@ -113,14 +113,14 @@ def print_grasp_info(task, task_name: str, robot_type: str):
         if info.get('recommended_approach'):
             print(f"    Recommended Approach: {info['recommended_approach']['world_direction']}")
 
-    # Alignment guidance (initial)
+
     print(f"\n[Initial Grasp Guidance]")
     if grasp_guidance_text:
         print(f"  {grasp_guidance_text}")
     else:
         print("  No alignment needed for any objects.")
 
-    # Current gripper alignment check
+
     print(f"\n[Current Gripper Alignment Check]")
     gripper_quat = np.array(gripper_info["quaternion"])
     alignment_guidance = check_gripper_alignment_for_scene(
@@ -184,14 +184,14 @@ if __name__ == "__main__":
     robot_type = args.robot.lower()
     task_name = args.task
 
-    # Load task class
+
     tasks_module = importlib.import_module("rlbench.tasks")
     try:
         task_cls = getattr(tasks_module, task_name)
     except AttributeError:
         raise SystemExit(f"Error: Task class '{task_name}' not found.")
 
-    # Setup environment
+
     print(f"[Main] Setting up environment with {robot_type} robot...")
     env, task = setup_environment(task_cls, robot_type)
 
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     print(f"[Main] Description: {descriptions}")
     print(f"[Main] Objects: {obj_names}")
 
-    # Print initial grasp info
+
     print_grasp_info(task, task_name, robot_type)
 
     print("\n[Commands]")
@@ -219,7 +219,7 @@ if __name__ == "__main__":
             print("[Main] Environment is shutdown.")
             break
 
-        #cmd = "run" #input("\n>>> ").strip()
+
 
         if cmd.lower() in ("exit", "quit"):
             print("[Main] Exiting...")
@@ -253,7 +253,7 @@ if __name__ == "__main__":
                 else:
                     print("[Main] Task not completed.")
 
-                # Show alignment info after run
+
                 print("\n[Post-run Alignment Check]")
                 print_grasp_info(task, task_name, robot_type)
 
@@ -263,7 +263,7 @@ if __name__ == "__main__":
                 error_msg = getattr(e, 'message', str(e))
                 print(f"[FAILURE] {type(e).__name__}: {error_msg}")
 
-                # Show alignment guidance on failure
+
                 scene_info = get_scene_info_simple(task, task_name, robot_type)
                 gripper_quat = np.array(scene_info["gripper"]["quaternion"])
                 alignment_guidance = check_gripper_alignment_for_scene(
