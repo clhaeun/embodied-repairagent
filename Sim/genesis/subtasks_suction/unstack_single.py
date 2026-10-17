@@ -22,8 +22,8 @@ def unstack_single(env, obj_name, pointing_to="down"):
     move_parallel(env, "up", 0.1, pointing_to=pointing_to)
 
     aside_pos = obj_pos.copy()
-    aside_pos[1] += 0.08  # Move to the right side
-    aside_pos[2] = obj_pos[2] + 0.05  # Slightly above floor level
+    aside_pos[1] += 0.08
+    aside_pos[2] = obj_pos[2] + 0.05
 
     move_to_position(env, aside_pos, pointing_to=pointing_to)
 
