@@ -34,15 +34,15 @@ def check_place_success(env, obj_name, target_name="hinge_body", margin=0.02):
     Returns:
         True if object bbox is inside hinge box bbox.
     """
-    # Object should not be in gripper
+
     if env.obj_in_gripper(obj_name) and not env.gripper_is_open():
         return False
 
-    # Check if object is inside hinge box
+
     box_bbox = env.get_obj_bbox(target_name)
     obj_bbox = env.get_obj_bbox(obj_name)
 
-    # Expand box bbox with margin
+
     box_min = box_bbox[0] - np.array([margin, margin, margin])
     box_max = box_bbox[1] + np.array([margin, margin, 0.05])
 
@@ -92,7 +92,7 @@ def check_close_hinge_success(env, close_threshold=0.2):
         return False
 
     dof_pos = hinge_lid.entity.get_dofs_position()[0].item()
-    # Closed state is around -0.785
+
     return abs(dof_pos + 0.785) < close_threshold
 
 
@@ -108,11 +108,11 @@ def check_move_obstacle_success(env, obj_name):
     Returns:
         True if object is not on the hinge lid.
     """
-    # Object should not be in gripper
+
     if env.obj_in_gripper(obj_name) and not env.gripper_is_open():
         return False
 
-    # Get hinge lid bbox
+
     hinge_lid = env.env.scene_objects.get("hinge_lid")
     if hinge_lid is None:
         return True
@@ -120,7 +120,7 @@ def check_move_obstacle_success(env, obj_name):
     lid_bbox = env.get_obj_bbox("hinge_lid")
     obj_pos = env.get_obj_pos(obj_name)
 
-    # Check if object is outside lid's xy area
+
     not_on_lid = (
         obj_pos[0] < lid_bbox[0][0] - 0.02 or
         obj_pos[0] > lid_bbox[1][0] + 0.02 or
