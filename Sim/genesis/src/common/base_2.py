@@ -9,7 +9,7 @@ from src.common.constants import Z_OFFSET
 class BaseTask(ABC):
     task_name = ""
     instruction = ""
-    use_weld = True  # If False, gripper uses pure physics friction instead of welding
+    use_weld = True
 
     def __init__(self, variant, is_subtask=False, offset=(0.5, 0.0)):
         self.variant = variant
@@ -43,7 +43,7 @@ class BaseTask(ABC):
                 fixed=True,
                 collision=False,
             ),
-            surface=gs.surfaces.Smooth(color=(0.7, 0.7, 0.7)),  # Single color to avoid heterogeneous colors error
+            surface=gs.surfaces.Smooth(color=(0.7, 0.7, 0.7)),
         )
         self.scene_objects["floor"] = scene.add_entity(
             gs.morphs.Box(
