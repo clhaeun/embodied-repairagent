@@ -10,12 +10,12 @@ import torch
 
 from src.common.constants import FLOOR_AABB
 
-# Base angle offset for each pointing direction (fingers horizontal for "front")
+
 BASE_ANGLE_OFFSET = {
     "down": 0,
     "left": 0,
     "right": 0,
-    "front": np.pi / 2,  # 90 degrees to make fingers parallel to XY plane
+    "front": np.pi / 2,
 }
 
 
@@ -94,11 +94,11 @@ def get_gripper_offset(ee_type, pointing_to="down"):
     if ee_type == "gripper":
         pos_offset = np.array([0.0035, 0, 0.115])
     elif ee_type == "robotiq85":
-        # Robotiq85: from link7 to finger tip
-        # attachment(0.107) + inner_knuckle(0.069) + inner_finger(0.045) + tip(~0.02) ≈ 0.24
-        # pos_offset = np.array([0.0, 0, 0.275])
+
+
+
         pos_offset = np.array([0.0, 0, 0.265])
-    else:  # suction
+    else:
         pos_offset = np.array([0.0, 0.0, 0.215])
 
     if pointing_to == "left":
@@ -239,7 +239,7 @@ def move_to_position(env, pos, pointing_to="down", lift_clearance=0.12, angle=0.
         )
 
         if i == len(waypoints) - 2:
-            # Skip path planning if holding an object or using robotiq85
+
             holding_object = env._grasp["active"] or env._welded["active"]
             use_path_planning = (
                 env.ee_type == "gripper"
@@ -352,22 +352,22 @@ def rotate_gripper(env, angle, steps=80):
         angle: Rotation angle delta in degrees (relative to current angle).
         steps: Number of interpolation steps for smooth motion.
     """
-    # if env.ee_type != "gripper":
-    #     print("[env] rotate_gripper called but end-effector is not gripper.")
-    #     return
 
-    # Convert angle delta to radians
+
+
+
+
     angle_delta = np.radians(angle)
 
-    # Update gripper state
+
     env.gripper_state["angle"] += angle_delta
 
-    # Get current joint positions and only modify joint 6 (wrist)
+
     current_qpos = env.env.franka.get_qpos().cpu().numpy()[:7].astype(np.float32)
     goal_qpos = current_qpos.copy()
     goal_qpos[6] -= angle_delta
 
-    # Execute the motion
+
     _execute_joint_motion(env, goal_qpos, steps=steps)
 
     env.trajectory.append(env.env.capture_obs())
@@ -563,7 +563,7 @@ def place(env, obj_name, pointing_to="down"):
     return True
 
 
-# Robotiq85 gripper skills
+
 def open_robotiq85(env):
     """
     Open the Robotiq85 gripper.
@@ -588,9 +588,9 @@ def open_robotiq85(env):
             )
         )
 
-    # finger_joint: 0 (closed) ~ 0.725 (open)
+
     src_qpos = env.env.franka.get_qpos().cpu().numpy()[7]
-    tgt_qpos = 0.7  # open position
+    tgt_qpos = 0.7
     steps = 50
 
     for i in range(steps):
@@ -614,8 +614,8 @@ def close_robotiq85(env):
         print("[env] close_robotiq85 called but end-effector is not robotiq85.")
         return
 
-    # finger_joint: 0 (closed) ~ 0.725 (open)
-    # Use force control for grasping
+
+
     env.env.franka.control_dofs_force(np.array([-50.0]), [7])
     for _ in range(50):
         env.step()
@@ -627,7 +627,7 @@ def close_robotiq85(env):
 
             scene_obj = env.env.scene_objects[obj_name]
 
-            # DEBUG: Check obj_in_gripper result
+
             in_gripper = env.obj_in_gripper(obj_name)
             print(f"[DEBUG close_robotiq85] Checking {obj_name}: in_gripper={in_gripper}")
 
@@ -771,7 +771,7 @@ def place_robotiq85(env, obj_name, pointing_to="down"):
     return True
 
 
-# Vacuum gripper skills
+
 def activate_vacuum(env):
     """
     Activate the vacuum gripper.
@@ -845,7 +845,7 @@ def detach_vacuum_handle(env):
     env.ee_strict = strict
 
 
-# Helper functions
+
 def _execute_joint_motion(env, goal_qpos, steps=80):
     """Execute smooth joint motion to goal position."""
     if torch.is_tensor(goal_qpos):
@@ -875,7 +875,7 @@ def _execute_joint_motion(env, goal_qpos, steps=80):
 
 def _feasibility_check(env, obj_name):
     """Check if an object is reachable."""
-    # Put in hinge
+
     if any(
         [
             obj_name in ["apple", "orange", "lemon"],
@@ -893,7 +893,7 @@ def _feasibility_check(env, obj_name):
         ):
             return False
 
-    # Pick place
+
     if "cube" in obj_name or "cylinder" in obj_name:
         target_bbox = env.get_obj_bbox(obj_name)
         if target_bbox is not None:
@@ -922,7 +922,7 @@ def _feasibility_check(env, obj_name):
                 if ol[2] >= th[2] - tol_z and ol[2] > tl[2] + tol_z:
                     return False
 
-    # Put in prismatic
+
     if obj_name in ["bottom_drawer_handle"]:
         top_drawer = env.env.scene_objects.get("top_drawer")
         if top_drawer is not None:
