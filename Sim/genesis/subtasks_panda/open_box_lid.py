@@ -27,26 +27,26 @@ def open_box_lid(env, handle_name="box_handle", lid_name="box_lid"):
     """
     print(f"[OpenBoxLid] Opening box lid")
 
-    # Move to handle
+
     success = move_gripper_to(env, handle_name, pointing_to="down")
     if not success:
         print(f"[OpenBoxLid] Failed to move to handle")
         return False
 
-    # Grasp the handle
+
     grasp_handle(env, handle_name)
 
     handle_pos = env.get_obj_pos(handle_name)
     
-    # Open the box lid
+
     for _ in range(3):
         move_parallel(env, "up", 0.09, pointing_to="down")
         move_parallel(env, "right", 0.09, pointing_to="down")
 
-    # Release handle
+
     release_handle(env)
 
-    # Move up to clear
+
     move_parallel(env, "up", 0.05, pointing_to="down")
     move_parallel(env, "left", 0.05, pointing_to="down")
     
