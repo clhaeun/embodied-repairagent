@@ -50,7 +50,6 @@ def run_task(env, task, descriptions = None, obs = None, variation_index: int = 
     Main function to run the LiftNumberedBlock task with the given environment and task.
     Task Description: Pick up the block with the number 1. Grasp the 1 numbered block and lift. Lift the 1 numbered block.
     """
-    # Get dictionary of positions of objects
+
     positions = get_object_positions(variation_index)
 
-    # Implement the rest of run_task here, following the 4-space indentation rule.
