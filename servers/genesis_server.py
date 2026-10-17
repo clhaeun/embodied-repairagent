@@ -1295,7 +1295,7 @@ def handle_client(conn, addr):
                     if _BACKEND is not None:
                         full_prompt = build_generate_prompt(req)
                         
-                        print(f"[Generate] Robot: {robot_type}, Prompt length: {len(full_prompt)}")
+
                         if req.get("debug_prompt", False):
                             lines = full_prompt.splitlines()
 
@@ -1337,7 +1337,7 @@ def handle_client(conn, addr):
 
                     full_prompt = build_revise_prompt(req)
 
-                    print(f"[REVISE] Robot: {robot_type}, Prompt length: {len(full_prompt)}")
+
                     if req.get("debug_prompt", False):
                         _debug_print_prompt(full_prompt, tag="REVISE", head_n=120, tail_n=80)
 
@@ -1373,7 +1373,7 @@ def handle_client(conn, addr):
 
                     full_prompt = build_repair_prompt(req)
 
-                    print(f"[REPAIR] Robot: {robot_type}, Prompt length: {len(full_prompt)}")
+
                     if req.get("debug_prompt", False):
                         _debug_print_prompt(full_prompt, tag="REPAIR", head_n=120, tail_n=80)
 
