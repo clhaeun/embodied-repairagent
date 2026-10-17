@@ -30,15 +30,15 @@ def unstack_single(env, obj_name, pointing_to="down"):
     """
     print(f"[UnstackSingle] Unstacking {obj_name}")
 
-    # Check if object is visible
+
     if not env.is_obj_visible(obj_name):
         print(f"[UnstackSingle] Object {obj_name} not visible")
         return False
 
-    # Get current position of top object
+
     top_pos = env.get_obj_pos(obj_name)
 
-    # Move to and grasp the top object
+
     success = move_gripper_to(env, obj_name, pointing_to=pointing_to)
     if not success:
         print(f"[UnstackSingle] Failed to move to {obj_name}")
@@ -46,21 +46,21 @@ def unstack_single(env, obj_name, pointing_to="down"):
 
     close_gripper(env)
 
-    # Lift up first
+
     move_parallel(env, "up", 0.1, pointing_to=pointing_to)
 
-    # Calculate aside position (move to side of original position)
-    aside_pos = top_pos.copy()
-    aside_pos[1] += 0.08  # Move to the right side
-    aside_pos[2] = top_pos[2] + 0.05  # Slightly above floor level
 
-    # Move to aside position
+    aside_pos = top_pos.copy()
+    aside_pos[1] += 0.08
+    aside_pos[2] = top_pos[2] + 0.05
+
+
     move_to_position(env, aside_pos, pointing_to=pointing_to)
 
-    # Release object
+
     open_gripper(env)
 
-    # Move up to clear
+
     move_parallel(env, "up", 0.08, pointing_to=pointing_to)
 
     print(f"[UnstackSingle] Successfully unstacked {obj_name}")
