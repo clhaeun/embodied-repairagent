@@ -24,19 +24,19 @@ def save_camera_image(obs: Observation, cam_name, save_path, use_cv2=False):
 
     img = cam_map[cam_name]
 
-    # 1) 스케일 처리: float[0,1] -> uint8[0,255], 이미 uint8이면 그대로
+
     if img.dtype != np.uint8:
         img = np.clip(img, 0, 1)
         img = (img * 255).astype(np.uint8)
 
-    # 2) 저장
+
     if not use_cv2:
-        # imageio는 RGB 그대로 저장 -> 색 뒤집힘 없음
+
         imageio.imwrite(save_path, img)
     else:
-        # OpenCV는 BGR 기대 -> RGB를 BGR로 바꿔서 저장해야 색이 정상
+
         import cv2
-        img_bgr = img[..., ::-1]  # RGB->BGR
+        img_bgr = img[..., ::-1]
         cv2.imwrite(save_path, img_bgr)
    
    
@@ -187,16 +187,16 @@ def pick(env, task, target_pos, approach_distance=0.15, max_steps=100, threshold
     print("[pick] Done pick process.")
     
     final_gripper_state = getattr(obs, 'gripper_open', 1.0)
-    # gripper state 확인
-    # if final_gripper_state < 1.0:
-    #     print("[pick] Gripper successfully closed.")
-    # else:
-    #     print("[pick] Warning: Gripper did not close properly.")
-    #     fd_error = FeedbackWithError(env=env, task=task,skill_type="pick", attempted_action=action, robot_pos=obs.gripper_pose,
-    #                                     waypoints=None, waypoint_index=-1, step_index=-1, 
-    #                                     original_robot_pos=original_pos,
-    #                                     error_message=f"Gripper did not close properly after pick operation.")
-    #     raise SkillFailure(fd_error)
+
+
+
+
+
+
+
+
+
+
         
     return obs, reward, done
 
@@ -292,7 +292,7 @@ def place(env, task, target_pos, approach_distance=0.15, max_steps=100, threshol
     print("[place] Done place process.")
 
     final_gripper_state = getattr(obs, 'gripper_open', 1.0)
-    # gripper state 확인
+
     if final_gripper_state == 1.0:
         print("[place] Gripper successfully open.")
     else:
@@ -322,22 +322,22 @@ def move(env, task, target_pos, max_steps=100, threshold=0.01, timeout=10.0):
     """
     print("========== [move] START ==========")
     
-    # Get initial observation
+
     obs = task.get_observation()
     start_pos = obs.gripper_pose[:3]
     start_quat = normalize_quaternion(obs.gripper_pose[3:7])
     original_pos = obs.gripper_pose.copy()
     
-    # Assume gripper_open exists in observation (1.0 for open, -1.0 for closed)
-    # Note: This assumption is based on typical robotic environments; adjust if different
-    initial_gripper_state = getattr(obs, 'gripper_open', 1.0)  # Default to 1.0 if not found
+
+
+    initial_gripper_state = getattr(obs, 'gripper_open', 1.0)
     
     print(f"[move] Initial gripper state: {initial_gripper_state}")
     print(f"[move] Initial gripper pos: {start_pos}")
     print(f"[move] Initial gripper quat(xyzw): {start_quat}, euler={euler_from_quat(start_quat)}")
     print(f"[move] Target pos: {target_pos}")
     
-    # Create waypoints from start to target position
+
     NUM_WAYPOINT = 10
     waypoints = []
     for t in range(NUM_WAYPOINT):
@@ -345,11 +345,11 @@ def move(env, task, target_pos, max_steps=100, threshold=0.01, timeout=10.0):
         wp = start_pos + alpha * (target_pos - start_pos)
         waypoints.append(wp)
     
-    # Initialize action array
+
     action = np.zeros(env.action_shape)
-    action[-1] = initial_gripper_state  # Maintain current gripper state
+    action[-1] = initial_gripper_state
     
-    # Move to each waypoint
+
     for i, waypoint in enumerate(waypoints):
         step_count = 0
         start_time = time.time()
@@ -394,7 +394,7 @@ def move(env, task, target_pos, max_steps=100, threshold=0.01, timeout=10.0):
                                         error_message=f"Exceeded max_steps({max_steps}) at waypoint {i}.")
             raise SkillFailure(fd_error)
     
-    # Hold at target position for stability
+
     for _ in range(5):
         action[:3] = target_pos
         action[3:7] = start_quat
@@ -405,9 +405,9 @@ def move(env, task, target_pos, max_steps=100, threshold=0.01, timeout=10.0):
     print("[move] Done move process.")
     return obs, reward, done
 
-###########################################################################################
-############################### New Skill Code for Rotation ###############################
-###########################################################################################
+
+
+
 
 import numpy as np
 import time
@@ -416,38 +416,38 @@ import numpy as np, time
 from env_utils import _to_world_vec
 
 def align_two_axes(env, task,
-                   local_axes=('x','y'),    # 그리퍼 로컬에서 정렬할 축 2개
-                   world_axes=('z','y'),    # 월드에서 목표 축 2개
-                   axis_dirs=(1,1),         # 각 축의 ± 방향
-                   tol_rad=1e-3,            # 허용 회전각 [rad]
+                   local_axes=('x','y'),
+                   world_axes=('z','y'),
+                   axis_dirs=(1,1),
+                   tol_rad=1e-3,
                    max_steps=100, timeout=10.0):
     """
     그리퍼 로컬 두 축을 월드 두 축에 동시에 정렬하여
     완전한 방향 고정을 수행.
     """
-    # 1) 현재 포즈
+
     obs = task.get_observation()
     pos = obs.gripper_pose[:3]
     curr_quat = normalize_quaternion(obs.gripper_pose[3:7])
     curr_rot = R.from_quat(curr_quat)
     original_pos = obs.gripper_pose.copy()
 
-    # 2) 벡터 준비
+
     axis_map = {'x': np.array([1,0,0]), 'y': np.array([0,1,0]), 'z': np.array([0,0,1])}
-    a = []  # 현재 로컬→월드 벡터
-    b = []  # 목표 벡터
+    a = []
+    b = []
     for la, wa, d in zip(local_axes, world_axes, axis_dirs):
         a.append(curr_rot.apply(axis_map[la]))
         b.append(d * _to_world_vec(wa))
 
-    # 3) 두 쌍에 대한 최적 회전 계산
-    #   R_opt: a_i → b_i 가 가장 최소 오차가 나도록 하는 회전
+
+
     R_opt, _ = R.align_vectors(b, a)
     target_quat = (R_opt * curr_rot).as_quat()
 
-    # 4) step 루프: 회전각 기준으로 수렴 여부 판단
-#    def angle_diff(q1, q2):
-#        return (R.from_quat(q1).inv() * R.from_quat(q2)).magnitude()
+
+
+
 
     action = np.zeros(env.action_shape)
     action[-1] = getattr(obs, 'gripper_open', 1.0)
@@ -480,7 +480,7 @@ def align_two_axes(env, task,
 
         if time.time() - start > timeout:
             break
-    # 안정화
+
     for _ in range(5):
         action[:3] = pos
         action[3:7] = target_quat
@@ -502,7 +502,7 @@ import math
 import inspect
 
 def _quat_mul(q1, q2):
-    # (x, y, z, w)
+
     x1, y1, z1, w1 = q1
     x2, y2, z2, w2 = q2
     return np.array([
@@ -516,35 +516,35 @@ def _quat_from_euler(roll, pitch, yaw):
     cr = math.cos(roll/2);  sr = math.sin(roll/2)
     cp = math.cos(pitch/2); sp = math.sin(pitch/2)
     cy = math.cos(yaw/2);   sy = math.sin(yaw/2)
-    # XYZ (roll, pitch, yaw) → quaternion (x,y,z,w)
+
     return np.array([
-        sr*cp*cy - cr*sp*sy,   # x
-        cr*sp*cy + sr*cp*sy,   # y
-        cr*cp*sy - sr*sp*cy,   # z
-        cr*cp*cy + sr*sp*sy    # w
+        sr*cp*cy - cr*sp*sy,
+        cr*sp*cy + sr*cp*sy,
+        cr*cp*sy - sr*sp*cy,
+        cr*cp*cy + sr*sp*sy
     ], dtype=float)
 
 _flip_dict = {
-    # Top-down (현재 코드와 동일: +Z → -Z)
-    'down' : np.array([1.0, 0.0, 0.0, 0.0]),  # x축 180도
 
-    # 접근축이 월드 +X (오른쪽에서)
-    'right' : _quat_from_euler(0.0, math.radians(90), 0.0),   # pitch=+90°
+    'down' : np.array([1.0, 0.0, 0.0, 0.0]),
 
-    # 접근축이 월드 -X (왼쪽에서)
-    'left'  : _quat_from_euler(0.0, math.radians(-90), 0.0),  # pitch=-90°
 
-    # 접근축이 월드 +Y (앞에서)
-    'front' : _quat_from_euler(math.radians(-90), 0.0, 0.0),  # roll=-90°
+    'right' : _quat_from_euler(0.0, math.radians(90), 0.0),
 
-    # 접근축이 월드 -Y (뒤에서)
-    'back'  : _quat_from_euler(math.radians(90), 0.0, 0.0),   # roll=+90°
+
+    'left'  : _quat_from_euler(0.0, math.radians(-90), 0.0),
+
+
+    'front' : _quat_from_euler(math.radians(-90), 0.0, 0.0),
+
+
+    'back'  : _quat_from_euler(math.radians(90), 0.0, 0.0),
 }
 
 def _yaw_from_quat(q):
     x, y, z, w = q
-    # ZYX 컨벤션에서 yaw(psi) 추출
-    # yaw = atan2(2(wz + xy), 1 - 2(y^2 + z^2))
+
+
     t0 = 2.0*(w*z + x*y)
     t1 = 1.0 - 2.0*(y*y + z*z)
     return math.atan2(t0, t1)
@@ -561,9 +561,9 @@ def align_to_quaternion(env, task,
                         object_quaternion,
                         yaw_align,
                         approach_direction,
-                        tol_rad=1e-3,      # 허용 회전 오차 [rad]
-                        max_steps=100,     # 최대 스텝
-                        timeout=10.0):     # 타임아웃 [초]
+                        tol_rad=1e-3,
+                        max_steps=100,
+                        timeout=10.0):
     """
     현재 그리퍼 방향을 target_quat에 맞추도록 회전시킴.
     
@@ -577,14 +577,14 @@ def align_to_quaternion(env, task,
     Returns:
         obs, reward, done: 마지막 step 결과
     """
-    # 1) 초기 포즈 및 action 벡터 준비
+
     obs = task.get_observation()
     pos = obs.gripper_pose[:3]
     action = np.zeros(env.action_shape)
-    action[-1] = getattr(obs, 'gripper_open', 1.0)  # 그리퍼 개방도 고정
+    action[-1] = getattr(obs, 'gripper_open', 1.0)
     original_pos = obs.gripper_pose.copy()
 
-    # target quat 계산
+
     yaw = _yaw_from_quat(object_quaternion)
     flip_quat = _flip_dict[approach_direction]
     yaw_offset = (0.0 if (yaw_align == 'parallel') else (math.pi / 2.0))
@@ -592,17 +592,17 @@ def align_to_quaternion(env, task,
     target_quat = _quat_mul(yaw_quat, flip_quat)
     target_quat = (target_quat / np.linalg.norm(target_quat))
 
-    # 2) 쿼터니언 정규화
+
     target_quat = normalize_quaternion(target_quat)
 
-    # 3) 수렴 루프
+
     start_time = time.time()
     step = 0
     while True:
         obs = task.get_observation()
         curr_quat = normalize_quaternion(obs.gripper_pose[3:7])
 
-        # 수렴 조건
+
         if angle_diff(curr_quat, target_quat) < tol_rad:
             break
         if step >= max_steps:
@@ -610,15 +610,15 @@ def align_to_quaternion(env, task,
 
         if time.time() - start_time > timeout:
             print(f"[align_to_quaternion] Timeout: Failed to reach waypoint {step} within {timeout} seconds.")
-            # fd_error = FeedbackWithError(env=env, task=task,skill_type="align_to_quaternion",attempted_action=action,robot_pos=obs.gripper_pose,
-            #                             waypoints=None, waypoint_index=-1, step_index=step, 
-            #                             original_robot_pos=original_pos,
-            #                             error_message=f"Timeout while reaching waypoint {step} during align_to_quaternion process.")
-            # raise SkillFailure(fd_error)
+
+
+
+
+
             print("??")
             return obs, reward, done
 
-        # 위치 유지, 방향 목표로 설정
+
         action[:3] = pos
         action[3:7] = target_quat
         
@@ -638,7 +638,7 @@ def align_to_quaternion(env, task,
 
         step += 1
 
-    # 4) 안정화를 위해 몇 번 더 반복
+
     for _ in range(5):
         action[:3] = pos
         action[3:7] = target_quat
@@ -793,33 +793,33 @@ def push(env, task, target_pos, approach_distance=0.1, max_steps=100, threshold=
         
     return obs, reward, done
 
-##########################################################################################
-########################## New Skill Code for Higher level Exec ##########################
-##########################################################################################
+
+
+
 
 def open_and_retract(env, task,
-                     retract_dir=np.array([0, 0, 0.005]),  # 빼는 방향(기본: +z 위로)
-                     dist=0.04,                          # 4cm 정도만 빼기
-                     steps=15):                          # 보간 스텝
+                     retract_dir=np.array([0, 0, 0.005]),
+                     dist=0.04,
+                     steps=15):
     """
     현재 위치에서 그리퍼를 열면서(release) 지정한 방향으로 dist만큼 직선 retract.
     - 열기 = 1.0, 닫기 = -1.0 가정
     - 안전/간단 버전: 복잡한 보정, wiggle 없음
     """
-    # 현재 포즈
+
     obs = task.get_observation()
     pos = obs.gripper_pose[:3].copy()
-    quat = obs.gripper_pose[3:7].copy()  # 별도 정규화 안 함
+    quat = obs.gripper_pose[3:7].copy()
     action = np.zeros(env.action_shape, dtype=float)
 
-    # 목표점 계산
+
     retract_dir = np.asarray(retract_dir, dtype=float)
     if np.linalg.norm(retract_dir) < 1e-9:
-        retract_dir = np.array([0, 0, 1.0])  # 방향이 0이면 위로
+        retract_dir = np.array([0, 0, 1.0])
     retract_dir = retract_dir / np.linalg.norm(retract_dir)
     end_pos = pos - retract_dir * float(dist)
 
-    # 1) 일단 현재에서 열기 명령
+
     action[:3] = pos
     action[3:7] = quat
     action[-1] = 1.0
@@ -827,14 +827,14 @@ def open_and_retract(env, task,
     if done:
         return obs, reward, done
 
-    # 2) 열린 상태 유지하며 직선 retract
+
     steps = max(1, int(steps))
     for k in range(steps):
         a = (k + 1) / steps
         p = pos * (1 - a) + end_pos * a
         action[:3] = p
         action[3:7] = quat
-        action[-1] = 1.0  # 계속 열린 상태 유지
+        action[-1] = 1.0
         obs, reward, done = task.step(action)
         if done:
             return obs, reward, done
