@@ -32,8 +32,8 @@ def implement_get_object_positions(objects_dict, index: int = None):
 
 def implement_full_func_instruction(objects_dict, descriptions: str, task_name, index: int = None):
     get_obj_pos = implement_get_object_positions(objects_dict, index)
-    # if task_name == "ChangeChannel":
-    #     descriptions = "Push the target button to change the channel."
+
+
     run_task = f"""
 def run_task(env, task, descriptions = None, obs = None, variation_index: int = 1):
     \"\"\"
