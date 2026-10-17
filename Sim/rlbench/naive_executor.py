@@ -1,4 +1,4 @@
-# 20251215 작성
+
 
 import argparse
 import importlib
@@ -34,14 +34,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     robot_type = args.robot.lower()
 
-    # rlbench.tasks 모듈에서 클래스 동적 로드
+
     tasks_module = importlib.import_module(f"rlbench.tasks")
     try:
         task_cls = getattr(tasks_module, args.task)
     except AttributeError:
         raise SystemExit(f"Error: '{args.task}' 라는 태스크 클래스를 찾을 수 없습니다.")
     
-    # env setup
+
     env, task = setup_environment(task_cls, robot_type.lower())
 
     descriptions, obs = task.reset()
@@ -77,7 +77,7 @@ if __name__ == "__main__":
             run_task = getattr(module, "run_skill")
             run_task(env, task, descriptions, obs)
 
-            # success 여부 확인
+
             success, terminate = task._task.success()
             if success:
                 print("[Main] [Feedback] Task completed successfully! [Main]")
