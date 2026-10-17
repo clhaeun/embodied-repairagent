@@ -12,10 +12,10 @@ def _get_object_relation(task_name: str, objects: List[str], instruction: str) -
     """
     Generate object relation description based on task type and objects.
     """
-    # Filter out non-manipulable objects
+
     manipulable = [obj for obj in objects if obj not in ('floor', 'gripper', 'suction')]
 
-    # Task-specific relation templates
+
     if task_name == "pick_place":
         containers = [obj for obj in manipulable if any(kw in obj.lower() for kw in ('box', 'bin', 'container', 'basket', 'tray'))]
         items = [obj for obj in manipulable if obj not in containers]
@@ -85,18 +85,18 @@ def construct_prompt(
     Returns:
         Formatted prompt string for LLM code generation
     """
-    # Filter out 'floor' from available objects for manipulation
+
     available_objects = [obj for obj in objects if obj != 'floor']
 
-    # Generate object relation if not provided
+
     if object_relation is None:
         object_relation = _get_object_relation(task_name, objects, instruction)
 
-    # Create object list string
+
     obj_list_str = ", ".join([f"'{obj}'" for obj in available_objects])
 
-    # Note: Vacuum EE instructions are already included in the prompt template below
-    _ = ee_type  # ee_type can be used for future conditional prompt sections
+
+    _ = ee_type
 
     prompt = f"""
 # MANDATORY: Use these EXACT objects and skills. NO placeholders!
