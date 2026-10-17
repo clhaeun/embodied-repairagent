@@ -41,14 +41,14 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
 
     print("[InsertSlot] Starting task")
 
-    # Get positions
+
     target_slot_pos = env.get_obj_pos("target_slot")
     auxiliary_slot_pos = env.get_obj_pos("auxiliary_slot")
 
     print(f"[InsertSlot] Target slot position: {target_slot_pos}")
     print(f"[InsertSlot] Auxiliary slot position: {auxiliary_slot_pos}")
 
-    # Step 1: Remove blocking object from target slot
+
     print("\n[InsertSlot] Step 1: Removing blocking object")
     try:
         result = provider.execute_subtask(
@@ -64,7 +64,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
         if skip.result is not None:
             subtask_results.append(skip.result)
 
-    # Step 2: Place blocking object beside auxiliary slot
+
     print("\n[InsertSlot] Step 2: Placing blocking object aside")
     try:
         result = provider.execute_subtask(
@@ -82,7 +82,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
         if skip.result is not None:
             subtask_results.append(skip.result)
 
-    # Step 3: Insert target object into target slot
+
     print("\n[InsertSlot] Step 3: Inserting target object")
     try:
         result = provider.execute_subtask(
@@ -100,7 +100,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
         if skip.result is not None:
             subtask_results.append(skip.result)
 
-    # Check result
+
     result = env.check_result()
     print(f"\n[InsertSlot] Task completed with result: {result}")
     return result
