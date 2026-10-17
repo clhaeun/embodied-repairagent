@@ -140,7 +140,7 @@ TOOL_CALL_PATTERNS = [
     r"<tool_call\b.*?>.*?</tool_call>",   # 블록 형태
     r"</?tool_call\b.*?>",                # 태그만
     r"<\|tool_call\|>.*?<\|/tool_call\|>", # 특수토큰 변형(혹시)
-    r"<\|.*?\|>",                          # 기타 모델 특수토큰(보수적으로)
+    r"<\|.*?\|>",
 ]
 
 def _strip_tool_calls(s: str) -> str:
@@ -261,7 +261,7 @@ def fix_quaternion(code: str) -> str:
     try:
         tree = ast.parse(code)
     except SyntaxError:
-        return code  # 파싱 실패면 그대로(보수적)
+        return code
 
     tree = _FixAlignGripperKwargs().visit(tree)
     ast.fix_missing_locations(tree)
@@ -340,9 +340,9 @@ def postprocess_initial_code(llm_generated: str, robot_name: str) -> str:
         try:
             body = _extract_function_body_ast(cleaned, "run_skill")
             if not body or not body.strip():
-                body = cleaned  # 빈 바디면 fallback
+                body = cleaned
         except Exception:
-            body = cleaned  # 파싱 실패 시 보수적 fallback
+            body = cleaned
     else:
         body = cleaned
 
@@ -598,7 +598,7 @@ def merge_continuation_into_run_skill(
     try:
         tree = ast.parse(current_code)
     except Exception:
-        # current_code가 깨져있으면 병합하지 않고 그대로 반환(보수적)
+
         return current_code
 
     fn = _find_run_skill_node(tree)
@@ -802,7 +802,7 @@ def postprocess_continuation_code(llm_generated: str) -> str:
     if _is_valid_body(body):
         return body
 
-    # 6) 1차 복구: 앞쪽 잡텍스트 제거 후 재검증(기존 로직 유지)
+
     lines = body.splitlines()
     start = 0
     code_start_re = re.compile(r"^\s*(#|[A-Za-z_][A-Za-z0-9_]*\s*=?|\(|\)|\[|\]|obs\s*,\s*reward\s*,\s*done\s*=)")
@@ -824,7 +824,7 @@ def postprocess_continuation_code(llm_generated: str) -> str:
         if cand.strip() and _is_valid_body(cand):
             return cand
 
-    # 8) 3차 복구: 코드펜스 다중 블록 중 최선 블록 재시도(기존 로직 유지)
+
     picked = _pick_best_code_block(raw)
     if picked:
         picked_clean = _clean_llm_text_to_python_code(picked)
@@ -935,7 +935,7 @@ def _rewrite_list_plus_list(stmt_code: str) -> str:
     try:
         tree = ast.parse(src)
     except Exception:
-        return stmt_code  # 파싱 실패면 원본 유지(보수적)
+        return stmt_code
 
     new_tree = _ListAddToNpArray().visit(tree)
     ast.fix_missing_locations(new_tree)
@@ -970,7 +970,7 @@ def _apply_list_add_to_np_array_on_body(body: str) -> str:
         new_body = _dedent_continuation(new_body)
         return new_body
     except Exception:
-        # 보수적으로 실패 시 원본 유지
+
         return body
 
 
@@ -1173,7 +1173,7 @@ def create_execution_context(env, task, robot_type: str) -> Dict[str, Any]:
     try:
         skill_module = importlib.import_module(skill_module_name)
     except ImportError:
-        # fallback to default
+
         skill_module = importlib.import_module("skill_code")
 
     # env_utils 모듈에서 필요한 함수들 import
