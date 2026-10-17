@@ -1,6 +1,6 @@
- # ... (previous code remains unchanged)
 
-    # Corrected code to complete the task
+
+
     sponge_object = Shape('sponge')
     sponge_position = np.array(sponge_object.get_position(), dtype=np.float64)
     target_z = float(getattr(task._task, 'z_boundary', sponge_position[2]))
