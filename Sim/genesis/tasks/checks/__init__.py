@@ -50,40 +50,40 @@ from tasks.checks.pour_liquid import (
 )
 
 
-# ============================================================================
-# Subtask-to-Check Function Mapping
-# ============================================================================
-# Maps subtask names to their corresponding check functions.
-# Used by genesis_loop.py to automatically verify subtask success.
-#
-# Structure:
-#   SUBTASK_CHECK_MAP[task_name][subtask_name] = check_function
-#
-# Check functions have signatures like:
-#   check_func(env, obj_name, ...) -> bool
-# ============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
 
 SUBTASK_CHECK_MAP = {
-    # =========================================================================
-    # pick_place task
-    # =========================================================================
+
+
+
     "pick_place": {
         "pick_single": pick_place_check_pick,
         "place_single": pick_place_check_place,
         "unstack_single": check_unstack_success,
     },
 
-    # =========================================================================
-    # sweep task
-    # =========================================================================
+
+
+
     "sweep": {
         "sweep_single": check_sweep_success,
         "relocate_single": check_relocate_success,
     },
 
-    # =========================================================================
-    # put_in_prismatic task
-    # =========================================================================
+
+
+
     "put_in_prismatic": {
         "pick_single": prismatic_check_pick,
         "place_single": prismatic_check_place,
@@ -91,20 +91,20 @@ SUBTASK_CHECK_MAP = {
         "close_drawer": check_close_drawer_success,
     },
 
-    # =========================================================================
-    # put_in_hinge task
-    # =========================================================================
+
+
+
     "put_in_hinge": {
         "pick_single": hinge_check_pick,
         "place_single": hinge_check_place,
-        "place_at_position": check_move_obstacle_success,  # For moving obstacle
+        "place_at_position": check_move_obstacle_success,
         "open_hinge_lid": check_open_hinge_success,
         "close_hinge_lid": check_close_hinge_success,
     },
 
-    # =========================================================================
-    # pick_place_2 variants (ball, cube, cylinder, inverse_*)
-    # =========================================================================
+
+
+
     "pick_place_2": {
         "pick_and_place_object": check_pick_and_place_success,
     },
@@ -127,18 +127,18 @@ SUBTASK_CHECK_MAP = {
         "pick_and_place_object": check_pick_and_place_success,
     },
 
-    # =========================================================================
-    # insert_slot task
-    # =========================================================================
+
+
+
     "insert_slot": {
         "remove_from_slot": check_remove_from_slot_success,
         "place_beside_slot": check_place_beside_slot_success,
         "insert_into_slot": check_insert_into_slot_success,
     },
 
-    # =========================================================================
-    # pour_liquid task
-    # =========================================================================
+
+
+
     "pour_liquid": {
         "grasp_container_vacuum": check_grasp_container_success,
         "pour_into_container": check_pour_success,
@@ -163,37 +163,37 @@ def get_check_function(task_name: str, subtask_name: str):
 
 
 __all__ = [
-    # pick_place
+
     "pick_place_check_pick",
     "pick_place_check_place",
     "check_unstack_success",
-    # sweep
+
     "check_sweep_success",
     "check_relocate_success",
-    # put_in_prismatic
+
     "prismatic_check_pick",
     "prismatic_check_place",
     "check_open_drawer_success",
     "check_close_drawer_success",
-    # put_in_hinge
+
     "hinge_check_pick",
     "hinge_check_place",
     "check_open_hinge_success",
     "check_close_hinge_success",
     "check_move_obstacle_success",
-    # pick_place_2
+
     "pick_place_2_check_pick",
     "pick_place_2_check_place",
     "check_pick_and_place_success",
-    # insert_slot
+
     "check_remove_from_slot_success",
     "check_place_beside_slot_success",
     "check_insert_into_slot_success",
-    # pour_liquid
+
     "check_grasp_container_success",
     "check_pour_success",
     "check_release_container_success",
-    # Mapping utilities
+
     "SUBTASK_CHECK_MAP",
     "get_check_function",
 ]
