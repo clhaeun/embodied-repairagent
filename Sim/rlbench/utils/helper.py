@@ -17,10 +17,10 @@ def list_task_objects(env: TaskEnvironment) -> List[Object]:
     return base.get_objects_in_tree(exclude_base=True)
 
 def to_camel_case(s):
-    return ''.join(word.capitalize() for word in s.split('_'))  # snake to camel
+    return ''.join(word.capitalize() for word in s.split('_'))
 
 def to_words(s):
-    return re.sub(r'(?<!^)(?=[A-Z])', ' ', s).lower()  # camel to words
+    return re.sub(r'(?<!^)(?=[A-Z])', ' ', s).lower()
 
 def object_names_prev(env: TaskEnvironment, task_name: str = ""):
     objects_info = []
@@ -94,7 +94,7 @@ def object_names(env: TaskEnvironment, task_name: str = ""):
         cls = _type_registry.get(type_name, None)
         obj = cls(name)
         pos = obj.get_position()
-        # Convert numpy array to list for JSON serialization
+
         pos_list = pos.tolist() if hasattr(pos, 'tolist') else list(pos)
         objects_info.append({"type": type_name, "name": name, "position": pos_list})
     
@@ -155,7 +155,7 @@ def get_scene_summary(env: TaskEnvironment, task_name: str = "") -> str:
             scene_summary_str += f"- name: '{name}', type: '{obj_type}', position: {['{:.2f}'.format(c) for c in obj_pos]}"
 
             if name in orientation_dependent_objects:
-                obj_orientation = pyrep_object.get_orientation()  # Quaternion [x, y, z, w]
+                obj_orientation = pyrep_object.get_orientation()
                 scene_summary_str += f", orientation: {['{:.2f}'.format(c) for c in obj_orientation]}"
 
             scene_summary_str += "\n"
@@ -177,7 +177,7 @@ def object_names_with_noise(env: TaskEnvironment, task_name: str = "", noise_pro
         tuple: A tuple containing the string representation of the noisy object list
                and the list of noisy object dictionaries.
     """
-    # Fix the random seed to ensure reproducibility.
+
     random.seed(42)
 
     _, objects_info = object_names(env, task_name)
@@ -203,19 +203,19 @@ def object_names_with_noise(env: TaskEnvironment, task_name: str = "", noise_pro
         for task, objects in tasks_dict.items():
             if task != task_name:
                 for obj_name in objects:
-                    # Add only if not in current task and does not contain "success".
+
                     if obj_name not in current_task_objects and "success" not in obj_name:
                         all_other_objects.append(obj_name)
         
-        # Remove duplicates
+
         all_other_objects = list(set(all_other_objects))
 
         if action == 'add' and all_other_objects:
             num_to_add = random.randint(1, 3)
-            # 추가하려는 개수보다 추가 가능한 객체 수가 적을 경우, 가능한 만큼만 추가
+
             num_to_add = min(num_to_add, len(all_other_objects))
             
-            # 중복 없이 num_to_add 개수만큼 객체를 샘플링
+
             objects_to_add = random.sample(all_other_objects, num_to_add)
             
             for obj_name in objects_to_add:
@@ -226,18 +226,18 @@ def object_names_with_noise(env: TaskEnvironment, task_name: str = "", noise_pro
 
         elif action == 'remove' and objects_info:
             initial_count = len(objects_info)
-            # 제거 후 최소 2개의 객체가 남아야 하므로, 최대로 제거 가능한 개수는 (현재 개수 - 2)
-            # 이 값과 3 중에서 더 작은 값을 상한으로 설정
+
+
             max_removable = min(3, initial_count - 2)
 
             if max_removable >= 1:
                 num_to_remove = random.randint(1, max_removable)
                 objects_to_remove = random.sample(objects_info, num_to_remove)
                 
-                # 제거할 객체들의 이름으로 세트(set)를 만들어 효율적으로 탐색
+
                 names_to_remove = {obj['name'] for obj in objects_to_remove}
                 
-                # 제거할 객체들을 제외하고 새로운 리스트를 생성
+
                 objects_info = [obj for obj in objects_info if obj['name'] not in names_to_remove]
                 
                 removed_names = [obj['name'] for obj in objects_to_remove]
