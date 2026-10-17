@@ -32,20 +32,20 @@ def get_scene_info(env, target_robot: str = "gripper") -> Dict[str, Any]:
     try:
         scene_info: Dict[str, Any] = {}
 
-        # =================================================================
-        # Gripper State (critical for validation)
-        # =================================================================
+
+
+
         gripper_info = _extract_gripper_info(env)
         scene_info["gripper"] = gripper_info
 
-        # =================================================================
-        # Robot/End-effector type
-        # =================================================================
+
+
+
         scene_info["robot_type"] = getattr(env, 'ee_type', target_robot)
 
-        # =================================================================
-        # Object States
-        # =================================================================
+
+
+
         gripper_pos = gripper_info.get("position")
         objects_info = _extract_objects_info(env, gripper_info.get("held_object"), gripper_pos)
         scene_info["objects"] = objects_info
@@ -75,20 +75,20 @@ def _extract_gripper_info(env) -> Dict[str, Any]:
     }
 
     try:
-        # Get gripper position from the gripper object
+
         if "gripper" in env.env.scene_objects:
             gripper_obj = env.env.scene_objects["gripper"]
 
-            # Position: get from gripper's link or entity
+
             gripper_info["position"] = _get_gripper_position(env, gripper_obj)
 
-            # Quaternion: get orientation
+
             gripper_info["quaternion"] = _get_gripper_quaternion(gripper_obj)
 
-            # Is open: check gripper state
+
             gripper_info["is_open"] = _get_gripper_open_state(env, gripper_obj)
 
-        # Check if holding an object
+
         gripper_info["held_object"] = _get_held_object(env)
 
     except Exception as e:
@@ -100,13 +100,13 @@ def _extract_gripper_info(env) -> Dict[str, Any]:
 def _get_gripper_position(env, gripper_obj) -> Optional[list]:
     """Get gripper position as list."""
     try:
-        # Try getting position from the end-effector link
+
         ee_link = gripper_obj.get_link(env.ee_name) if hasattr(gripper_obj, 'get_link') else None
         if ee_link is not None:
             pos = ee_link.get_pos()
             return pos.cpu().numpy().tolist() if hasattr(pos, 'cpu') else pos.tolist()
         else:
-            # Fallback: use gripper entity position
+
             pos = gripper_obj.get_pos() if hasattr(gripper_obj, 'get_pos') else None
             if pos is not None:
                 return pos.cpu().numpy().tolist() if hasattr(pos, 'cpu') else pos.tolist()
@@ -150,7 +150,7 @@ def _get_held_object(env) -> Optional[str]:
     return None
 
 
-# Height threshold for surface observation (60cm above object top)
+
 SURFACE_OBSERVATION_HEIGHT = 0.60
 
 
@@ -175,7 +175,7 @@ def _update_visited_surface(
     if gripper_pos is None or bbox is None:
         return
 
-    # Already visited
+
     if obj_name in env._visited_surfaces:
         return
 
@@ -183,17 +183,17 @@ def _update_visited_surface(
         gx, gy, gz = gripper_pos
         bbox_min, bbox_max = bbox[0], bbox[1]
 
-        # Check if gripper is within XY bounds of object
+
         in_xy_range = (bbox_min[0] <= gx <= bbox_max[0] and
                        bbox_min[1] <= gy <= bbox_max[1])
 
-        # Check if gripper is above object but within observation height
+
         obj_top_z = bbox_max[2]
         above_surface = obj_top_z <= gz <= (obj_top_z + SURFACE_OBSERVATION_HEIGHT)
 
         if in_xy_range and above_surface:
             env._visited_surfaces.add(obj_name)
-            # Log surface observation
+
             obj = env.env.scene_objects.get(obj_name)
             if obj is not None:
                 surface_info = getattr(obj, 'surface_info', None)
@@ -226,7 +226,7 @@ def _extract_objects_info(
     Returns:
         List of object state dictionaries
     """
-    # Initialize visited surfaces set on env if not exists
+
     if not hasattr(env, '_visited_surfaces'):
         env._visited_surfaces = set()
 
@@ -265,7 +265,7 @@ def _extract_single_object_info(
         pos = env.get_obj_pos(obj_name)
         bbox = env.get_obj_bbox(obj_name)
 
-        # Get quaternion if available
+
         quat = None
         try:
             quat_tensor = obj.get_quat() if hasattr(obj, 'get_quat') else None
@@ -274,15 +274,15 @@ def _extract_single_object_info(
         except Exception:
             pass
 
-        # Get surface_info if available (e.g., inverse tray with slippery edges)
+
         raw_surface_info = getattr(obj, 'surface_info', None)
 
-        # Check if gripper is above this object (within 30cm above surface)
-        # If so, mark as visited and expose surface_info
+
+
         bbox_list = bbox.tolist() if bbox is not None else None
         _update_visited_surface(env, obj_name, gripper_pos, bbox_list)
 
-        # Only expose surface_info if gripper has visited above this object
+
         surface_info = None
         if obj_name in env._visited_surfaces and raw_surface_info is not None:
             surface_info = raw_surface_info
