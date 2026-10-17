@@ -27,7 +27,7 @@ class RemoteLLMSocketClient:
         host: str,
         port: int,
         connect_timeout: float = 120.0,
-        recv_timeout: Optional[float] = 600.0,  # 10 minutes for LLM generation
+        recv_timeout: Optional[float] = 600.0,
         tcp_nodelay: bool = True,
     ):
         self.host = host
@@ -56,7 +56,7 @@ class RemoteLLMSocketClient:
             s.settimeout(self.recv_timeout)
         self._sock = s
 
-        # handshake
+
         self.send({"type": "hello", "client": "genesis_loop"})
         resp = self.recv()
         if not isinstance(resp, dict) or resp.get("type") != "hello_ack":
