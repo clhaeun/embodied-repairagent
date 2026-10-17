@@ -1,7 +1,7 @@
-# RepairAgent policy_provider
-# - Provider는 prompt를 만들지 않고 "준비물(inputs)"만 서버로 전송
-# - failure: type="repair" (서버가 run_skill 전체를 재작성하도록 유도)
-# - not_finished: type="revise" + last_step.need_more_steps=True (서버가 추가 생성/완성하도록 유도)
+
+
+
+
 
 import os
 import json
@@ -55,7 +55,7 @@ class PolicyProvider:
 
     def __init__(
         self,
-        mode: str,                 # "static"|"local_llm"|"remote_llm"
+        mode: str,
         policy_path: str,
         task_name: str,
         source_robot: str,
@@ -64,10 +64,10 @@ class PolicyProvider:
         initial_prompt: str,
         remote_host: str = "127.0.0.1",
         remote_port: int = 9000,
-        # object_names: Optional[List[str]] = None,
+
         object_names: list = None,
         descriptions: str = "",
-        # target_scene_info: Any = None,
+
         target_scene_info = None,
         grasp_guidance: str = "",
     ):
@@ -81,31 +81,31 @@ class PolicyProvider:
         self.initial_prompt = initial_prompt
         self.object_names = object_names or []
         self.descriptions = descriptions
-        # self.target_scene_info = target_scene_info or []
+
         self.target_scene_info = target_scene_info
-        self.grasp_guidance = grasp_guidance  # alignment가 필요한 graspable objects 정보
-        self.last_response_num_tokens: Optional[int] = None  # 마지막 LLM 응답의 토큰 수
-        self.last_prompt: Optional[str] = None  # 마지막 LLM에 전달된 프롬프트
-        self.last_hypothesis_prompt: Optional[str] = None  # 마지막 hypothesis 생성용 프롬프트
-        self.last_hypothesis_response: Optional[str] = None  # 마지막 hypothesis LLM 응답
+        self.grasp_guidance = grasp_guidance
+        self.last_response_num_tokens: Optional[int] = None
+        self.last_prompt: Optional[str] = None
+        self.last_hypothesis_prompt: Optional[str] = None
+        self.last_hypothesis_response: Optional[str] = None
 
         self.client: Optional[RemoteLLMSocketClient] = None
         self.last_response_num_tokens: Optional[int] = None
 
         self.client: Optional[RemoteLLMSocketClient] = None
-        self.bg_client: Optional[RemoteLLMSocketClient] = None  # 백그라운드 스레드용 별도 클라이언트
-        self._bg_client_lock = threading.Lock()  # bg_client 접근 보호용 lock
+        self.bg_client: Optional[RemoteLLMSocketClient] = None
+        self._bg_client_lock = threading.Lock()
 
         self._remote_host = remote_host
         self._remote_port = remote_port
         if self.mode == "remote_llm":
-            # connect_timeout을 30초로 줄여서 빠르게 실패하도록
-            # recv_timeout은 600초(10분)로 LLM 생성 시간 고려
+
+
             self.client = RemoteLLMSocketClient(
                 remote_host,
                 remote_port,
-                connect_timeout=30.0,  # 연결 시도는 30초만
-                recv_timeout=600.0     # 응답 대기는 10분
+                connect_timeout=30.0,
+                recv_timeout=600.0
             )
             print(f"[INFO] Connecting to remote LLM server at {remote_host}:{remote_port}...")
             self.client.connect()
@@ -121,9 +121,9 @@ class PolicyProvider:
             self.bg_client.close()
             self.bg_client = None
 
-    # -------------------------
-    # Initial code generation
-    # -------------------------
+
+
+
     def get_initial_code(self) -> str:
         """
         generate 요청에서:
@@ -179,9 +179,9 @@ class PolicyProvider:
 
         raise ValueError(f"Unknown mode: {self.mode}")
 
-    # -------------------------
-    # Step-wise revise (optional)
-    # -------------------------
+
+
+
     def revise_on_step(
         self,
         current_code: str,
@@ -216,7 +216,7 @@ class PolicyProvider:
                 "last_step": last_step_payload,
                 "grasp_guidance": self.grasp_guidance,
                 "reference_code": self.reference_code,
-                # "target_scene_info": self.target_scene_info,
+
             }
         }
         _debug_print_req("CLIENT->SERVER generate", req)
@@ -238,9 +238,9 @@ class PolicyProvider:
         return new_code
 
 
-    # -------------------------
-    # Failure repair (full rewrite expected)
-    # -------------------------
+
+
+
     def repair_on_failure(
         self,
         current_code: str,
@@ -275,7 +275,7 @@ class PolicyProvider:
             self._save(new_code)
             return new_code
 
-        # remote_llm
+
         assert self.client is not None
 
         req = {
@@ -313,9 +313,9 @@ class PolicyProvider:
         self._save(new_code)
         return new_code
 
-    # -------------------------
-    # Not-finished -> revise (server generates additional steps / or returns full code)
-    # -------------------------
+
+
+
     def repair_on_not_finished(
         self,
         current_code: str,
@@ -357,7 +357,7 @@ class PolicyProvider:
         assert self.client is not None
 
         last_step_payload = dict(last_step_payload or {})
-        last_step_payload["need_more_steps"] = True  # 서버 revise 게이트용
+        last_step_payload["need_more_steps"] = True
 
         req = {
             "type": "revise",
@@ -380,9 +380,9 @@ class PolicyProvider:
                 "grasp_guidance": self.grasp_guidance,
                 "reference_code": self.reference_code,
                 "exploration_obs": exploration_obs,
-                # "target_scene_info": self.target_scene_info,
+
             },
-            # "gen": {"do_sample": False, "temperature": 0.2, "top_p": 0.9, "min_new_tokens": 200, "max_new_tokens": 900},
+
         }
         _debug_print_req("CLIENT->SERVER generate", req)
         resp = self.client.request(req)
@@ -399,9 +399,9 @@ class PolicyProvider:
         self._save(new_code)
         return new_code
 
-    # -------------------------
-    # utils
-    # -------------------------
+
+
+
     """
     def _update_token_stats(self, resp: Dict[str, Any]) -> None:
         # SkillCache는 num_tokens를 쓰기도 하고, 다른 서버는 meta.new_tokens를 쓰기도 함
@@ -418,7 +418,7 @@ class PolicyProvider:
         prompt = meta.get("prompt")
         if prompt:
             self.last_prompt = prompt
-        # hypothesis 정보도 추출
+
         hyp_prompt = meta.get("hypothesis_prompt")
         hyp_response = meta.get("hypothesis_response")
         self.last_hypothesis_prompt = hyp_prompt if hyp_prompt else None
@@ -431,7 +431,7 @@ class PolicyProvider:
 
     def _read(self, robot_name: str, task_name: str) -> str:
         candidates = [
-            f"./common_rlbench/tasks/tasks_{robot_name}/{task_name}.py",  # oracle 폴더(우선)
+            f"./common_rlbench/tasks/tasks_{robot_name}/{task_name}.py",
             f"./tasks_{robot_name}/{task_name}.py",
         ]
         for path in candidates:
