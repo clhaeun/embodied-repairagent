@@ -11,11 +11,11 @@ class RunTaskExtractor(ast.NodeVisitor):
         self.helper_functions = {}
 
     def visit_FunctionDef(self, node):
-        # target function body
+
         if node.name == self.subtask_name:
             self.subtask_name_body = node.body
 
-        # helper functions
+
         else:
             self.helper_functions[node.name] = node
 
@@ -84,7 +84,7 @@ def parse_code_bundle(code: str, subtask_name: str) -> CodeBundle:
     lines = code.split("\n")
     tree = ast.parse(code)
 
-    # FIX 1) extractor 이름 수정
+
     ex = RunTaskExtractor(subtask_name)
     ex.visit(tree)
 
@@ -97,7 +97,7 @@ def parse_code_bundle(code: str, subtask_name: str) -> CodeBundle:
         start = node.lineno - 1
         end_inclusive = getattr(node, "end_lineno", node.lineno)
 
-        # FIX 2) end_lineno는 inclusive이므로 +1 해서 slice
+
         helper_src_parts.append("\n".join(lines[start:end_inclusive]))
 
     helper_src = "\n\n".join(helper_src_parts)
