@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 """
 LLM-generated Python code post-processor
 ---------------------------------------
@@ -48,37 +48,37 @@ from dataclasses import dataclass
 from typing import List, Optional, Tuple
 from utils.code_postprocess import add_return_statement
 
-# Optional deps (graceful if missing)
-try:
-    import black  # type: ignore
-except Exception:  # pragma: no cover
-    black = None  # type: ignore
 
 try:
-    import autoflake  # type: ignore
-except Exception:  # pragma: no cover
-    autoflake = None  # type: ignore
+    import black
+except Exception:
+    black = None
 
 try:
-    import libcst as cst  # type: ignore
-except Exception:  # pragma: no cover
-    cst = None  # type: ignore
+    import autoflake
+except Exception:
+    autoflake = None
 
 try:
-    from pygments.lexers import guess_lexer  # type: ignore
-    from pygments.util import ClassNotFound  # type: ignore
-except Exception:  # pragma: no cover
-    guess_lexer = None  # type: ignore
-    ClassNotFound = Exception  # fallback
+    import libcst as cst
+except Exception:
+    cst = None
 
 try:
-    import markdown  # type: ignore
-except Exception:  # pragma: no cover
-    markdown = None  # type: ignore
+    from pygments.lexers import guess_lexer
+    from pygments.util import ClassNotFound
+except Exception:
+    guess_lexer = None
+    ClassNotFound = Exception
 
-# Optional: tree-sitter (Python) — stubbed; enable if you have it
-try:  # pragma: no cover - optional
-    from tree_sitter import Language, Parser  # type: ignore
+try:
+    import markdown
+except Exception:
+    markdown = None
+
+
+try:
+    from tree_sitter import Language, Parser
 
     _TS_AVAILABLE = True
 except Exception:
@@ -98,7 +98,7 @@ PYTHON_LANG_LABELS = {
 class CodeBlock:
     language: Optional[str]
     code: str
-    fence_label: Optional[str] = None  # label written after ``` if any
+    fence_label: Optional[str] = None
 
 
 @dataclass
@@ -124,9 +124,9 @@ class Config:
     add_header_comment: bool = True
 
 
-# -----------------------------
-# Extraction & classification
-# -----------------------------
+
+
+
 
 FENCE_RE = re.compile(
     r"```(?P<label>[a-zA-Z0-9_+\-]*)\n(?P<code>[\s\S]*?)```",
@@ -143,7 +143,7 @@ def extract_code_blocks(text: str) -> List[CodeBlock]:
         blocks.append(CodeBlock(language=label, code=code, fence_label=label))
 
     if not blocks:
-        # No fences → assume entire text is a single code-like blob
+
         blocks = [CodeBlock(language=None, code=text, fence_label=None)]
     return blocks
 
@@ -163,7 +163,7 @@ def detect_language(block: CodeBlock) -> str:
     if label in ("python", "pycon"):
         return "python"
 
-    # Fallback to Pygments guess
+
     if guess_lexer is None:
         return label or "text"
     try:
@@ -176,15 +176,15 @@ def detect_language(block: CodeBlock) -> str:
         return label or "text"
 
 
-# -----------------------------
-# Cleanup helpers
-# -----------------------------
+
+
+
 
 PYCON_PROMPT_RE = re.compile(r"^(>>> |\.\.\. )", re.MULTILINE)
 
 
 def strip_pycon_prompts(code: str) -> str:
-    # Remove REPL prompts and leading spaces following them
+
     return PYCON_PROMPT_RE.sub("", code)
 
 
@@ -192,14 +192,14 @@ MD_INLINE_CODE_LINE_RE = re.compile(r"^`{1,3}.*?`{1,3}$")
 
 
 def drop_inline_code_lines(code: str) -> str:
-    # Defensive: If stray single-line backticked code leaked in
+
     lines = [ln for ln in code.splitlines() if not MD_INLINE_CODE_LINE_RE.match(ln.strip())]
     return "\n".join(lines)
 
 
-# -----------------------------
-# Syntax & static checks
-# -----------------------------
+
+
+
 
 
 def python_syntax_ok(code: str) -> Tuple[bool, Optional[str]]:
@@ -318,7 +318,7 @@ def run_black(code: str) -> str:
     return black.format_str(code, mode=mode)
 
 
-# libcst-based safety tweaks
+
 if cst is not None:
 
     class FixBareExcept(cst.CSTTransformer):
@@ -339,22 +339,22 @@ if cst is not None:
 
 else:
 
-    def libcst_tweaks(code: str) -> str:  # type: ignore
+    def libcst_tweaks(code: str) -> str:
         return code
 
 
-# -----------------------------
-# Tree-sitter (optional) quick parse check
-# -----------------------------
+
+
+
 
 def treesitter_quick_check_python(code: str) -> bool:
     if not _TS_AVAILABLE:
-        return True  # skip quietly
-    try:  # Users must provide compiled language library in env var if needed
-        # Example: export TS_LANG=/path/to/build/my-langs.so
+        return True
+    try:
+
         lib = os.environ.get("TS_LANG")
         if not lib or not os.path.exists(lib):
-            return True  # silently skip if not configured
+            return True
         lang = Language(lib, "python")
         parser = Parser()
         parser.set_language(lang)
@@ -364,19 +364,19 @@ def treesitter_quick_check_python(code: str) -> bool:
         return True
 
 
-# -----------------------------
-# Orchestrator
-# -----------------------------
+
+
+
 
 
 def postprocess_text(text: str, cfg: Config) -> Tuple[str, Diagnostics]:
     steps: List[str] = []
 
-    # 1) Extract blocks
+
     raw_blocks = extract_code_blocks(text)
     steps.append(f"extracted_blocks={len(raw_blocks)}")
 
-    # 2) Keep only Python blocks (label → Pygments guess)
+
     py_blocks: List[CodeBlock] = []
     for b in raw_blocks:
         lang = detect_language(b)
@@ -394,11 +394,11 @@ def postprocess_text(text: str, cfg: Config) -> Tuple[str, Diagnostics]:
         code = cfg.join_blocks_with.join([b.code.strip("""
 """) for b in py_blocks])
 
-    # 3) Quick syntax check before autofixers
+
     ok, err = python_syntax_ok(code)
     steps.append(f"syntax_pre={'ok' if ok else 'fail'}")
 
-    # 3.1) Salvage if needed (truncated blocks / unclosed parens)
+
     if not ok:
         salvaged, note = salvage_incomplete_code(code)
         if note:
@@ -410,33 +410,33 @@ def postprocess_text(text: str, cfg: Config) -> Tuple[str, Diagnostics]:
         else:
             steps.append("salvage_not_effective")
 
-    # 4) Autoflake
+
     if cfg.run_autoflake:
         code = run_autoflake(code)
         steps.append("autoflake")
 
-    # 5) Black
+
     if cfg.run_black:
         code = run_black(code)
         steps.append("black")
 
-    # 6) libcst
+
     if cfg.run_libcst:
         code = libcst_tweaks(code)
         steps.append("libcst")
         if cfg.run_black:
             code = run_black(code)
 
-    # 7) Tree-sitter
+
     if not treesitter_quick_check_python(code):
         steps.append("treesitter=error")
     else:
         steps.append("treesitter=ok_or_skipped")
 
-    # 8) Syntax check final
+
     syntax_ok, syntax_error = python_syntax_ok(code)
 
-    # 9) Static analysis
+
     pyflakes_out = run_pyflakes_on_code(code) if cfg.run_pyflakes else None
     pylint_out = run_pylint_on_code(code, cfg.pylint_max_line_length) if cfg.run_pylint else None
 
@@ -462,18 +462,18 @@ def fix_if_done_return(code: str) -> str:
         line = lines[i]
         stripped = line.lstrip()
         if stripped.startswith("if done:"):
-            # 기본 indent 기억
+
             indent = line[: len(line) - len(stripped)]
-            # 다음 줄 확인
+
             if i + 1 < len(lines):
                 nxt = lines[i + 1].lstrip()
                 if not nxt.startswith("return"):
-                    # if done: 줄 자체를 return 붙여서 교체
+
                     new_lines.append(f"{indent}if done:    return")
-                    i += 1  # 다음 줄은 건너뛰지 않고 그대로 처리
+                    i += 1
                     continue
             else:
-                # 마지막 줄이 if done:이면 그냥 교체
+
                 new_lines.append(f"{indent}if done:    return")
                 i += 1
                 continue
@@ -482,9 +482,9 @@ def fix_if_done_return(code: str) -> str:
     return "\n".join(new_lines)
 
 
-# -----------------------------
-# CLI
-# -----------------------------
+
+
+
 
 def postprocess_advanced(file_name, code = None, no_autoflake = False, no_black = False, no_libcst = False, no_pyflakes = False, pylint = True, max_line_length = 100, keep_prompts = False, report = False):
     text: str
