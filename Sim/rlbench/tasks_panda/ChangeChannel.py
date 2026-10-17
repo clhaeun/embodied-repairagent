@@ -1,4 +1,4 @@
-# tasks/change_channel.py -  done
+
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from pyrep.objects.shape import Shape
@@ -17,26 +17,26 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
     button1_position = np.array(button1_object.get_position(), dtype=float)
     success0_quat = success0.get_quaternion()
 
-    # Move to hover position
+
     hover_pos = remote_position.copy()
     hover_pos[2] += 0.15
     obs, reward, done = move(env, task, target_pos=hover_pos, timeout=10.0)
 
-    # Perpendicular to remote
+
     obs, reward, done = align_to_quaternion(env, task, object_quaternion=remote_quat, yaw_align='perpendicular', approach_direction='down')
 
-    # Pick the remote
+
     obs, reward, done = pick(env, task, target_pos=remote_position, approach_distance=0.01, approach_axis='z', timeout=10.0)
     
-    # Align to TV
+
     obs, reward, done = align_to_quaternion(env, task, object_quaternion=success0_quat, yaw_align='perpendicular', approach_direction='down')
 
-    # Place the remote
+
     remote_position[0] -= 0.043
     remote_position[1] += 0.06
     obs, reward, done = place(env, task, target_pos=remote_position, approach_distance=0.01, approach_axis='z', timeout=10.0)
 
-    # Close gripper, Push the button
+
     push_pos = button1_position.copy() + [0.0, 0.0, -0.01]
     obs, reward, done = push(env, task, target_pos=push_pos, approach_distance=0.01, approach_axis='z', timeout=10.0)
 
