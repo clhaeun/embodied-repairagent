@@ -1,29 +1,29 @@
-# test_skill_code_ur5.py
-#
-# 목적:
-# - skill_code_ur5.py에 있는 UR5 스킬(ur5_move_to, ur5_grasp_at, ur5_release_at, ur5_align_gripper)을
-#   하나씩 독립적으로 실행해보는 테스트 러너.
-#
-# 주의:
-# - RLBench task는 성공(done=True)하면 환경이 꺼질 수 있으므로,
-#   "한 프로세스에서 여러 스킬을 연속으로 길게 테스트"하기보단,
-#   한 번의 run_skill 호출에서 "테스트 1개"만 수행하거나,
-#   각 테스트를 별도의 에피소드로 분리하는 구성이 안전함.
-#
-# - object는 참고 코드에 나온 것만 사용: Shape('ball'), Shape('basket_ball_hoop_respondable')
-#
-# 사용:
-# - RLBench 쪽에서 tasks/basketball_in_hoop.py가 run_skill(env, task, ...)을 호출하듯
-#   이 파일의 run_skill을 task에 연결해서 테스트.
-#
-# - 스킬은 skill_code_ur5.py에서 import 하도록 구성.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 from time import sleep
 import numpy as np
 
 from pyrep.objects.shape import Shape
 
-# UR5 skills
+
 from skill_code_ur5 import (
     ur5_move_to,
     ur5_grasp_at,
@@ -31,9 +31,9 @@ from skill_code_ur5 import (
     ur5_align_gripper,
 )
 
-# ------------------------------------------------------------
-# Helper: safe "done" handling
-# ------------------------------------------------------------
+
+
+
 
 def _step_guard(task):
     """현재 task가 이미 success 상태면 바로 return."""
@@ -44,9 +44,9 @@ def _step_guard(task):
         return False
 
 
-# ------------------------------------------------------------
-# One-by-one tests
-# ------------------------------------------------------------
+
+
+
 
 def _test_move_only(env, task):
     """
@@ -56,7 +56,7 @@ def _test_move_only(env, task):
     ball = Shape('ball')
     ball_pos = np.array(ball.get_position(), dtype=float)
 
-    # 공 위로 충분히 띄운 지점 (top-down 충돌 회피)
+
     target = ball_pos + np.array([0.0, 0.0, 0.25], dtype=float)
 
     print("[TEST] ur5_move_to -> ball above")
@@ -81,13 +81,13 @@ def _test_align_only(env, task):
     - 위치는 현재 위치 유지.
     """
     ball = Shape('ball')
-    q = np.array(ball.get_quaternion(), dtype=float)  # xyzw
+    q = np.array(ball.get_quaternion(), dtype=float)
 
     print(f"[TEST] ur5_align_gripper (reference=ball quat) quat={q}")
     obs, reward, done = ur5_align_gripper(
         env, task,
         reference_quat=q,
-        approach_direction="down",   # top-down 기준
+        approach_direction="down",
         yaw_mode="parallel",
         yaw_offset_rad=0.0,
         pos_hold=None,
@@ -111,7 +111,7 @@ def _test_grasp_only(env, task):
     obs, reward, done = ur5_grasp_at(
         env, task,
         grasp_pos=ball_pos,
-        grasp_quat=None,  # 기존 동작 유지: 현재 그리퍼 orientation 유지
+        grasp_quat=None,
         approach={"axis": "z", "distance": 0.15, "n_waypoints_approach": 5, "n_waypoints_descend": 10},
         gripper_close=-1.0,
         settle_steps=5,
@@ -135,7 +135,7 @@ def _test_release_only(env, task):
     hoop = Shape('basket_ball_hoop_respondable')
     hoop_pos = np.array(hoop.get_position(), dtype=float)
 
-    # hoop 옆/위로: 기존 참고 코드처럼 x방향 접근 형태
+
     place_pos = hoop_pos + np.array([0.1, 0.0, 0.15], dtype=float)
 
     print("[TEST] ur5_release_at -> open at above hoop-ish")
@@ -168,7 +168,7 @@ def _test_full_sequence(env, task):
     ball_pos = np.array(ball.get_position(), dtype=float)
     hoop_pos = np.array(hoop.get_position(), dtype=float)
 
-    # 1) grasp
+
     print("[SEQ] ur5_grasp_at")
     obs, reward, done = ur5_grasp_at(
         env, task,
@@ -182,7 +182,7 @@ def _test_full_sequence(env, task):
     if done:
         return obs, reward, done
 
-    # 2) move/release above hoop (x-approach 형태)
+
     target_place = hoop_pos + np.array([0.1, 0.0, 0.15], dtype=float)
     print("[SEQ] ur5_release_at")
     obs, reward, done = ur5_release_at(
@@ -197,22 +197,22 @@ def _test_full_sequence(env, task):
     if done:
         return obs, reward, done
 
-    # 3) align (ball quat 기반)
+
     q = np.array(ball.get_quaternion(), dtype=float)
     print(f"[SEQ] ur5_align_gripper reference quat={q}")
     obs, reward, done = ur5_align_gripper(
         env, task,
         reference_quat=q,
-        approach_direction="right",   # 참고 코드에서 approach_direction='x' 느낌 -> 'right'가 의미상 가까움
+        approach_direction="right",
         yaw_mode="parallel",
         timeout_s=10.0
     )
     return obs, reward, done
 
 
-# ------------------------------------------------------------
-# Main entry used by RLBench task runner
-# ------------------------------------------------------------
+
+
+
 
 def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0):
     """
@@ -222,10 +222,10 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
     """
     sleep(1.0)
 
-    TEST_MODE = "single"  # "single" or "sequence"
-    SINGLE_WHICH = "grasp"  # "move" | "align" | "grasp" | "release"
+    TEST_MODE = "single"
+    SINGLE_WHICH = "grasp"
 
-    # 혹시 이미 성공 상태면 바로 종료
+
     if _step_guard(task):
         return
 
@@ -233,7 +233,7 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
         _test_full_sequence(env, task)
         return
 
-    # single
+
     if SINGLE_WHICH == "move":
         _test_move_only(env, task)
     elif SINGLE_WHICH == "align":
