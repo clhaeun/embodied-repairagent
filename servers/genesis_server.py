@@ -415,8 +415,8 @@ def build_generate_prompt(req: dict) -> str:
                     full_prompt = full_prompt[:insert_pos] + "\n" + ref_docstring + "\n" + full_prompt[insert_pos:]
 
     if req.get("debug_prompt", False):
-        # print("\n[DEBUG][PROMPT][GENERATE] full_prompt head:\n" + "\n".join(full_prompt.splitlines()[:80]))
-        # print("\n[DEBUG][PROMPT][GENERATE] full_prompt tail:\n" + "\n".join(full_prompt.splitlines()[-40:]))
+
+
         print(f"\n[DEBUG][PROMPT][GENERATE] chars={len(full_prompt)}, lines={len(full_prompt.splitlines())}")
         # 특정 섹션이 들어갔는지 빠르게 체크
         for k in ["[REFERENCE CODE", "[CURRENT SCENE]", "[GRASP GUIDANCE]", "# RULES", "def run_task"]:
