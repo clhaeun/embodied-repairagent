@@ -12,16 +12,16 @@ Research-code archive for iterative repair of generated robot-control programs i
 
 The historical experiment configurations use `model=code_agent` as an **agent mode**. This does **not** identify the LLM checkpoint, and the checkpoint used for the archived runs has not been confirmed.
 
-## Code layout
+## Repository contents
 
-- `rlbench/`: RLBench experiment driver, AST-based execution/repair loop, model-request client, environment utilities, and robot primitives (selected from the RLBench backup).
-- `genesis/`: Genesis experiment driver, task/subtask loop, repair provider and support modules (selected from the Genesis backup).
-- `examples/`: selected robot-skill examples reported as authored by the repository maintainer.
+- `examples/oracle_skills/`: seven historical RLBench task-policy examples reported as authored by the maintainer. These are **not standalone runnable examples**; they depend on simulator and robot-skill libraries that are not copied here.
 - `results/`: compact tables of *archived* results, without large raw traces or generated code.
-- `SOURCE_PROVENANCE.md`: pinned source commits, limitations, and code-origin details.
-- `ATTRIBUTION_REVIEW.md`: collaborative authorship and redistribution notes.
+- `SOURCE_PROVENANCE.md`: pinned source commits, limitations, and source links.
+- `ATTRIBUTION_REVIEW.md`: collaborative authorship and redistribution review.
 
-Some directories may remain incomplete pending attribution and dependency review. The files are historical snapshots and have **not been end-to-end tested** in a fresh environment.
+### Code pending provenance clearance
+
+The original research implementation connects RLBench `rlbench_exp.py` → `rlbench_loop.py` → `policy_provider.py` → an inference server, and Genesis `genesis_experiment.py` → `genesis_loop.py` → `policy_provider.py`. These were developed in a collaborative setting and **are intentionally not copied here yet**. The historical source is linked in the provenance document. Neither pipeline has been independently reproduced in a fresh environment.
 
 ## Archived experimental evidence (not final paper results)
 
