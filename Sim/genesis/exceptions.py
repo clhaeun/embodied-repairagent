@@ -35,7 +35,7 @@ class SubtaskFailure(Exception):
         self.target_name = target_name
         self.context = context or {}
 
-        # Build default message if not provided
+
         if message is None:
             parts = [f"Subtask '{subtask_name}' failed"]
             if obj_name:
@@ -86,7 +86,7 @@ class SubtaskNotfinished(Exception):
         self.target_name = target_name
         self.context = context or {}
 
-        # Build default message if not provided
+
         if message is None:
             parts = [f"Subtask '{subtask_name}' not finished"]
             if obj_name:
