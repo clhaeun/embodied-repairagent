@@ -17,13 +17,13 @@ from prompts.prompt_utils import SUBTASK_SIGNATURES
 _LIST_PREFIX = re.compile(r"^\s*(?:\[\d+\]|\d+[.)]|[-*•])\s*")
 
 def _decomment_and_strip_list_prefix(st: str) -> str:
-    # "#   [7] foo(...)" -> "foo(...)"
+
     s = st.lstrip("#").strip()
     s = _LIST_PREFIX.sub("", s).strip()
     return s
 
 def _get_slice_int(slice_node) -> int | None:
-    # py3.8: ast.Index(value=ast.Constant); py3.9+: ast.Constant directly
+
     if isinstance(slice_node, ast.Constant) and isinstance(slice_node.value, int):
         return slice_node.value
     if hasattr(ast, "Index") and isinstance(slice_node, ast.Index):
@@ -33,7 +33,7 @@ def _get_slice_int(slice_node) -> int | None:
     return None
 
 def _is_values_call(node: ast.AST) -> bool:
-    # something.values()
+
     return (
         isinstance(node, ast.Call)
         and isinstance(node.func, ast.Attribute)
@@ -48,30 +48,30 @@ class _MaxValuesSubscriptKeyFixer(ast.NodeTransformer):
     def visit_Subscript(self, node: ast.Subscript):
         self.generic_visit(node)
 
-        # node.value should be Call(max(...))
+
         if not isinstance(node.value, ast.Call):
             return node
         call = node.value
 
-        # call.func should be Name("max")
+
         if not (isinstance(call.func, ast.Name) and call.func.id == "max"):
             return node
 
-        # need 1 arg: X.values()
+
         if len(call.args) != 1 or not _is_values_call(call.args[0]):
             return node
 
-        # slice must be int k
+
         k = _get_slice_int(node.slice)
         if k is None:
             return node
 
-        # 이미 key가 있으면 건드리지 않음
+
         for kw in call.keywords:
             if kw.arg == "key":
                 return node
 
-        # key=lambda p: float(p[k])
+
         p_arg = ast.arg(arg="p")
         p_name = ast.Name(id="p", ctx=ast.Load())
         idx = ast.Subscript(
@@ -111,7 +111,7 @@ def rewrite_numpy_max_patterns_in_code(code: str) -> str:
     try:
         tree = ast.parse(src)
     except Exception:
-        return code  # 파싱 안되면 원본 유지
+        return code
 
     new_tree = _MaxValuesSubscriptKeyFixer().visit(tree)
     ast.fix_missing_locations(new_tree)
@@ -119,7 +119,7 @@ def rewrite_numpy_max_patterns_in_code(code: str) -> str:
     try:
         return ast.unparse(new_tree).rstrip() + "\n"
     except Exception:
-        # unparse 실패 시 원본 유지
+
 
         return code
 
@@ -137,9 +137,9 @@ def rewrite_numpy_max_patterns_in_body(body: str) -> str:
     try:
         rewritten = rewrite_numpy_max_patterns_in_code(wrapped)
     except Exception:
-        return body  # rewrite 실패 시 원본 유지
+        return body
 
-    # 다시 __tmp__ 바디만 뽑아오기
+
     try:
         return _extract_function_body_ast(rewritten, "__tmp__").rstrip("\n")
     except Exception:
@@ -170,7 +170,7 @@ def _strip_known_marker_blocks(text: str) -> str:
         ("[EXECUTED_STATEMENTS_START]", "[EXECUTED_STATEMENTS_END]"),
         ("[ALREADY EXECUTED", "[END OF EXECUTED CODE]"),
         ("[FAILED_STATEMENT_BEGIN]", "[FAILED_STATEMENT_END]"),
-        # 혹시 constraints/reference를 마커로 감싸면 여기도 추가
+
         ("[REFERENCE_BEGIN]", "[REFERENCE_END]"),
         ("[CONSTRAINTS_BEGIN]", "[CONSTRAINTS_END]"),
     ]
@@ -198,7 +198,7 @@ def _strip_prompt_blocks_and_docstrings(text: str) -> str:
         "[EXECUTED_STATEMENTS_START]",
         "[ALREADY EXECUTED",
         "[FAILED_STATEMENT_BEGIN]",
-        "[REFERENCE CODE",   # "[REFERENCE CODE (TASK...)" 포함
+        "[REFERENCE CODE",
     )
     end_markers = (
         "[EXECUTED_STATEMENTS_END]",
@@ -208,9 +208,9 @@ def _strip_prompt_blocks_and_docstrings(text: str) -> str:
 
     for ln in lines:
         s = ln.strip()
-        s2 = s.lstrip("#").strip()   # "# [REFERENCE CODE" -> "[REFERENCE CODE"
+        s2 = s.lstrip("#").strip()
 
-        # (1) marker block drop  (주석(#)이 붙어도 인식)
+
         if any(s2.startswith(b) for b in begin_markers):
             in_marker = True
             continue
@@ -220,11 +220,11 @@ def _strip_prompt_blocks_and_docstrings(text: str) -> str:
         if in_marker:
             continue
 
-        # (2) triple-quote block drop ("""...""" or '''...''')
+
         if not in_triple and (s.startswith('"""') or s.startswith("'''")):
             in_triple = True
             triple_quote = s[:3]
-            # same-line close
+
             if s.count(triple_quote) >= 2:
                 in_triple = False
                 triple_quote = None
@@ -235,7 +235,7 @@ def _strip_prompt_blocks_and_docstrings(text: str) -> str:
                 triple_quote = None
             continue
 
-        # (3) prompt-ish header comments drop
+
         if s.startswith("# [") and "]" in s:
             continue
 
@@ -249,17 +249,17 @@ def _leading_spaces(s: str) -> int:
     return len(s) - len(s.lstrip(" "))
     
 TOOL_CALL_PATTERNS = [
-    r"<tool_call\b.*?>.*?</tool_call>",   # 블록 형태
-    r"</?tool_call\b.*?>",                # 태그만
-    r"<\|tool_call\|>.*?<\|/tool_call\|>", # 특수토큰 변형(혹시)
-    r"<\|.*?\|>",                          # 기타 모델 특수토큰(보수적으로)
+    r"<tool_call\b.*?>.*?</tool_call>",
+    r"</?tool_call\b.*?>",
+    r"<\|tool_call\|>.*?<\|/tool_call\|>",
+    r"<\|.*?\|>",
 ]
 def _strip_tool_calls(s: str) -> str:
-    # 1) 블록/태그 형태 제거
+
     for p in TOOL_CALL_PATTERNS:
         s = re.sub(p, "", s, flags=re.DOTALL | re.IGNORECASE)
 
-    # 2) 라인 중간에 붙은 "<tool_call" 이후를 잘라내기 (핵심)
+
     s = re.sub(r"(<tool_call\b.*)$", "", s, flags=re.IGNORECASE | re.MULTILINE)
     s = re.sub(r"(<\|tool_call\|>.*)$", "", s, flags=re.IGNORECASE | re.MULTILINE)
 
@@ -301,7 +301,7 @@ def _clean_llm_text_to_python_code(raw: str, subtask_name: str | None = None) ->
     s = re.sub(r"```(?:python)?", "", s, flags=re.IGNORECASE).replace("```", "").rstrip()
     s = _strip_tool_calls(s)
     s = s.replace("\t", "    ")
-    # Use rstrip() to preserve leading indentation of first line
+
     return s.rstrip() + "\n"
 
 def _extract_function_body_ast(code_str: str, func_name: str) -> str:
@@ -333,7 +333,7 @@ def _extract_function_body_ast(code_str: str, func_name: str) -> str:
 def _normalize_indent(body: str, target_indent: int = 4) -> str:
     lines = (body or "").splitlines()
 
-    # 공백 아닌 라인만 모아서 최소 들여쓰기 계산
+
     non_empty = [ln for ln in lines if ln.strip()]
     if not non_empty:
         return "\n"
@@ -349,7 +349,7 @@ def _normalize_indent(body: str, target_indent: int = 4) -> str:
     out = []
     for ln in lines:
         if ln.strip():
-            out.append(prefix + ln[min_lead:])  # min만 제거 -> 상대 들여쓰기 유지
+            out.append(prefix + ln[min_lead:])
         else:
             out.append("")
     return "\n".join(out).rstrip() + "\n"
@@ -381,7 +381,7 @@ def _normalize_body_indent(body: str, indent: int) -> str:
             out.append("")
     return "\n".join(out).rstrip() + "\n"
 
-_BLOCK_OPEN_RE = re.compile(r".*:\s*(#.*)?$")  # 줄 끝에 : 로 블록 여는지
+_BLOCK_OPEN_RE = re.compile(r".*:\s*(#.*)?$")
 
 def _fix_all_indentation(body: str) -> str:
     """
@@ -400,7 +400,7 @@ def _fix_all_indentation(body: str) -> str:
         return len(ln) - len(ln.lstrip(" "))
 
     out = []
-    stack = []  # (block_indent, expected_child_indent)
+    stack = []
     prev_indent = 0
 
     for ln in lines:
@@ -415,45 +415,45 @@ def _fix_all_indentation(body: str) -> str:
         is_return = stripped.startswith("return")
         is_else_like = stripped.startswith(("else:", "elif ", "except:", "except ", "finally:"))
 
-        # 5) else/elif/except/finally는 이전 블록과 같은 레벨로 정렬
+
         if is_else_like and stack:
-            # Pop current block and align with previous block's indent
+
             stack.pop()
             if stack:
-                # If nested, use parent's child indent
+
                 block_indent = stack[-1][1]
             else:
-                # Top level
+
                 block_indent = 0
             ln = " " * block_indent + stripped
             cur = block_indent
 
-        # 1) 스택 정리: 현재 indent가 블록 indent 이하로 떨어지면 블록 종료
+
         elif not is_else_like:
             while stack and cur <= stack[-1][0]:
                 stack.pop()
 
-        # 2) 블록 컨텍스트에 따라 indent 조정
+
         if stack and not is_else_like:
-            # 블록 내부인 경우: expected_child_indent를 초과하면 줄임
+
             _, expect = stack[-1]
             if cur > expect:
                 ln = " " * expect + stripped
                 cur = expect
         elif not is_else_like:
-            # 블록 밖인데 이전보다 indent가 증가했으면 -> 이전 레벨로 복구
+
             if cur > prev_indent:
                 ln = " " * prev_indent + stripped
                 cur = prev_indent
 
         out.append(ln)
 
-        # 3) return 문이면 모든 블록 컨텍스트 종료
+
         if is_return:
             stack.clear()
-            prev_indent = 0  # 최상위 레벨로 리셋
+            prev_indent = 0
 
-        # 4) 현재 줄이 블록을 여는 경우 스택에 push (주석은 제외)
+
         elif (not is_comment) and _BLOCK_OPEN_RE.match(ln.rstrip()):
             block_indent = cur
             stack.append((block_indent, block_indent + 4))
@@ -472,10 +472,10 @@ def _dedent_continuation(body: str) -> str:
         return len(ln) - len(ln.lstrip(" "))
 
     non_empty = [ln for ln in lines if ln.strip()]
-    # 주석/빈줄은 baseline 계산에서 제외
+
     candidates = [ln for ln in non_empty if not ln.lstrip().startswith("#")]
 
-    # 전부 주석뿐이면 그냥 일반 dedent
+
     if not candidates:
         base = min(lead(ln) for ln in non_empty)
     else:
@@ -526,17 +526,17 @@ def merge_continuation_into_subtask(
 
     lines = current_code.splitlines(keepends=True)
 
-    # body indent 추정
+
     body_indent = 4
     if fn.body:
         first_body_line_idx = fn.body[0].lineno - 1
         if 0 <= first_body_line_idx < len(lines):
             body_indent = _leading_spaces(lines[first_body_line_idx]) or 4
 
-    # 삽입 라인 결정(1-based lineno)
+
     insert_lineno = None
     if insert_after_lineno is not None:
-        insert_lineno = int(insert_after_lineno) + 2  # 0-based -> 다음 줄 1-based
+        insert_lineno = int(insert_after_lineno) + 2
     else:
         if insert_before_last_return:
             last_ret = None
@@ -556,17 +556,17 @@ def merge_continuation_into_subtask(
 
     insert_idx = max(0, min(len(lines), insert_lineno - 1))
 
-    # ---- 안전장치: 함수 바디 영역 밖으로 삽입 방지 ----
+
     fn_start_0 = fn.lineno - 1
     fn_end_0 = getattr(fn, "end_lineno", fn.lineno) - 1
-    # def 라인 바로 다음부터 함수 끝 라인까지를 안전 범위로
+
     insert_idx = max(fn_start_0 + 1, min(insert_idx, fn_end_0 + 1))
 
     cont_norm = _normalize_body_indent(cont_body, indent=body_indent).rstrip("\n")
     if not cont_norm.strip():
         return current_code
 
-    # ---- 안전장치: 앞뒤로 개행 1개씩 확보 ----
+
     cont_norm = cont_norm + "\n\n"
 
     new_lines = lines[:insert_idx] + [cont_norm] + lines[insert_idx:]
@@ -598,7 +598,7 @@ def debug_print_next_statements(
     try:
         tree = ast.parse(current_code)
     except Exception as e:
-        print(f"[DEBUG][{tag}] current_code unparsable: {e}")
+
         return
 
     ex = RunTaskExtractor(subtask_name)
@@ -608,7 +608,7 @@ def debug_print_next_statements(
     next_index = len(executed_stmt_texts)
     remaining = body[next_index:]
 
-    print(f"[DEBUG][{tag}] subtask={subtask_name} next_index={next_index}, body_len={len(body)}, remaining={len(remaining)}")
+
 
     for i, stmt in enumerate(remaining[:k], start=next_index + 1):
         try:
@@ -621,13 +621,13 @@ def debug_print_next_statements(
         lno = getattr(stmt, "lineno", None)
         end = getattr(stmt, "end_lineno", lno)
 
-        print(f"[DEBUG][{tag}] to_exec[{i}] {kind} (lineno={lno}, end={end}): {head}")
+
 
         if show_full:
-            print(f"[DEBUG][{tag}] to_exec[{i}] full:\n{stmt_code}\n---")
+
 
     if len(remaining) > k:
-        print(f"[DEBUG][{tag}] ... ({len(remaining) - k} more statements)")
+
 
 
 class _ListAddToNpArray(ast.NodeTransformer):
@@ -649,7 +649,7 @@ class _ListAddToNpArray(ast.NodeTransformer):
         return node
 
 def _rewrite_list_plus_list(stmt_code: str) -> str:
-    # 아주 싼 사전 필터: 해당 패턴이 없으면 파싱 자체를 안 함
+
     if "] + [" not in stmt_code and "]+[" not in stmt_code:
         return stmt_code
 
@@ -660,12 +660,12 @@ def _rewrite_list_plus_list(stmt_code: str) -> str:
     try:
         tree = ast.parse(src)
     except Exception:
-        return stmt_code  # 파싱 실패면 원본 유지(보수적)
+        return stmt_code
 
     new_tree = _ListAddToNpArray().visit(tree)
     ast.fix_missing_locations(new_tree)
 
-    # Python 3.9+ : ast.unparse 사용 가능
+
     try:
         new_src = ast.unparse(new_tree)
     except Exception:
@@ -696,23 +696,23 @@ def _uncomment_skill_calls(body: str) -> str:
     for ln in lines:
         stripped = ln.strip()
 
-        # 주석이 아니면 그대로 유지
+
         if not stripped.startswith("#"):
             result.append(ln)
             continue
 
-        # 주석 제거 후 skill인지 확인
+
         uncommented = stripped[1:].strip()
 
-        # skill 호출 패턴인 경우 주석 제거
+
         if any(uncommented.startswith(prefix) for prefix in SKILL_PREFIXES):
-            # 원래 들여쓰기 유지
+
             indent = ln[:len(ln) - len(ln.lstrip())]
             result.append(indent + uncommented)
-            print(f"[DEBUG][UNCOMMENT_SKILL] Converted: {stripped[:60]} -> {uncommented[:60]}")
+
         else:
-            # skill이 아닌 주석은 버림 (예: # floor: pos=...)
-            print(f"[DEBUG][UNCOMMENT_SKILL] Dropped non-skill comment: {stripped[:60]}")
+
+
             continue
 
     return "\n".join(result)
@@ -727,78 +727,78 @@ def postprocess_initial_code(llm_generated: str, subtask_name: str, robot_type: 
     body = cleaned
     try:
         t0 = ast.parse(cleaned)
-        # 1) run_task가 있으면 run_task body 우선
+
         if any(isinstance(n, ast.FunctionDef) and n.name == "run_task" for n in t0.body):
             body = _extract_function_body_ast(cleaned, "run_task").rstrip("\n")
 
-        # 2) 그 외에 subtask_name 함수가 있으면 그 body
+
         elif any(isinstance(n, ast.FunctionDef) and n.name == subtask_name for n in t0.body):
             body = _extract_function_body_ast(cleaned, subtask_name).rstrip("\n")
 
-        # 3) 없으면 cleaned 전체(body-only로 간주)
+
     except Exception:
         body = cleaned
 
-    # Skill 주석을 코드로 변환
+
     body = _uncomment_skill_calls(body)
 
-    # Simple and safe indentation normalization
-    print(f"[DEBUG][POSTPROCESS_INIT] Before normalize_indent: {len(body)} chars")
-    print(f"[DEBUG][POSTPROCESS_INIT] First 300 chars:\n{body[:300]}")
+
+
+
 
     if not body.strip():
         body = "return True"
 
-    # -------------------------
-    # header + interface
-    # -------------------------
+
+
+
     robot_type = normalize_robot_type(robot_type)
     imports = HEADER[robot_type].strip("\n") + "\n\n"
 
-    # Use hardcoded signature from SUBTASK_SIGNATURES dictionary
+
     if subtask_name in SUBTASK_SIGNATURES:
         signature_line, description = SUBTASK_SIGNATURES[subtask_name]
         RUN_TASK_INTERFACE = signature_line + "\n"
-        print(f"[DEBUG][POSTPROCESS_INIT] Using hardcoded signature for {subtask_name}: {signature_line}")
+
     elif run_task_interface and run_task_interface.lstrip().startswith("def ") and run_task_interface.rstrip().endswith(":"):
-        # Fallback to reference signature if provided (for backward compatibility)
+
         RUN_TASK_INTERFACE = run_task_interface.rstrip() + "\n"
-        print(f"[DEBUG][POSTPROCESS_INIT] Using reference signature for {subtask_name}: {run_task_interface.rstrip()}")
+
     else:
-        # Last resort: generic signature
+
         RUN_TASK_INTERFACE = "def {}(env, obj_name=None, target_name=None, **kwargs):\n".format(subtask_name)
         print(f"[WARN][POSTPROCESS_INIT] Using generic signature for {subtask_name}")
 
-    # Conditionally apply numpy pattern rewrite only if ast.unparse is available (Python 3.9+)
+
     if hasattr(ast, "unparse"):
         body = rewrite_numpy_max_patterns_in_code(body)
 
-    # Normalize indentation (safe: only adjusts minimum indent to target_indent=4)
+
     body_indented = _normalize_indent(body, target_indent=4)
-    print(f"[DEBUG][POSTPROCESS_INIT] After normalize_indent: {len(body_indented)} chars")
+
     return imports + RUN_TASK_INTERFACE + body_indented
 
 
 
 def postprocess_continuation_code(llm_generated: str, subtask_name: Optional[str] = None) -> str:
-    print(f"[DEBUG][POSTPROCESS_CONT] Input length: {len(llm_generated or '')}")
-    print(f"[DEBUG][POSTPROCESS_CONT] subtask_name: {subtask_name}")
+
+
 
     raw = (llm_generated or "").strip()
     if not raw:
-        print("[DEBUG][POSTPROCESS_CONT] Empty input - returning empty string")
+
         return ""
 
-    # 0) 흔한 문법 파괴 토큰 방어
+
     raw = raw.replace("{{", "{").replace("}}", "}")
 
-    # 1) 공통 클리닝
+
     cleaned = _clean_llm_text_to_python_code(raw)
     cleaned = _strip_known_marker_blocks(cleaned)
 
-    # ------------------------------------------------------------
-    # A) 프롬프트 에코 방지: "마커 이후"만 취하기 (가장 마지막 마커 기준)
-    # ------------------------------------------------------------
+
+
+
     markers = [
         "Now write the fixed continuation:",
         "Continue from here (add the remaining steps):",
@@ -815,9 +815,9 @@ def postprocess_continuation_code(llm_generated: str, subtask_name: Optional[str
     if cut_pos != -1:
         cleaned = cleaned[cut_pos:].strip()
 
-    # ------------------------------------------------------------
-    # B) AST로 함수 바디 추출 (가능하면)
-    # ------------------------------------------------------------
+
+
+
     body = cleaned
     try:
         t0 = ast.parse(cleaned)
@@ -834,9 +834,9 @@ def postprocess_continuation_code(llm_generated: str, subtask_name: Optional[str
     except Exception:
         body = cleaned
 
-    # ------------------------------------------------------------
-    # C) "코드 라인만" 남기기: 주석/헤더/markdown/constraints/json 덩어리 제거
-    # ------------------------------------------------------------
+
+
+
     bad_prefixes = ("def ", "def\t", "import ", "from ", "class ", "if __name__")
     drop_exact_prefixes = (
         "# [NEW STATEMENTS", "# [EXECUTED", "# --- executed", "# --- end executed",
@@ -857,9 +857,9 @@ def postprocess_continuation_code(llm_generated: str, subtask_name: Optional[str
 
     lines = body.splitlines()
 
-    # (1) 맨 앞에서부터 "첫 번째 비주석/비공백 코드 라인"이 나올 때까지 주석/빈줄 제거
+
     i = 0
-    print(f"[DEBUG][POSTPROCESS_CONT] Starting first loop, total lines: {len(lines)}")
+
     while i < len(lines):
         s = lines[i].strip()
         if not s:
@@ -869,21 +869,21 @@ def postprocess_continuation_code(llm_generated: str, subtask_name: Optional[str
             i += 1
             continue
         if s.startswith("#"):
-            # 주석 해제 + list prefix 제거해서 코드인지 확인
+
             maybe = _decomment_and_strip_list_prefix(s)
-            print(f"[DEBUG][POSTPROCESS_CONT] Line {i}: '{s[:80]}' -> decommented: '{maybe[:80]}'")
-            #  코드처럼 생긴 주석이면 여기서 멈춰서 아래 루프가 처리하게 함
+
+
             if maybe.startswith(ALLOW_CALL_PREFIX):
-                print(f"[DEBUG][POSTPROCESS_CONT] Found code-like comment at line {i}: {s[:80]}")
+
                 break
-            print(f"[DEBUG][POSTPROCESS_CONT] Not code-like, skipping line {i}")
+
             i += 1
             continue
         break
-    print(f"[DEBUG][POSTPROCESS_CONT] Skipped {i} lines at beginning, remaining: {len(lines) - i}")
+
     lines = lines[i:]
 
-    # (2) 본문에서 프롬프트 잔재 제거 + constraints json 블록 제거
+
     kept = []
     skip_json_block = False
     json_brace_depth = 0
@@ -896,44 +896,44 @@ def postprocess_continuation_code(llm_generated: str, subtask_name: Optional[str
             kept.append(ln)
             continue
 
-        # 마크다운/펜스/잡텍스트 제거
+
         if st.startswith("```") or st.startswith("[") or st.startswith("]"):
             continue
 
-        # prompt 헤더류 주석 제거
+
         if st.startswith("#"):
-            # 1) 프롬프트 헤더류는 기존대로 drop
+
             if any(st.startswith(pfx) for pfx in drop_exact_prefixes):
-                print(f"[DEBUG][POSTPROCESS_CONT] Dropping prompt header: {st[:60]}")
+
                 continue
             if st.startswith("# [") and "]" in st:
-                print(f"[DEBUG][POSTPROCESS_CONT] Dropping bracket comment: {st[:60]}")
+
                 continue
 
-            # 2) 코드처럼 생긴 주석이면 주석 해제해서 살림
+
             code_like = _decomment_and_strip_list_prefix(st)
-            print(f"[DEBUG][POSTPROCESS_CONT] Checking comment: '{st[:80]}' -> code_like: '{code_like[:80]}'")
+
             if code_like.startswith(ALLOW_CALL_PREFIX):
                 indent = ln[:len(ln) - len(s)]
                 kept.append(indent + code_like)
-                print(f"[DEBUG][POSTPROCESS_CONT] KEPT code-like comment: {code_like[:60]}")
+
                 continue
 
-            # 3) 나머지 주석은 drop(원하시면 kept.append(ln)로 "보존"도 가능)
-            print(f"[DEBUG][POSTPROCESS_CONT] Dropping non-code comment: {st[:60]}")
+
+
             continue
 
-        # constraints json 같은 덩어리 제거 (키가 보이면 그 블록 통째로 버림)
-        # LAST_STEP JSON 블록도 제거 (step_index, skill_call_count, skill_name 등)
+
+
         json_keys = [
             "executed_prefix_count", "must_keep_executed_prefix",
             "step_index", "skill_call_count", "skill_name", "need_more_steps",
             '"success":', '"statement":'
         ]
         if any(key in st for key in json_keys):
-            # 그 라인 포함해서 블록 제거 시작
+
             skip_json_block = True
-            # 중괄호 깊이 추적
+
             json_brace_depth += st.count("{") - st.count("}")
             continue
 
@@ -944,17 +944,17 @@ def postprocess_continuation_code(llm_generated: str, subtask_name: Optional[str
                 json_brace_depth = 0
             continue
 
-        # continuation 계약 위반 제거
+
         if any(st.startswith(bp) for bp in bad_prefixes):
             continue
 
-        # return은 continuation에서 위험 -> pass로 치환
+
         if st.startswith("return"):
             indent = ln[:len(ln) - len(s)]
             kept.append(indent + "pass")
             continue
 
-        # '...' 같은 불완전 토큰 제거
+
         if st == "..." or st == "…":
             continue
 
@@ -962,49 +962,49 @@ def postprocess_continuation_code(llm_generated: str, subtask_name: Optional[str
 
 
     body = "\n".join(kept).strip("\n")
-    print(f"[DEBUG][POSTPROCESS_CONT] After filtering lines: {len(body)} chars, {len(kept)} lines kept")
+
     if not body.strip():
-        print("[DEBUG][POSTPROCESS_CONT] Body empty after filtering lines - returning empty string")
+
         return ""
     body = _strip_prompt_blocks_and_docstrings(body)
-    print(f"[DEBUG][POSTPROCESS_CONT] After strip_prompt_blocks: {len(body)} chars")
-    body = _strip_leading_triple_quote_block(body)
-    print(f"[DEBUG][POSTPROCESS_CONT] After strip_triple_quote: {len(body)} chars")
-    body = rewrite_numpy_max_patterns_in_body(body)
-    print(f"[DEBUG][POSTPROCESS_CONT] After rewrite_numpy_max: {len(body)} chars")
 
-    # 4) dedent
+    body = _strip_leading_triple_quote_block(body)
+
+    body = rewrite_numpy_max_patterns_in_body(body)
+
+
+
     body = _dedent_continuation(body)
     if not body.strip():
-        print("[DEBUG][POSTPROCESS_CONT] Body empty after dedent - returning empty string")
+
         return ""
 
-    # 5) 문법 검증
+
     def _is_valid_body(snippet: str) -> bool:
         try:
             wrapped = "def __tmp__():\n" + _normalize_body_indent(snippet, indent=4)
             ast.parse(wrapped)
             return True
         except Exception as e:
-            print(f"[DEBUG][POSTPROCESS_CONT] Validation failed: {type(e).__name__}: {e}")
+
             return False
 
     if _is_valid_body(body):
-        print(f"[DEBUG][POSTPROCESS_CONT] Valid body - returning {len(body)} chars")
+
         return body
 
-    # 6) (기존 복구 로직은 유지하되, 여기까지 왔으면 보통 LLM이 깨진 블록을 준 케이스)
-    #    끝에서부터 truncate 하며 최대 valid prefix 찾기
-    print("[DEBUG][POSTPROCESS_CONT] Body invalid - trying to recover by truncating")
+
+
+
     lines2 = body.splitlines()
     for end in range(len(lines2), 0, -1):
         cand = "\n".join(lines2[:end]).rstrip() + "\n"
         if cand.strip() and _is_valid_body(cand):
-            print(f"[DEBUG][POSTPROCESS_CONT] Recovered valid prefix with {end} lines")
+
             return cand
 
-    print("[DEBUG][POSTPROCESS_CONT] Could not recover valid body - returning as-is")
-    print("[DEBUG][POST] final continuation lines =", len(body.splitlines()))
+
+
     return body
 
 
@@ -1024,7 +1024,7 @@ def preprocess_reference_code(code: str) -> str:
     try:
         tree = ast.parse(src)
     except Exception:
-        # AST가 깨진 경우: 기존처럼 라인 기반 fallback (간단)
+
         return _fallback_extract_body_only(src)
 
     fn = None
@@ -1040,12 +1040,12 @@ def preprocess_reference_code(code: str) -> str:
     end = fn.body[-1].end_lineno
     body = "".join(lines[start:end])
 
-    # body를 "그대로" 쓰되, 최소 들여쓰기만 제거해서 깔끔하게
+
     return textwrap.dedent(body).rstrip()
 
 
 def _fallback_extract_body_only(src: str) -> str:
-    # ast.parse 실패 시: 가장 단순한 라인 기반 추출
+
     lines = src.splitlines()
     in_def = False
     def_indent = 0
@@ -1057,7 +1057,7 @@ def _fallback_extract_body_only(src: str) -> str:
                 in_def = True
                 def_indent = len(ln) - len(stripped)
             continue
-        # 함수 바디: def_indent보다 깊은 줄만 수집
+
         cur_indent = len(ln) - len(stripped)
         if stripped == "":
             out.append("")
