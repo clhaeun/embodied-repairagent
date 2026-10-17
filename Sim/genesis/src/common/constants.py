@@ -3,7 +3,7 @@ import numpy as np
 Z_OFFSET = 0.5
 FLOOR_AABB = np.array([[0.11, -0.60, -0.01], [0.73, 0.61, 0.50]])
 
-# For panda gripper (9 DOF: 7 arm + 2 finger)
+
 INITIAL_DOF_POSITION = [
     0.00,
     -0.25 * np.pi,
@@ -16,8 +16,8 @@ INITIAL_DOF_POSITION = [
     0.04,
 ]
 
-# For robotiq85 gripper (8 DOF: 7 arm + 1 finger_joint)
-# finger_joint range: 0 (closed) ~ 0.725 (open)
+
+
 INITIAL_DOF_POSITION_ROBOTIQ85 = [
     0.00,
     -0.25 * np.pi,
@@ -26,7 +26,7 @@ INITIAL_DOF_POSITION_ROBOTIQ85 = [
     0.00,
     0.50 * np.pi,
     0.25 * np.pi,
-    0.7,  # gripper open position
+    0.7,
 ]
 
 STATE_CHECK_INTERVAL = 30
