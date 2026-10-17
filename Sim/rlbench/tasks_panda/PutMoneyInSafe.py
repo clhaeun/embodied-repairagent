@@ -1,4 +1,4 @@
-# tasks/put_money_in_safe.py - done
+
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from pyrep.objects.shape import Shape
@@ -21,7 +21,7 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
     safe_sizes, _ = get_bbox_sizes(safe_object)
     l, h = float(np.max(safe_sizes)), float(np.min(safe_sizes))
 
-    # Align to money_axis, move to hover point
+
     hover_pos = money_position.copy()
     hover_pos[0] -= l
     hover_pos[1] += l/2
@@ -29,19 +29,19 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
     obs, reward, done = move(env, task, target_pos=hover_pos, timeout=10.0)
     obs, reward, done = align_two_axes(env, task, local_axes=('z', 'y'), world_axes=('x', 'y'), axis_dirs=(1, 1), tol_rad=1e-3, timeout=40.0)
 
-    # Pick money on the side
+
     money_side = np.array([money_position[0]-0.05, money_position[1], money_position[2]+h/2], dtype=np.float64)
     obs, reward, done = pick(env, task, target_pos=money_side, approach_distance=0.1, approach_axis='z', timeout=10.0)
 
-    # Move to hover2_pos
+
     hover2_pos = np.array([money_side[0]-2*Lm, money_side[1], money_side[2]+2*Lm], dtype=np.float64)
     obs, reward, done = move(env, task, target_pos=hover2_pos, timeout=10.0)
     obs, reward, done = align_two_axes(env, task, local_axes=('z', 'y'), world_axes=('z', 'x'), axis_dirs=(-1, 1), tol_rad=1e-3, timeout=40.0)
 
-    # Rotate grip to move in a direction of -x+y
+
     approach_dir = normalize_vector(np.array([-1.0,1.0,0.0], dtype=np.float64))
 
-    # Prepare to slide into safe's mouth
+
     pre_pos = safe_position + 2*approach_dir*Lm
     pre_pos[0] += 0.075
     pre_pos[2] = safe_position[2] + 0.07
