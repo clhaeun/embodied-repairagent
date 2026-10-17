@@ -874,7 +874,7 @@ def build_generate_prompt(req: Dict[str, Any]) -> str:
                 1,  # 첫 번째 매치만
             )
     elif reference_code.strip():
-        # fallback: Composition patterns 마커가 없으면 기존처럼 뒤에 추가
+
         ref_code_safe = _comment_out_run_skill_body(reference_code)
         prompt = prompt.rstrip() + "\n\n# REFERENCE CODE (oracle, body-only; do not copy)\n" + ref_code_safe.strip() + "\n# (end reference)\n"
 
