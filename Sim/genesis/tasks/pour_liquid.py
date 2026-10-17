@@ -43,14 +43,14 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
 
     print("[PourLiquid] Starting task")
 
-    # Get positions
+
     beaker_pos = env.get_obj_pos("beaker")
     mug_pos = env.get_obj_pos("mug")
 
     print(f"[PourLiquid] Beaker position: {beaker_pos}")
     print(f"[PourLiquid] Mug position: {mug_pos}")
 
-    # Step 1: Grasp beaker with vacuum gripper
+
     print("\n[PourLiquid] Step 1: Grasping beaker")
     try:
         result = provider.execute_subtask(
@@ -66,7 +66,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
         if skip.result is not None:
             subtask_results.append(skip.result)
 
-    # Step 2: Pour into mug
+
     print("\n[PourLiquid] Step 2: Pouring into mug")
     try:
         result = provider.execute_subtask(
@@ -83,7 +83,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
         if skip.result is not None:
             subtask_results.append(skip.result)
 
-    # Step 3: Release beaker back to original position
+
     print("\n[PourLiquid] Step 3: Releasing beaker")
     try:
         result = provider.execute_subtask(
@@ -100,7 +100,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
         if skip.result is not None:
             subtask_results.append(skip.result)
 
-    # Check result
+
     result = env.check_result()
     print(f"\n[PourLiquid] Task completed with result: {result}")
     return result
