@@ -25,7 +25,7 @@ def release_container(env, place_pos=None, original_pos=None, pointing_to="down"
     Returns:
         True if successful, False otherwise.
     """
-    # Handle alternative parameter names
+
     if place_pos is None:
         place_pos = original_pos
     if place_pos is None:
@@ -33,19 +33,19 @@ def release_container(env, place_pos=None, original_pos=None, pointing_to="down"
 
     print(f"[ReleaseContainer] Releasing at {place_pos}")
 
-    # Move to place position
+
     release_pos = place_pos.copy()
     release_pos[2] += 0.15
     move_to_position(env, release_pos, pointing_to=pointing_to)
 
-    # Lower
+
     release_pos[2] = place_pos[2] + 0.08
     move_to_position(env, release_pos, pointing_to=pointing_to)
 
-    # Release gripper
+
     open_gripper(env)
 
-    # Move up
+
     move_parallel(env, "up", 0.1, pointing_to=pointing_to)
 
     print(f"[ReleaseContainer] Successfully released")
