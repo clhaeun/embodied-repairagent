@@ -28,15 +28,15 @@ def get_object_positions(index: int):
     bulb_pos = bulb.get_position()
 
     return {
-        'lamp_base': lamp_base_pos,  # Target button for pushing
-        'lamp_screw': lamp_screw_pos,  # Top plate of the button
-        'lampshade': lampshade_pos,  # Joint position of the button
-        'push_button_target': push_button_target_pos,  # Target button for pushing
-        'cable': cable_pos,  # Top plate of the button
-        'bulb_phys': bulb_phys_pos,  # Joint position of the button
-        'target_button_joint': target_button_joint_pos,  # Target button for pushing
-        'light_bulb': light_bulb_pos,  # Top plate of the button
-        'bulb': bulb_pos,  # Joint position of the button
+        'lamp_base': lamp_base_pos,
+        'lamp_screw': lamp_screw_pos,
+        'lampshade': lampshade_pos,
+        'push_button_target': push_button_target_pos,
+        'cable': cable_pos,
+        'bulb_phys': bulb_phys_pos,
+        'target_button_joint': target_button_joint_pos,
+        'light_bulb': light_bulb_pos,
+        'bulb': bulb_pos,
     }
 
 
@@ -46,19 +46,19 @@ def run_task(env, task, descriptions=None, obs=None, variation_index: int = 0):
         print("Environment or task is not set up correctly.")
         return
 
-    # Reset the task to get descriptions and initial observation
+
     if descriptions is None or obs is None:
         print("Resetting task to get initial descriptions and observations.")
         descriptions, obs = task.reset()
     target_color_name, _ = colors[variation_index]
     print(f"[Task] Objective: Push the {target_color_name} button")
 
-    # Get object positions
+
     object_positions = get_object_positions(variation_index)
     button_pos = object_positions['target_button_joint']
 
-    # Execute the pick and place actions
-    # Adjusted position for picking
+
+
     push_pos = button_pos + np.array([0, 0, -0.03])
     obs, reward, done = push(env, task,
                              target_pos=push_pos,
@@ -74,4 +74,3 @@ def run_task(env, task, descriptions=None, obs=None, variation_index: int = 0):
     else:
         print("[Task] Task not completed yet (done=False).")
 
-# INSTRUCTIO
