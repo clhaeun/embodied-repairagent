@@ -226,11 +226,11 @@ class StateObserver:
                 }
                 on_top_candidates.setdefault(obj_name, []).append(candidate)
 
-        # Track which objects have which type of spatial relations (for priority filtering)
+
         objects_with_inside = set()
         objects_with_ontop = set()
 
-        # Filter InsideOf relations: keep only smallest container for each object
+
         inside_by_object = {}
         for obj_name, container_name in inside_relations:
             if self._same_articulated(obj_name, container_name):
@@ -243,9 +243,9 @@ class StateObserver:
             container_volume = np.prod(container_high - container_low)
             inside_by_object[obj_name].append((container_name, container_volume))
 
-        # For each object, keep only the container with smallest volume
+
         for obj_name, containers in inside_by_object.items():
-            containers.sort(key=lambda x: x[1])  # Sort by volume
+            containers.sort(key=lambda x: x[1])
             smallest_container = containers[0][0]
             state.append(f"(InsideOf {obj_name} {smallest_container})")
             objects_with_inside.add(obj_name)
@@ -254,7 +254,7 @@ class StateObserver:
         for obj_name, cand_list in on_top_candidates.items():
             if not cand_list:
                 continue
-            # Skip OnTopOf if object already has InsideOf (higher priority)
+
             if obj_name in objects_with_inside:
                 continue
             cand_list.sort(
@@ -277,8 +277,8 @@ class StateObserver:
                 state.append(f"(OnTopOf {obj_name} {support_name})")
                 objects_with_ontop.add(obj_name)
 
-        # OverOf: Check if welded object is over other objects (XY overlap)
-        # Calculate after InsideOf/OnTopOf since it's lower priority
+
+
         welded = getattr(self.env, "_welded", None)
         if (
             welded
@@ -288,7 +288,7 @@ class StateObserver:
             welded_obj = welded["object"]
             welded_bbox = bbox_cache.get(welded_obj)
 
-            # Skip OverOf if welded object already has InsideOf or OnTopOf (higher priority)
+
             if (
                 welded_obj not in objects_with_inside
                 and welded_obj not in objects_with_ontop
@@ -297,17 +297,17 @@ class StateObserver:
                     welded_low = np.asarray(welded_bbox[0], dtype=float)
                     welded_high = np.asarray(welded_bbox[1], dtype=float)
 
-                    # General case: Find all objects that welded object is over (XY overlap)
+
                     over_candidates = []
-                    xy_overlap_margin = 0.005  # 5mm margin for overlap detection
-                    min_z_gap = 0.02  # Minimum 2cm vertical separation
-                    max_z_gap = 0.30  # Maximum 30cm vertical separation
+                    xy_overlap_margin = 0.005
+                    min_z_gap = 0.02
+                    max_z_gap = 0.30
 
                     for other_name in candidates:
                         if other_name == welded_obj or "handle" in other_name:
                             continue
 
-                        # Skip if welded object is InsideOf or OnTopOf this object
+
                         if (welded_obj, other_name) in inside_relations:
                             continue
                         if (welded_obj, other_name) in on_top_relations:
@@ -320,7 +320,7 @@ class StateObserver:
                         other_low = np.asarray(other_bbox[0], dtype=float)
                         other_high = np.asarray(other_bbox[1], dtype=float)
 
-                        # Check XY overlap
+
                         overlap_x = (welded_low[0] - xy_overlap_margin) < other_high[
                             0
                         ] and (welded_high[0] + xy_overlap_margin) > other_low[0]
@@ -358,28 +358,28 @@ class StateObserver:
 
         state = sorted(list(set(state)))
 
-        # Print only differences from previous state
-        # if self.prev_state is not None:
-        #     prev_set = set(self.prev_state)
-        #     curr_set = set(state)
-        #     added = curr_set - prev_set
-        #     removed = prev_set - curr_set
 
-        #     if added or removed:
-        #         print("State changes:")
-        #         if removed:
-        #             print("  Removed:")
-        #             for pred in sorted(removed):
-        #                 print(f"    - {pred}")
-        #         if added:
-        #             print("  Added:")
-        #             for pred in sorted(added):
-        #                 print(f"    + {pred}")
-        #     else:
-        #         print("State unchanged")
-        # else:
-        #     print(f"Initial state: {(state)}")
-        # print("")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         self.prev_state = state
         return state
