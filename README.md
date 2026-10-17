@@ -27,13 +27,11 @@ Execution uses a bounded repair loop. RLBench runs generated statements through 
 
 ## Experiments
 
-The following figures are from the saved February 2026 experiment logs, not the final paper evaluation.
-
 | Simulator | Transfer | Agent / execution mode | Task success | Subtask success |
 |---|---|---|---|---|
-| RLBench (Feb 11) | Panda → Sawyer | `code_agent`, `failure` | 9/20 in each of 3 runs | 46/74, 43/74, 43/74 |
-| Genesis (Feb 27) | Panda → Robotiq | `code_agent`, failure-based repair | 7/12 for seeds 42, 123, 2024 | 47/64, 48/64, 48/64 |
-| Genesis (Feb 27) | Panda → Suction | `code_agent`, failure-based repair | 6/12 for seeds 42, 123, 2024 | 38/48, 38/48, 37/48 |
+| RLBench | Panda → Sawyer | `code_agent`, `failure` | 9/20 in each of 3 runs | 46/74, 43/74, 43/74 |
+| Genesis | Panda → Robotiq | `code_agent`, failure-based repair | 7/12 for seeds 42, 123, 2024 | 47/64, 48/64, 48/64 |
+| Genesis | Panda → Suction | `code_agent`, failure-based repair | 6/12 for seeds 42, 123, 2024 | 38/48, 38/48, 37/48 |
 
 All these runs used `remote_llm`. 
 
