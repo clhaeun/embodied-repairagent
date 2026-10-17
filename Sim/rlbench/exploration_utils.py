@@ -28,11 +28,11 @@ def compute_static_observation(
         또는 None (관찰 불가 시)
     """
 
-    # MeatOnGrill 태스크에 특화된 관찰
+
     if task_name == "MeatOnGrill":
         return _observe_meat_on_grill(scene_info, failed_stmt_text)
 
-    # 다른 태스크는 일반 관찰 (추후 확장)
+
     return _observe_generic_place_task(scene_info, failed_stmt_text)
 
 
@@ -90,26 +90,26 @@ def _observe_meat_on_grill(
         if grill_pos is None or success_pos is None:
             return None
 
-        # chicken이 조작 대상 (MeatOnGrill 태스크의 목표 물체)
-        # chicken이 없으면 steak, 그것도 없으면 gripper 위치를 fallback으로 사용
+
+
         meat_pos = chicken_pos if chicken_pos is not None else steak_pos
         if meat_pos is None:
             gripper = scene_info.get("gripper", {})
             meat_pos = np.array(gripper.get("position", [0, 0, 0]))
 
-        # --- 거리 계산 ---
+
         d_grill_success = float(np.linalg.norm(grill_pos - success_pos))
         d_meat_grill = float(np.linalg.norm(meat_pos - grill_pos))
         d_meat_success = float(np.linalg.norm(meat_pos - success_pos))
 
-        # --- 관계: dz (높이 차이), xy_offset (수평 오프셋) ---
+
         dz_grill_success = float(success_pos[2] - grill_pos[2])
         xy_offset_grill_success = float(np.linalg.norm(grill_pos[:2] - success_pos[:2]))
 
         dz_meat_success = float(meat_pos[2] - success_pos[2])
         xy_offset_meat_success = float(np.linalg.norm(meat_pos[:2] - success_pos[:2]))
 
-        # --- 임계값 기반 boolean ---
+
         success_radius_m = 0.05
         grill_in_success = d_grill_success < success_radius_m
         meat_in_success = d_meat_success < success_radius_m
@@ -117,14 +117,14 @@ def _observe_meat_on_grill(
 
         target_used = _infer_target_from_code(failed_stmt_text)
 
-        # obj 섹션: chicken과 steak을 개별 추적
+
         obj_section = {}
         if chicken_pos is not None:
             obj_section["chicken"] = [round(v, 2) for v in chicken_pos.tolist()]
         if steak_pos is not None:
             obj_section["steak"] = [round(v, 2) for v in steak_pos.tolist()]
 
-        # 7B 친화적 JSON: 숫자는 2자리, 단위 명시, 등급 태그, 관계 포함
+
         observation = {
             "probe": "static_goal_check",
             "manipulated_object": "chicken" if chicken_pos is not None else "steak",
@@ -153,7 +153,7 @@ def _observe_meat_on_grill(
             "target_used": target_used,
         }
 
-        # grill과 success가 떨어져 있으면 명시적 recommendation 추가
+
         if d_grill_success > 0.08:
             observation["recommendation"] = {
                 "place_target": "success",
@@ -190,10 +190,10 @@ def _observe_generic_place_task(
         objects = scene_info.get("objects", [])
 
         success_pos = None
-        # 조작 대상 물체 찾기 (success가 아닌 첫 번째 물체)
+
         manipulated_obj_name = None
         manipulated_obj_pos = None
-        # 태스크별 주요 타깃 후보
+
         named_targets = {}
 
         for obj in objects:
@@ -206,7 +206,7 @@ def _observe_generic_place_task(
             if "success" in name.lower():
                 success_pos = np.array(pos)
             else:
-                # 태스크별 주요 객체 이름 매칭
+
                 name_lower = name.lower()
                 for kw in ("basketball", "phone", "umbrella", "money", "rubbish",
                            "knife", "charger", "ball", "meat", "steak", "lamp", "button"):
@@ -231,7 +231,7 @@ def _observe_generic_place_task(
             "target_used": target_used,
         }
 
-        # 물체-success 관계 (place 실패 판정에 직결)
+
         if manipulated_obj_pos is not None:
             d_obj_success = float(np.linalg.norm(manipulated_obj_pos - success_pos))
             dz_obj_success = float(manipulated_obj_pos[2] - success_pos[2])
@@ -255,7 +255,7 @@ def _observe_generic_place_task(
                 "obj_in_success": obj_in_success,
             }
 
-        # pick/grasp 실패 시에만 그리퍼-물체 거리 추가
+
         if is_grasp and manipulated_obj_pos is not None:
             gripper = scene_info.get("gripper", {})
             gripper_pos = np.array(gripper.get("position", [0, 0, 0]))
@@ -314,30 +314,30 @@ def _decide_recommendation(
         reason: "grill_success_far" | "near" | "ambiguous"
     """
 
-    # 핵심 휴리스틱:
-    # - grill과 success가 멀리 떨어져 있으면 (> 0.1m)
-    # - 객체가 success에 더 가까우면 success 추천
+
+
+
 
     if d_grill_success > 0.1:
-        # grill과 success가 명확히 분리됨
+
         if d_obj_success < d_obj_grill:
             return "success", "grill_success_far"
         else:
             return "grill", "near"
 
-    # grill과 success가 가까우면 현재 타깃 유지
+
     if d_obj_success < 0.05 and target_used == "success":
         return "success", "near"
     elif d_obj_grill < 0.05 and target_used == "grill":
         return "grill", "near"
 
-    # 애매한 경우 success 추천 (보수적)
+
     return "success", "ambiguous"
 
 
-# ============================================================================
-# 초경량 모드 (3개 feature만)
-# ============================================================================
+
+
+
 
 def compute_minimal_observation(
     task_name: str,
@@ -375,7 +375,7 @@ def compute_minimal_observation(
         d_grill_success = float(np.linalg.norm(grill_pos - success_pos))
         target_used = _infer_target_from_code(failed_stmt_text)
 
-        # 간단한 추천 로직
+
         recommend_target = "success" if d_grill_success > 0.1 else target_used
 
         return {
