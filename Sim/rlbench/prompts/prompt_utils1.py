@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-# 1) 정적 베이스 템플릿(뼈대)만 저장
+
 initial_prompt_dict = {
     "CODE_AGENT": {
         "panda": dedent("""\
@@ -177,11 +177,11 @@ initial_prompt_dict = {
 }
 
 def _quote_obj_list(object_names):
-    # ['ball', 'ball_hoop_responsable'] -> "'ball', 'ball_hoop_responsable'"
+
     return ", ".join(f"'{name}'" for name in object_names)
 
 def get_prompt(task, task_name, object_names, target_robot, descriptions, model, grasp_guidance: str = ""):
-    model_key = model.upper()  # "code_agent" -> "CODE_AGENT"
+    model_key = model.upper()
 
     if model_key == 'OURS':
         return "Temp"
@@ -194,20 +194,20 @@ def get_prompt(task, task_name, object_names, target_robot, descriptions, model,
 
     base_template = initial_prompt_dict[model_key][target_robot]
 
-    # 2) 동적 값 주입(컨트롤 포인트)
+
     obj_list_str = _quote_obj_list(object_names)
 
-    # descriptions가 None이면 빈 문자열로
+
     descriptions = descriptions or ""
 
-    # 주입해서 최종 프롬프트 완성
+
     prompt = base_template.format(
         obj_list_str=obj_list_str,
         task_name=task_name,
         descriptions=descriptions,
     )
 
-    # Grasp guidance 추가 (alignment가 필요한 객체가 있는 경우에만)
+
     if grasp_guidance:
         prompt = prompt + f"\n\n            # {grasp_guidance}"
 
@@ -224,7 +224,7 @@ def _indent_to_body(stmt_texts: List[str], indent: str = "    ") -> str:
         if not s.strip():
             out.append("")
             continue
-        # 이미 들여쓰기가 있으면 그대로, 없으면 4칸 들여쓰기
+
         if s.startswith((" ", "\t")):
             out.append(s)
         else:
@@ -232,7 +232,7 @@ def _indent_to_body(stmt_texts: List[str], indent: str = "    ") -> str:
     return "\n".join(out)
 
 def get_regenerate_prompt_on_failure(
-    base_initial_prompt: str,             # get_prompt(...) 결과 (def run_skill 뼈대 포함)
+    base_initial_prompt: str,
     task_name: str,
     robot_type: str,
     current_code: str,
@@ -240,7 +240,7 @@ def get_regenerate_prompt_on_failure(
     failed_stmt_text: str,
     error_payload: Dict[str, Any],
     scene: Dict[str, Any],
-    failure_report: Optional[str] = None, # 있으면 보조로 첨부
+    failure_report: Optional[str] = None,
 ) -> str:
     executed_block = _indent_to_body(executed_stmt_texts, indent="    ")
 
@@ -278,8 +278,8 @@ def get_regenerate_prompt_on_failure(
     parts.append("[SCENE]\n" + json.dumps(scene or {}, ensure_ascii=False))
     parts.append("[CURRENT_CODE]\n" + (current_code or "").strip())
 
-    # 핵심: base_initial_prompt(= def run_skill 뼈대) + 이미 실행된 prefix를 그대로 보여주고,
-    # "다음 줄부터 이어서" 생성하도록 유도
+
+
     prompt = "\n\n".join(parts) + "\n\n" + base_initial_prompt.rstrip() + "\n\n"
     if executed_block.strip():
         prompt += executed_block + "\n"
@@ -335,18 +335,17 @@ def get_regenerate_prompt_on_not_finished(
     return prompt
 
 
-# ---- 사용 예시 ----
-# if __name__ == "__main__":
-#     available_objects = ['ball', 'ball_hoop_responsable']
-#     task_name = "basketball in hoop"
-#     descriptions = "Put the ball into the hoop."
 
-#     p = get_prompt(
-#         task=None,
-#         task_name=task_name,
-#         object_names=available_objects,
-#         target_robot="panda",
-#         descriptions=descriptions,
-#         model="code_agent",
-#     )
-#     print(p)
+
+
+
+
+
+
+
+
+
+
+
+
+
