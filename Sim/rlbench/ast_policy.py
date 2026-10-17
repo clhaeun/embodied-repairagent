@@ -5,16 +5,16 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 
-# ============================================================================
-# Skill Names 동적 로드 (skill_code*.py 파일들에서 추출)
-# ============================================================================
+
+
+
 
 def _load_skill_names_from_files() -> set:
     """skill_code*.py 파일들에서 스킬 함수 이름들을 동적으로 추출"""
     skill_code_dir = Path(__file__).parent
     skill_names = set()
 
-    # 헬퍼/유틸 함수들 (스킬이 아닌 것들)
+
     helper_functions = {
         'save_camera_image', 'normalize_quaternion', 'euler_from_quat',
         'safe_step', 'angle_diff', 'open_and_retract',
@@ -26,7 +26,7 @@ def _load_skill_names_from_files() -> set:
                 tree = ast.parse(f.read())
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    # _로 시작하는 private 함수 제외
+
                     if not node.name.startswith('_') and node.name not in helper_functions:
                         skill_names.add(node.name)
         except Exception as e:
@@ -34,7 +34,7 @@ def _load_skill_names_from_files() -> set:
 
     return skill_names
 
-# 전역 스킬 이름 집합 (모듈 로드 시 한 번만 초기화)
+
 SKILL_NAMES: set = _load_skill_names_from_files()
 
 
@@ -63,7 +63,7 @@ def get_statement_code(stmt: ast.stmt, source_lines: List[str]) -> str:
 
 def is_skill_call(stmt: ast.stmt) -> Tuple[bool, Optional[str]]:
     """statement가 skill 호출인지 확인하고, skill 이름 반환"""
-    # 전역 SKILL_NAMES 사용 (모듈 로드 시 skill_code*.py에서 동적 추출)
+
 
     def find_call(node):
         if isinstance(node, ast.Call):
