@@ -136,7 +136,7 @@ class PolicyProvider:
                 return f.read()
 
         if self.mode == "local_llm":
-            # local_llm은 아직 기존 스타일 유지(원하시면 동일하게 A안으로 정리 가능)
+
             from generate import generate_code_with_local_llm
             code = generate_code_with_local_llm(self.initial_prompt)
             self._save(code)
@@ -339,7 +339,7 @@ class PolicyProvider:
 
         if self.mode == "local_llm":
             from generate import generate_code_with_local_llm
-            # local_llm은 임시로 기존 방식(필요하면 나중에 A안과 동일하게 정리 가능)
+
             augmented = (
                 self.initial_prompt
                 + "\n\n[NOT_FINISHED]\nAll statements executed but goal not met.\n"
@@ -432,7 +432,7 @@ class PolicyProvider:
     def _read(self, robot_name: str, task_name: str) -> str:
         candidates = [
             f"./common_rlbench/tasks/tasks_{robot_name}/{task_name}.py",  # oracle 폴더(우선)
-            f"./tasks_{robot_name}/{task_name}.py",                      # 기존 경로(호환)
+            f"./tasks_{robot_name}/{task_name}.py",
         ]
         for path in candidates:
             if os.path.exists(path):
