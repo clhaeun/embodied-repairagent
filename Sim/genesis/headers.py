@@ -62,7 +62,7 @@ HEADER = {
     'robotiq85': COMMON_HEADER + ROBOTIQ85_HEADER,
 }
 
-# Skill function names for each robot type
+
 SKILL_FUNCTIONS = {
     'gripper': [
         'move_gripper_to',
@@ -109,6 +109,6 @@ def normalize_robot_type(robot_type: str) -> str:
         "robotiq": "robotiq85",
         "robotiq_85": "robotiq85",
         "rq85": "robotiq85",
-        "panda": "gripper",   # 필요 시
+        "panda": "gripper",
     }
     return aliases.get(rt, rt)
