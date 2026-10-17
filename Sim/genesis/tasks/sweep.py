@@ -44,11 +44,11 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
     print(f"[Sweep] Piece to box mapping: {task.piece_to_box}")
     print(f"[Sweep] Misplaced pieces: {task.obst_pieces}")
 
-    # Step 1: Relocate misplaced pieces back to the board
+
     if task.obst_pieces:
         print(f"\n[Sweep] Relocating {len(task.obst_pieces)} misplaced piece(s)")
 
-        # Calculate grid positions to avoid collisions
+
         board_bbox = env.get_obj_bbox("board")
         if board_bbox is not None:
             center = (board_bbox[0] + board_bbox[1]) / 2
@@ -64,7 +64,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
         for i, piece_name in enumerate(task.obst_pieces):
             print(f"[Sweep] Relocating {piece_name} back to board")
 
-            # Calculate target position with offset
+
             target_pos = None
             if board_bbox is not None and i < len(grid_offsets):
                 offset = grid_offsets[i]
@@ -89,17 +89,17 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
                 print(f"[Sweep] Skipping relocate for {piece_name}")
                 continue
 
-    # Step 2: Sweep all pieces to their corresponding boxes
+
     for piece_name in task.object_names:
         print(f"\n[Sweep] Processing: {piece_name}")
 
-        # Get target box from piece_to_box mapping
+
         target_box = task.piece_to_box.get(piece_name)
         if target_box is None:
             print(f"[Sweep] No target box for {piece_name}, skipping")
             continue
 
-        # Sweep piece to target box
+
         try:
             result = provider.execute_subtask(
                 subtask_name="sweep_single",
@@ -114,7 +114,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
             print(f"[Sweep] Skipping sweep for {piece_name}")
             continue
 
-    # Check result
+
     result = env.check_result()
     print(f"\n[Sweep] Task completed with result: {result}")
     return result
