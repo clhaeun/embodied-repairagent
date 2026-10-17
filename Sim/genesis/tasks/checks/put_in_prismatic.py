@@ -33,18 +33,18 @@ def check_place_success(env, obj_name, target_name="bottom_drawer"):
     Returns:
         True if object bbox is inside drawer bbox.
     """
-    # Object should not be in gripper
+
     if env.obj_in_gripper(obj_name) and not env.gripper_is_open():
         return False
 
-    # Check if object is inside drawer
+
     drawer_bbox = env.get_obj_bbox(target_name)
     obj_bbox = env.get_obj_bbox(obj_name)
 
     obj_min, obj_max = obj_bbox[0], obj_bbox[1]
     drawer_min, drawer_max = drawer_bbox[0], drawer_bbox[1]
 
-    # Add margin for more lenient check
+
     margin = np.array([0.02, 0.02, 0.03])
     in_drawer = (
         np.all(obj_min >= drawer_min - margin) and
