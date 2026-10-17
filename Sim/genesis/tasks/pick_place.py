@@ -40,7 +40,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
     print(f"[PickPlace] Starting task with objects: {task.object_names}")
     print(f"[PickPlace] Stack pairs: {task.stack_pairs}")
     
-    # Step 1: Unstack blocks if any (process in reverse order - top first)
+
     if task.stack_pairs:
         print(f"\n[PickPlace] Unstacking {len(task.stack_pairs)} stacked block(s)")
         for low_obj, top_obj in reversed(task.stack_pairs):
@@ -61,7 +61,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
                 continue
 
     print("\n[PickPlace] Starting pick and place of blocks into toy box")
-    # Step 2: Pick and place the base block into the toy box
+
     base_block = task.object_names[0]
     print(f"\n[PickPlace] Picking base block: {base_block}")
     try:
@@ -96,11 +96,11 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
             subtask_results.append(skip.result)
 
     remain_blocks = task.object_names[1:]
-    # Step 3: Pick and place each block into the toy box
+
     for obj_name in remain_blocks:
         print(f"\n[PickPlace] Processing: {obj_name}")
 
-        # Pick the block
+
         try:
             result = provider.execute_subtask(
                 subtask_name="pick_single",
@@ -116,7 +116,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
                 subtask_results.append(skip.result)
             continue
 
-        # Place into toy box
+
         try:
             result = provider.execute_subtask(
                 subtask_name="place_single",
@@ -134,7 +134,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
                 subtask_results.append(skip.result)
             continue
 
-    # Check result
+
     result = env.check_result()
     print(f"\n[PickPlace] Task completed with result: {result}")
     return result
