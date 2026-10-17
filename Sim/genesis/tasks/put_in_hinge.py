@@ -46,12 +46,12 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
     print(f"[PutInHinge] Starting task with objects: {task.object_names}")
     print(f"[PutInHinge] Obstacle object on lid: {task.obst_object}")
 
-    # Step 1: Move obstacle fruit off the lid (obst_level=2)
+
     if task.obst_object:
         print(f"\n[PutInHinge] Moving {task.obst_object} off the lid")
 
         try:
-            # Pick the obstacle object
+
             result = provider.execute_subtask(
                 subtask_name="pick_single",
                 env=env,
@@ -61,10 +61,10 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
             )
             subtask_results.append(result)
 
-            # Place it aside (to a temporary position)
+
             hinge_body_pos = env.get_obj_pos("hinge_body")
             temp_pos = hinge_body_pos.copy()
-            temp_pos[0] -= 0.15  # Move to the front
+            temp_pos[0] -= 0.15
             temp_pos[2] += 0.05
 
             result = provider.execute_subtask(
@@ -81,7 +81,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
             if skip.result is not None:
                 subtask_results.append(skip.result)
 
-    # Step 2: Open the lid if closed (obst_level>=1)
+
     if is_hinge_lid_already_open(env) is False:
         print("[PutInHinge] Opening the hinge lid")
         try:
@@ -97,11 +97,11 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
             if skip.result is not None:
                 subtask_results.append(skip.result)
 
-    # Step 3: Pick and place each fruit into the hinge box
+
     for obj_name in task.object_names:
         print(f"\n[PutInHinge] Processing: {obj_name}")
 
-        # Pick the fruit
+
         try:
             result = provider.execute_subtask(
                 subtask_name="pick_single",
@@ -117,7 +117,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
                 subtask_results.append(skip.result)
             continue
 
-        # Place into hinge box body
+
         try:
             result = provider.execute_subtask(
                 subtask_name="place_single",
@@ -135,7 +135,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
                 subtask_results.append(skip.result)
             continue
 
-    # Step 4: Close the lid
+
     print("\n[PutInHinge] Closing the hinge lid")
     try:
         result = provider.execute_subtask(
@@ -150,7 +150,7 @@ def run_task(env, task, provider=None, subtask_results=None, max_repairs=5, **kw
         if skip.result is not None:
             subtask_results.append(skip.result)
 
-    # Check result
+
     result = env.check_result()
     print(f"\n[PutInHinge] Task completed with result: {result}")
     return result
