@@ -65,7 +65,7 @@ class RemoteLLMSocketClient:
             s.settimeout(self.recv_timeout)
         self._sock = s
 
-        # handshake
+
         self.send({"type": "hello", "client": "rlbench_loop"})
         resp = self.recv()
         if not isinstance(resp, dict) or resp.get("type") != "hello_ack":
@@ -102,7 +102,7 @@ class RemoteLLMSocketClient:
     def request(self, obj: Dict[str, Any]) -> Dict[str, Any]:
         if _DEBUG_RPC:
             safe = dict(obj)
-            # 너무 길어지는 필드만 축약 (필요하면 더 추가하세요)
+
             if isinstance(safe.get("prompt"), str):
                 safe["prompt"] = _shorten(safe["prompt"], 800)
             if isinstance(safe.get("reference_code"), str):
