@@ -1492,7 +1492,7 @@ def execute_failure_loop(
                     print(f"\n[HYPOTHESIS] === LLM Hypothesis Generation (revise) ===")
                     if hyp_prompt:
                         hyp_prompt_short = hyp_prompt[-500:] if len(hyp_prompt) > 500 else hyp_prompt
-                        print(f"[HYPOTHESIS] Prompt (tail):\n{hyp_prompt_short}")
+
                     if hyp_response:
                         print(f"[HYPOTHESIS] LLM Response:\n{hyp_response}")
                     print(f"[HYPOTHESIS] ==========================================\n")
@@ -1666,7 +1666,7 @@ def execute_failure_loop(
                             print(f"\n[HYPOTHESIS] === LLM Hypothesis Generation (repair) ===")
                             if hyp_prompt:
                                 hyp_prompt_short = hyp_prompt[-500:] if len(hyp_prompt) > 500 else hyp_prompt
-                                print(f"[HYPOTHESIS] Prompt (tail):\n{hyp_prompt_short}")
+
                             if hyp_response:
                                 print(f"[HYPOTHESIS] LLM Response:\n{hyp_response}")
                             print(f"[HYPOTHESIS] ==========================================\n")
@@ -1775,7 +1775,7 @@ def execute_failure_loop(
                     print(f"\n[HYPOTHESIS] === LLM Hypothesis Generation (revise) ===")
                     if hyp_prompt:
                         hyp_prompt_short = hyp_prompt[-500:] if len(hyp_prompt) > 500 else hyp_prompt
-                        print(f"[HYPOTHESIS] Prompt (tail):\n{hyp_prompt_short}")
+
                     if hyp_response:
                         print(f"[HYPOTHESIS] LLM Response:\n{hyp_response}")
                     print(f"[HYPOTHESIS] ==========================================\n")
