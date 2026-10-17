@@ -1,4 +1,4 @@
-# tasks/reach_and_drag.py  -  done
+
 from scipy.spatial.transform import Rotation as R
 from pyrep.objects.shape import Shape
 from pyrep.objects.joint import Joint
@@ -26,7 +26,7 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
 
     stick_perp = normalize_vector(np.array([-stick_axis[1], stick_axis[0], 0.0], dtype=np.float64))
     
-    # Move to stick_hover, Align to stick_perp, Pick the stick
+
     grasp_end = stick_position.copy()
     grasp_end[0] += 0.03
     grasp_end[1] += l/3
@@ -37,7 +37,7 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
     obs, reward, done = align_two_axes(env, task, local_axes=('z','x'), world_axes=('z', stick_perp), axis_dirs=(-1,1), tol_rad=2e-3, timeout=30.0)
     obs, reward, done = pick(env, task, target_pos=grasp_end, approach_distance=0.04, approach_axis='z', timeout=10.0)
     
-    # Prepare to drag
+
     obs, reward, done = move(env, task, target_pos=stick_hover, timeout=10.0)
     drag_dir = (target0_position - cube_position).astype(np.float64)
     drag_dir[2] = 0.0
@@ -45,7 +45,7 @@ def run_skill(env, task, descriptions=None, obs=None, variations_index: int = 0)
     prep_drag = grasp_end - 0.1*drag_dir
     obs, reward, done = move(env, task, target_pos=prep_drag, timeout=10.0)
     
-    # Drag the cube with the stick to target0
+
     drag_pos = target0_position + np.array([0.0, 0.2, 0.0])
     obs, reward, done = push(env, task, target_pos=drag_pos, approach_distance=0.1, approach_axis='y', timeout=20.0)
 
