@@ -52,7 +52,7 @@ def preprocess_reference_code(code: str) -> str:
     try:
         tree = ast.parse(src)
     except Exception:
-        # AST가 깨진 경우: 기존처럼 라인 기반 fallback (간단)
+
         return _fallback_extract_body_only(src)
 
     fn = None
@@ -529,7 +529,7 @@ class PolicyProvider:
                     func_lines = lines[start_line:end_line]
                     return '\n'.join(func_lines)
 
-            # If function not found, return full code (fallback)
+
             print(f"[WARN] Function '{function_name}' not found in reference, using full code")
             return code
         except Exception as e:
@@ -1580,14 +1580,14 @@ class PolicyProvider:
                             repair_duration = time.time() - repair_start
                             self._log_llm_call("REPAIR", subtask_name, repair_duration, self.last_response_num_tokens)
 
-                            # (1) RAW LLM continuation debug
+
                             raw_head = (new_code[:1200] + "\n...") if isinstance(new_code, str) and len(new_code) > 1200 else str(new_code)
                             raw_tail = ("...\n" + new_code[-800:]) if isinstance(new_code, str) and len(new_code) > 2000 else ""
                             print("\n[DEBUG][REPAIR] raw LLM continuation (head):\n", raw_head)
                             if raw_tail:
                                 print("\n[DEBUG][REPAIR] raw LLM continuation (tail):\n", raw_tail)
 
-                            # (2) Postprocess debug
+
                             cont_body = postprocess_continuation_code(new_code, subtask_name=subtask_name)
                             cont_head = (cont_body[:1200] + "\n...") if len(cont_body) > 1200 else cont_body
                             cont_tail = ("...\n" + cont_body[-800:]) if len(cont_body) > 2000 else ""
@@ -1608,7 +1608,7 @@ class PolicyProvider:
                                 insert_after_lineno=after_ln_0based,  # lineno/end_lineno를 넣는 이유입니다.
                             )
 
-                            # (4) Merge 후: next stmt 디버그
+
                             debug_print_next_statements(
                                 current_code=current_code,
                                 current_lines=current_code.split("\n"),
