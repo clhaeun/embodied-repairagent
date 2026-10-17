@@ -14,7 +14,7 @@ class PourLiquidTask(BaseTask):
 
     def __init__(self, variant, **kwargs):
         super().__init__(variant, **kwargs)
-        # rng is already initialized in BaseTask
+
         self.initial_liquid_amount = 100
         self.spilled_amount = 0
 
@@ -63,7 +63,7 @@ class PourLiquidTask(BaseTask):
                 fixed=True,
                 parse_glb_with_zup=True,
             ),
-            surface=gs.surfaces.Smooth(color=(0.7, 0.7, 0.7)),  # Single color to avoid heterogeneous colors error
+            surface=gs.surfaces.Smooth(color=(0.7, 0.7, 0.7)),
         )
 
     def _place_liquid(self, scene):
