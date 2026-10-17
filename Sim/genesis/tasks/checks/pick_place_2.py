@@ -33,11 +33,11 @@ def check_place_success(env, obj_name, target_name="tray"):
     Returns:
         True if object bbox is inside tray area.
     """
-    # Object should not be in gripper
+
     if env.obj_in_gripper(obj_name) and not env.gripper_is_open():
         return False
 
-    # Get tray bbox and calculate valid area
+
     tray_bbox = env.get_obj_bbox(target_name)
     center = (tray_bbox[0] + tray_bbox[1]) / 2
     half_size = (tray_bbox[1] - tray_bbox[0]) / 2 * 0.8
@@ -45,10 +45,10 @@ def check_place_success(env, obj_name, target_name="tray"):
     tray_min = center - half_size
     tray_max = center + half_size
 
-    # Get object bbox
+
     obj_bbox = env.get_obj_bbox(obj_name)
 
-    # Check if object is in tray (xy and z)
+
     xy_ok = np.all(
         (tray_min[:2] - 0.04 < obj_bbox[0][:2]) &
         (obj_bbox[1][:2] < tray_max[:2] + 0.04)
@@ -85,24 +85,24 @@ def check_lid_open(env, lid_name="box_lid"):
     Returns:
         True if lid is open (handle is raised above body AND gripper has released).
     """
-    # Get handle and body bbox
+
     handle_bbox = env.get_obj_bbox("box_handle")
     body_bbox = env.get_obj_bbox("box_body")
 
     if handle_bbox is None or body_bbox is None:
         return False
 
-    # Handle should be well above the body when lid is open
+
     handle_bottom_z = handle_bbox[0][2]
     body_top_z = body_bbox[1][2]
 
-    # Check if gripper has released the handle
+
     gripper_released = not env._grasp.get("active", False)
 
     print(f"[CheckLidOpen] handle_bottom_z={handle_bottom_z:.3f}, body_top_z={body_top_z:.3f}, gripper_released={gripper_released}")
 
-    # Both conditions must be satisfied:
-    # 1. Handle is sufficiently high above body
-    # 2. Gripper has released the handle (ensuring release_handle was called)
+
+
+
     height_ok = handle_bottom_z > body_top_z + 0.15
     return height_ok and gripper_released
