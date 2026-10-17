@@ -19,13 +19,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from result_types import SubtaskResult
 from exceptions import SubtaskFailure, SubtaskNotfinished, SubtaskSkip
-from ours_utils import (
-    extract_subtask_statements,
-    basic_validate_skill_call,
-)
 
 from remote_llm_socket_client import RemoteLLMSocketClient
-from background_validator import BackgroundValidator
 
 from postprocess import postprocess_initial_code, postprocess_continuation_code, debug_print_next_statements, merge_continuation_into_subtask
 from prompts.prompt_utils import SUBTASK_SIGNATURES
