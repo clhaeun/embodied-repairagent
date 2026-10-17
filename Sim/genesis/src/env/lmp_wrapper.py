@@ -13,7 +13,7 @@ import numpy as np
 
 from src.common.constants import FLOOR_AABB, RECORD_INTERVAL
 
-# Import skill functions from skill_code
+
 from skill_code import (
     move_gripper_to as _move_gripper_to,
     move_to_position as _move_to_position,
@@ -80,7 +80,7 @@ class LMPWrapper:
             self.ee_name = "link7"
         elif ee_type == "robotiq85":
             print("[env] Using robotiq85 end-effector.")
-            # Use link7 as IK target (robotiq_85_base_link is fixed to link7 via attachment)
+
             self.ee_name = "link7"
 
     def collect(self, data_type, show_viewer=True, record=False, record_path=None):
@@ -147,9 +147,9 @@ class LMPWrapper:
 
         return self.env.result
 
-    # ============================================================
-    # Perception API
-    # ============================================================
+
+
+
 
     def is_obj_visible(self, obj_name):
         """Check if an object is visible in the scene."""
@@ -278,7 +278,7 @@ class LMPWrapper:
                 return tmin <= tmax
 
             obj_aabb = torch.from_numpy(self.get_obj_bbox(obj_name)).to(left_pos.device)
-            # Add margin to bbox for more lenient check (especially Z-axis)
+
             margin = torch.tensor([0.005, 0.005, 0.02], device=left_pos.device)
             obj_aabb_min = obj_aabb[0] - margin
             obj_aabb_max = obj_aabb[1] + margin
@@ -288,22 +288,22 @@ class LMPWrapper:
             return bool(intersect)
 
         elif self.ee_type == "robotiq85":
-            # Robotiq85: check if line between left and right inner fingers intersects object AABB
+
             franka = self.env.franka
             left_finger = franka.get_link("left_inner_finger")
             right_finger = franka.get_link("right_inner_finger")
 
-            # Get finger tip positions (add offset to get actual contact point)
+
             left_pos = left_finger.get_pos()
             right_pos = right_finger.get_pos()
 
-            # Finger tip offset in local Z direction (approximately 0.02m from link origin)
+
             pointing_to = self.env.scene_objects["gripper"].pointing_to
             if pointing_to == "down":
                 tip_offset = torch.tensor([0.0, 0.0, -0.02], device=left_pos.device)
             elif pointing_to == "left":
                 tip_offset = torch.tensor([0.0, -0.02, 0.0], device=left_pos.device)
-            else:  # right
+            else:
                 tip_offset = torch.tensor([0.0, 0.02, 0.0], device=left_pos.device)
 
             left_tip = left_pos + tip_offset
@@ -331,7 +331,7 @@ class LMPWrapper:
                 return tmin <= tmax
 
             obj_aabb = torch.from_numpy(self.get_obj_bbox(obj_name)).to(left_tip.device)
-            # Add margin to bbox for more lenient check (especially Z-axis)
+
             margin = torch.tensor([0.005, 0.005, 0.02], device=left_tip.device)
             obj_aabb_min = obj_aabb[0] - margin
             obj_aabb_max = obj_aabb[1] + margin
@@ -339,17 +339,17 @@ class LMPWrapper:
                 left_tip, right_tip, obj_aabb_min, obj_aabb_max
             )
 
-            # DEBUG: Print finger and object positions (disabled)
-            # print(f"[DEBUG obj_in_gripper] {obj_name}")
-            # print(f"  left_tip: {left_tip.cpu().numpy()}")
-            # print(f"  right_tip: {right_tip.cpu().numpy()}")
-            # print(f"  obj_aabb_min: {obj_aabb_min.cpu().numpy()}")
-            # print(f"  obj_aabb_max: {obj_aabb_max.cpu().numpy()}")
-            # print(f"  intersect: {intersect}")
+
+
+
+
+
+
+
 
             return bool(intersect)
 
-        else:  # suction
+        else:
             end_effector = self.env.franka.get_link(self.ee_name)
             pos = end_effector.get_pos().cpu().numpy()
 
@@ -451,9 +451,9 @@ class LMPWrapper:
 
         raise RuntimeError("Failed to find an empty floor (x, y) from grid.")
 
-    # ============================================================
-    # Action API - Delegated to skill_code module
-    # ============================================================
+
+
+
 
     def move_gripper_to(self, obj_name, pointing_to="down", depth=0.01):
         """Move the gripper to a target object."""
@@ -493,7 +493,7 @@ class LMPWrapper:
         """Release a grasped handle."""
         return _release_handle(self)
 
-    # Vacuum gripper aliases
+
     def attach_vacuum_handle(self, handle_name):
         """Attach the vacuum gripper to a handle."""
         return _attach_vacuum_handle(self, handle_name)
@@ -513,9 +513,9 @@ class LMPWrapper:
     def __getattr__(self, name):
         return getattr(self.env, name)
 
-    # ============================================================
-    # Private Helper Methods
-    # ============================================================
+
+
+
 
     def _prepare_recording(self, record_path):
         """Prepare for recording."""
