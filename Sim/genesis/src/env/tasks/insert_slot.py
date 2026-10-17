@@ -14,13 +14,13 @@ class InsertSlotTask(BaseTask):
 
     def __init__(self, variant, **kwargs):
         super().__init__(variant, **kwargs)
-        # rng is already initialized in BaseTask
+
 
     def setup(self, scene):
         if not self.is_subtask:
             self._place_floor(scene)
 
-        # Randomly assign target/start positions
+
         left_offset = (self.offset[0], self.offset[1] - 0.12, Z_OFFSET)
         right_offset = (self.offset[0], self.offset[1] + 0.12, Z_OFFSET)
 
@@ -44,7 +44,7 @@ class InsertSlotTask(BaseTask):
                 fixed=True,
                 parse_glb_with_zup=True,
             ),
-            surface=gs.surfaces.Smooth(color=(0.6, 0.6, 0.6)),  # Single color to avoid heterogeneous colors error
+            surface=gs.surfaces.Smooth(color=(0.6, 0.6, 0.6)),
         )
 
         if "target" in name:
@@ -97,7 +97,7 @@ class InsertSlotTask(BaseTask):
         slot_aabb = env.get_obj_bbox("target_slot")
 
         margin = 0.01
-        # Check if target's xy AABB is within slot's xy AABB (stricter with margin)
+
         target_in_slot_xy = (
             target_aabb[0][0] > slot_aabb[0][0] + margin
             and target_aabb[1][0] < slot_aabb[1][0] - margin
@@ -105,7 +105,7 @@ class InsertSlotTask(BaseTask):
             and target_aabb[1][1] < slot_aabb[1][1] - margin
         )
 
-        # Check if target's bottom Z is below slot's middle Z
+
         slot_mid_z = (slot_aabb[0][2] + slot_aabb[1][2]) / 2
         target_inserted_z = target_aabb[0][2] < slot_mid_z
 
