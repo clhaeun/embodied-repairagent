@@ -26,20 +26,20 @@ def place_single(env, target_name, pointing_to="down", height_offset=0.1):
     """
     print(f"[PlaceSingle] Placing at {target_name}")
 
-    # Get target position
+
     target_pos = env.get_obj_pos(target_name)
 
-    # Calculate place position (above target)
+
     place_pos = target_pos.copy()
     place_pos[2] += height_offset
 
-    # Move to place position
+
     move_to_position(env, place_pos, pointing_to=pointing_to)
 
-    # Release object
+
     open_gripper(env)
 
-    # Move up to clear
+
     move_parallel(env, "up", 0.08, pointing_to=pointing_to)
 
     print(f"[PlaceSingle] Successfully placed at {target_name}")
@@ -60,13 +60,13 @@ def place_at_position(env, position, pointing_to="down"):
     """
     print(f"[PlaceSingle] Placing at position {position}")
 
-    # Move to place position
+
     move_to_position(env, position, pointing_to=pointing_to)
 
-    # Release object
+
     open_gripper(env)
 
-    # Move up to clear
+
     move_parallel(env, "up", 0.08, pointing_to=pointing_to)
 
     print(f"[PlaceSingle] Successfully placed at position")
