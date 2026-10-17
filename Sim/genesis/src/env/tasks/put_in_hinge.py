@@ -70,7 +70,7 @@ class PutInHingeTask(BaseTask):
                     pos=(cx, ys[idx], 0.5),
                     euler=euler,
                 ),
-                surface=gs.surfaces.Smooth(color=(0.8, 0.6, 0.4)),  # Single color to avoid heterogeneous colors error
+                surface=gs.surfaces.Smooth(color=(0.8, 0.6, 0.4)),
             )
 
             self.scene_objects[name] = entity
