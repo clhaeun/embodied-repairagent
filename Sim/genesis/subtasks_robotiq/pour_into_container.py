@@ -19,7 +19,7 @@ def pour_into_container(env, target_pos, pour_angle=120, pour_steps=60, hold_ste
 
     pour_pos = target_pos.copy()
     pour_pos[2] += 0.20
-    pour_pos[1] -= 0.05  # Offset for pouring
+    pour_pos[1] -= 0.05
     move_to_position(env, pour_pos, pointing_to="down")
 
     print(f"[PourIntoContainer] Tilting to pour")
