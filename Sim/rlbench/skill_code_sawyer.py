@@ -23,7 +23,7 @@ from rlbench.backend.exceptions import InvalidActionError
 from utils.trigger_condition import SkillFailure, PathOutOfWorkspace
 from utils.feedback import FeedbackWithError
 
-# 디버그 출력 플래그 (False면 로그 출력 안 함)
+
 SAWYER_MOVE_TO_DEBUG = False
 EXECUTE_PATH_DEBUG = False
 
@@ -38,9 +38,9 @@ def _exec_path_log(*args, **kwargs):
         print(*args, **kwargs)
 
 
-# =============================================================================
-# Common Utilities
-# =============================================================================
+
+
+
 
 def normalize_quaternion(q):
     """Quaternion 정규화 (xyzw 형식)"""
@@ -103,7 +103,7 @@ def _execute_path(env, task, path, skill_type, timeout_s=60.0, target_pos=None):
     arm = _get_arm(task)
     start_time = time.time()
 
-    # 디버그: path 정보
+
     path_configs = path._path_points if hasattr(path, '_path_points') else None
     _exec_path_log(f"[_execute_path] Starting path execution, timeout={timeout_s}s")
     if path_configs is not None:
@@ -119,7 +119,7 @@ def _execute_path(env, task, path, skill_type, timeout_s=60.0, target_pos=None):
     prev_pos = start_pos.copy()
 
     while not done_path:
-        # 타임아웃 체크
+
         if time.time() - start_time > timeout_s:
             obs = task.get_observation()
             fd_error = FeedbackWithError(
@@ -132,15 +132,15 @@ def _execute_path(env, task, path, skill_type, timeout_s=60.0, target_pos=None):
             )
             raise SkillFailure(fd_error)
 
-        # Path step 실행
+
         done_path = path.step()
         scene.step()
         step_count += 1
 
-        # 디버그: 매 step마다 위치 변화 추적
+
         current_pos_now = np.array(arm.get_tip().get_position())
 
-        # 10 step마다 또는 마지막 step에서 출력
+
         if step_count % 10 == 0 or done_path:
             if target_pos is not None:
                 dist_to_target = np.linalg.norm(current_pos_now - np.array(target_pos))
@@ -148,20 +148,20 @@ def _execute_path(env, task, path, skill_type, timeout_s=60.0, target_pos=None):
             else:
                 _exec_path_log(f"[_execute_path] Step {step_count}: pos={current_pos_now}, done_path={done_path}")
 
-        # 움직임이 거의 없는데 done_path=True면 조기종료 감지
+
         if done_path and step_count < 50:
             total_moved = np.linalg.norm(current_pos_now - start_pos)
             if target_pos is not None:
                 remaining = np.linalg.norm(current_pos_now - np.array(target_pos))
                 _exec_path_log(f"[_execute_path] WARNING: Path ended early! steps={step_count}, moved={total_moved:.4f}m, remaining={remaining:.4f}m")
 
-                # Joint limit 체크
+
                 _exec_path_log(f"[_execute_path] Checking joint limits...")
                 for j_idx, joint in enumerate(arm.joints):
                     interval = joint.get_joint_interval()
                     pos = joint.get_joint_position()
                     at_limit = ""
-                    if interval[0]:  # cyclic이 아닌 경우만
+                    if interval[0]:
                         if pos <= interval[1][0] + 0.02:
                             at_limit = " <-- AT LOWER LIMIT!"
                         elif pos >= interval[1][1] - 0.02:
@@ -170,13 +170,13 @@ def _execute_path(env, task, path, skill_type, timeout_s=60.0, target_pos=None):
 
         prev_pos = current_pos_now.copy()
 
-        # Task success 체크
+
         if _check_success(task):
             obs = task.get_observation()
             _exec_path_log(f"[_execute_path] Task success at step {step_count}")
             return obs, 1.0, True
 
-    # Path 완료 후 디버그 출력
+
     end_pos = np.array(arm.get_tip().get_position())
     _exec_path_log(f"[_execute_path] Path completed in {step_count} steps")
     _exec_path_log(f"[_execute_path] End tip position: {end_pos}")
@@ -187,13 +187,13 @@ def _execute_path(env, task, path, skill_type, timeout_s=60.0, target_pos=None):
         _exec_path_log(f"[_execute_path] Position error to target: {error:.4f}m")
         _exec_path_log(f"[_execute_path] Position diff: {end_pos - target_pos_arr}")
 
-        # Path가 목표에 도달하지 못했으면 direct joint interpolation 시도
-        if error > 0.05:  # 5cm 이상 오차
+
+        if error > 0.05:
             _exec_path_log(f"[_execute_path] Path didn't reach target, trying direct joint interpolation...")
             current_quat = arm.get_tip().get_quaternion()
 
             try:
-                # IK로 목표 joint position 계산
+
                 target_joints = arm.solve_ik_via_jacobian(target_pos_arr.tolist(), quaternion=current_quat)
                 _exec_path_log(f"[_execute_path] IK solution found, interpolating...")
 
@@ -207,13 +207,13 @@ def _execute_path(env, task, path, skill_type, timeout_s=60.0, target_pos=None):
                     arm.set_joint_positions(interp_joints.tolist())
                     scene.step()
 
-                    # Task success 체크
+
                     if _check_success(task):
                         obs = task.get_observation()
                         _exec_path_log(f"[_execute_path] Task success during direct interpolation!")
                         return obs, 1.0, True
 
-                    # 진행 상황 출력
+
                     if interp_i % 10 == 0:
                         curr_pos = np.array(arm.get_tip().get_position())
                         dist = np.linalg.norm(curr_pos - target_pos_arr)
@@ -226,7 +226,7 @@ def _execute_path(env, task, path, skill_type, timeout_s=60.0, target_pos=None):
             except IKError as e:
                 _exec_path_log(f"[_execute_path] IK failed for direct interpolation: {e}")
 
-    # Path 완료 후 observation 반환
+
     obs = task.get_observation()
     success = _check_success(task)
     reward = 1.0 if success else 0.0
@@ -234,9 +234,9 @@ def _execute_path(env, task, path, skill_type, timeout_s=60.0, target_pos=None):
     return obs, reward, success
 
 
-# =============================================================================
-# Quaternion Utilities for Alignment
-# =============================================================================
+
+
+
 
 def _quat_from_euler(roll, pitch, yaw):
     """Euler angles (XYZ) to quaternion (xyzw)"""
@@ -248,10 +248,10 @@ def _quat_from_euler(roll, pitch, yaw):
     sy = math.sin(yaw / 2)
 
     return np.array([
-        sr * cp * cy - cr * sp * sy,  # x
-        cr * sp * cy + sr * cp * sy,  # y
-        cr * cp * sy - sr * sp * cy,  # z
-        cr * cp * cy + sr * sp * sy   # w
+        sr * cp * cy - cr * sp * sy,
+        cr * sp * cy + sr * cp * sy,
+        cr * cp * sy - sr * sp * cy,
+        cr * cp * cy + sr * sp * sy
     ], dtype=float)
 
 
@@ -275,14 +275,14 @@ def _yaw_from_quat(q):
     return math.atan2(t0, t1)
 
 
-# Approach direction별 flip quaternion (gripper z축을 해당 방향으로)
+
 _FLIP_QUATS = {
-    'down':  np.array([1.0, 0.0, 0.0, 0.0], dtype=float),  # 180° about X (z -> -z)
-    'up':    np.array([0.0, 0.0, 0.0, 1.0], dtype=float),  # identity (z -> +z)
-    'right': _quat_from_euler(0.0, math.radians(90), 0.0),   # pitch +90°
-    'left':  _quat_from_euler(0.0, math.radians(-90), 0.0),  # pitch -90°
-    'front': _quat_from_euler(math.radians(-90), 0.0, 0.0),  # roll -90°
-    'back':  _quat_from_euler(math.radians(90), 0.0, 0.0),   # roll +90°
+    'down':  np.array([1.0, 0.0, 0.0, 0.0], dtype=float),
+    'up':    np.array([0.0, 0.0, 0.0, 1.0], dtype=float),
+    'right': _quat_from_euler(0.0, math.radians(90), 0.0),
+    'left':  _quat_from_euler(0.0, math.radians(-90), 0.0),
+    'front': _quat_from_euler(math.radians(-90), 0.0, 0.0),
+    'back':  _quat_from_euler(math.radians(90), 0.0, 0.0),
 }
 
 
@@ -304,28 +304,28 @@ def _compute_align_quaternion(approach_direction, reference_quat=None, yaw_mode=
 
     flip_quat = _FLIP_QUATS[approach_direction]
 
-    # Reference quat에서 yaw 추출
+
     if reference_quat is not None:
         ref_q = normalize_quaternion(reference_quat)
         yaw = _yaw_from_quat(ref_q)
     else:
         yaw = 0.0
 
-    # Yaw mode에 따른 offset
+
     yaw_offset = 0.0 if yaw_mode == 'parallel' else (math.pi / 2.0)
 
-    # Yaw quaternion
+
     yaw_quat = _quat_from_euler(0.0, 0.0, yaw + yaw_offset)
 
-    # 최종 quaternion: yaw 적용 후 flip
+
     target_quat = _quat_mul(yaw_quat, flip_quat)
 
     return normalize_quaternion(target_quat)
 
 
-# =============================================================================
-# Primitive Skills
-# =============================================================================
+
+
+
 
 def sawyer_move_to(
     env, task,
@@ -356,7 +356,7 @@ def sawyer_move_to(
     arm = _get_arm(task)
     target_pos = np.asarray(target_pos, dtype=float)
 
-    # 현재 orientation 유지
+
     current_quat = arm.get_tip().get_quaternion()
     current_pos = arm.get_tip().get_position()
     current_joint_pos = arm.get_joint_positions()
@@ -367,23 +367,23 @@ def sawyer_move_to(
     _move_to_log(f"[sawyer_move_to] current_quat: {current_quat}")
     _move_to_log(f"[sawyer_move_to] current_joint_pos: {current_joint_pos}")
 
-    # Try direct IK first to see if target is even reachable
+
     try:
         ik_joint_pos = arm.solve_ik_via_jacobian(target_pos, quaternion=current_quat)
         _move_to_log(f"[sawyer_move_to] IK via Jacobian succeeded: {ik_joint_pos}")
     except IKError as e:
         _move_to_log(f"[sawyer_move_to] IK via Jacobian failed: {e}")
-        # Try without quaternion constraint
+
         try:
             ik_joint_pos = arm.solve_ik_via_jacobian(target_pos)
             _move_to_log(f"[sawyer_move_to] IK via Jacobian (no quat) succeeded: {ik_joint_pos}")
         except IKError as e2:
             _move_to_log(f"[sawyer_move_to] IK via Jacobian (no quat) also failed: {e2}")
 
-    # Path planning with multiple fallback strategies
+
     path = None
 
-    # Strategy 1: Try linear path with collision checking
+
     try:
         _move_to_log("[sawyer_move_to] Trying linear path...")
         path = arm.get_linear_path(
@@ -396,7 +396,7 @@ def sawyer_move_to(
     except (ConfigurationPathError, RuntimeError) as e:
         _move_to_log(f"[sawyer_move_to] Linear path failed: {e}")
 
-    # Strategy 2: Try nonlinear path with collision checking
+
     if path is None:
         try:
             _move_to_log("[sawyer_move_to] Trying nonlinear path...")
@@ -412,7 +412,7 @@ def sawyer_move_to(
         except (ConfigurationPathError, RuntimeError) as e:
             _move_to_log(f"[sawyer_move_to] Nonlinear path failed: {e}")
 
-    # Strategy 3: Try linear path ignoring collisions
+
     if path is None:
         try:
             _move_to_log("[sawyer_move_to] Trying linear path (ignore collisions)...")
@@ -426,7 +426,7 @@ def sawyer_move_to(
         except (ConfigurationPathError, RuntimeError) as e:
             _move_to_log(f"[sawyer_move_to] Linear path (ignore collisions) failed: {e}")
 
-    # Strategy 4: Try nonlinear path ignoring collisions with more trials
+
     if path is None:
         try:
             _move_to_log("[sawyer_move_to] Trying nonlinear path (ignore collisions, more trials)...")
@@ -442,11 +442,11 @@ def sawyer_move_to(
         except (ConfigurationPathError, RuntimeError) as e:
             _move_to_log(f"[sawyer_move_to] Nonlinear path (ignore collisions) failed: {e}")
 
-    # Strategy 4.5: Try with a different orientation (pointing straight down)
+
     if path is None:
         try:
             _move_to_log("[sawyer_move_to] Trying linear path with different orientation...")
-            # Try pointing straight down
+
             down_quat = [0.0, 0.707, 0.0, 0.707]
             path = arm.get_linear_path(
                 target_pos,
@@ -458,7 +458,7 @@ def sawyer_move_to(
         except (ConfigurationPathError, RuntimeError) as e:
             _move_to_log(f"[sawyer_move_to] Linear path (different orientation) failed: {e}")
 
-    # Strategy 4.6: Try nonlinear with different orientation
+
     if path is None:
         try:
             _move_to_log("[sawyer_move_to] Trying nonlinear path with different orientation...")
@@ -475,27 +475,27 @@ def sawyer_move_to(
         except (ConfigurationPathError, RuntimeError) as e:
             _move_to_log(f"[sawyer_move_to] Nonlinear path (no quaternion) failed: {e}")
 
-    # Strategy 5: Try multi-waypoint path planning (break long movements into smaller path segments)
-    # Key insight: Short-distance path planning works! Use path planning for each segment.
+
+
     if path is None:
         try:
             _move_to_log("[sawyer_move_to] Trying multi-waypoint path planning approach...")
             scene = _get_scene(env)
 
-            # Calculate distance to target
+
             start_pos = np.array(current_pos)
             end_pos = np.array(target_pos)
             distance = np.linalg.norm(end_pos - start_pos)
             _move_to_log(f"[sawyer_move_to] Distance to target: {distance:.3f}")
 
-            # If distance is large, break into waypoints
-            # Based on test_sawyer.out: moves < 0.5m succeed, particularly < 0.4m
-            # Use very conservative segments to handle vertical drops
-            # Even for short distances, if we're here, it means all simpler strategies failed
-            # So we should still try with smaller segments
-            if distance > 0.05:  # Lower threshold from 0.30 to 0.05
-                # Create intermediate waypoints with conservative segment size
-                n_waypoints = max(2, int(np.ceil(distance / 0.10)))  # Segments of ~10cm
+
+
+
+
+
+            if distance > 0.05:
+
+                n_waypoints = max(2, int(np.ceil(distance / 0.10)))
                 _move_to_log(f"[sawyer_move_to] Creating {n_waypoints} waypoints (segments ~{distance/n_waypoints:.2f}m each)...")
 
                 success = True
@@ -506,11 +506,11 @@ def sawyer_move_to(
 
                     _move_to_log(f"[sawyer_move_to] Segment {i}/{n_waypoints}: current={arm.get_tip().get_position()} -> waypoint={waypoint_pos}")
 
-                    # Try path planning for this SHORT segment
+
                     segment_path = None
                     current_quat = arm.get_tip().get_quaternion()
 
-                    # Try linear path first (works best for short distances)
+
                     try:
                         segment_path = arm.get_linear_path(
                             waypoint_pos.tolist(),
@@ -521,7 +521,7 @@ def sawyer_move_to(
                     except (ConfigurationPathError, RuntimeError) as e:
                         _move_to_log(f"[sawyer_move_to]   Segment {i}: Linear path failed: {e}")
 
-                    # If linear failed, try with collision ignore
+
                     if segment_path is None:
                         try:
                             segment_path = arm.get_linear_path(
@@ -533,7 +533,7 @@ def sawyer_move_to(
                         except (ConfigurationPathError, RuntimeError) as e:
                             _move_to_log(f"[sawyer_move_to]   Segment {i}: Linear path (ignore collisions) failed: {e}")
 
-                    # If still failed, try nonlinear path
+
                     if segment_path is None:
                         try:
                             _move_to_log(f"[sawyer_move_to]   Segment {i}: Trying nonlinear path...")
@@ -549,7 +549,7 @@ def sawyer_move_to(
                         except (ConfigurationPathError, RuntimeError) as e:
                             _move_to_log(f"[sawyer_move_to]   Segment {i}: Nonlinear path failed: {e}")
 
-                    # If still failed, try nonlinear without quaternion constraint
+
                     if segment_path is None:
                         try:
                             _move_to_log(f"[sawyer_move_to]   Segment {i}: Trying nonlinear (no quaternion)...")
@@ -564,23 +564,23 @@ def sawyer_move_to(
                         except (ConfigurationPathError, RuntimeError) as e:
                             _move_to_log(f"[sawyer_move_to]   Segment {i}: Nonlinear (no quaternion) failed: {e}")
 
-                    # If still failed, try breaking into micro-segments from current position
+
                     if segment_path is None:
                         _move_to_log(f"[sawyer_move_to]   Segment {i}: Trying micro-segment approach...")
                         micro_target = waypoint_pos
                         micro_completed = 0
-                        max_micro_attempts = 50  # Safety limit
+                        max_micro_attempts = 50
 
                         for _ in range(max_micro_attempts):
                             current_pos_now = np.array(arm.get_tip().get_position())
                             remaining_dist = np.linalg.norm(micro_target - current_pos_now)
 
-                            if remaining_dist < 0.01:  # Close enough
+                            if remaining_dist < 0.01:
                                 _move_to_log(f"[sawyer_move_to]     Micro: Close enough to target ({remaining_dist:.3f}m)")
                                 micro_completed += 1
                                 break
 
-                            # Try progressively smaller step sizes
+
                             step_sizes = [0.02, 0.01, 0.005]
                             micro_path = None
                             used_step = None
@@ -593,7 +593,7 @@ def sawyer_move_to(
                                 micro_waypoint = current_pos_now + direction * step_size
                                 micro_quat = arm.get_tip().get_quaternion()
 
-                                # Try linear first
+
                                 try:
                                     micro_path = arm.get_linear_path(
                                         micro_waypoint.tolist(),
@@ -605,11 +605,11 @@ def sawyer_move_to(
                                 except (ConfigurationPathError, RuntimeError):
                                     pass
 
-                            # If direct path failed, try moving z first then xy
+
                             if micro_path is None and remaining_dist > 0.02:
                                 z_diff = micro_target[2] - current_pos_now[2]
                                 if abs(z_diff) > 0.005:
-                                    # Try moving only in z direction first
+
                                     z_step = np.sign(z_diff) * min(0.01, abs(z_diff))
                                     z_waypoint = current_pos_now.copy()
                                     z_waypoint[2] += z_step
@@ -624,7 +624,7 @@ def sawyer_move_to(
                                     except (ConfigurationPathError, RuntimeError):
                                         pass
 
-                            # Try nonlinear as last resort
+
                             if micro_path is None:
                                 for step_size in [0.01, 0.005]:
                                     if step_size > remaining_dist:
@@ -644,7 +644,7 @@ def sawyer_move_to(
                                     except (ConfigurationPathError, RuntimeError):
                                         pass
 
-                            # Last resort: direct joint interpolation (bypass path planning)
+
                             if micro_path is None:
                                 _move_to_log(f"[sawyer_move_to]     Micro: Trying direct joint interpolation...")
                                 for step_size in [0.01, 0.005, 0.002]:
@@ -653,17 +653,17 @@ def sawyer_move_to(
                                     direction = (micro_target - current_pos_now) / remaining_dist
                                     micro_waypoint = current_pos_now + direction * step_size
 
-                                    # Try to find IK solution
+
                                     try:
                                         target_joints = arm.solve_ik_via_jacobian(
                                             micro_waypoint.tolist(),
                                             quaternion=micro_quat
                                         )
-                                        # Got IK solution, move directly
+
                                         current_joints = np.array(arm.get_joint_positions())
                                         target_joints = np.array(target_joints)
 
-                                        # Interpolate in joint space
+
                                         n_interp = 10
                                         for interp_i in range(1, n_interp + 1):
                                             alpha = interp_i / n_interp
@@ -672,7 +672,7 @@ def sawyer_move_to(
                                             scene.step()
 
                                         used_step = step_size
-                                        micro_path = "direct"  # Mark as success
+                                        micro_path = "direct"
                                         _move_to_log(f"[sawyer_move_to]     Micro: Direct joint interpolation succeeded for {step_size}m")
                                         break
                                     except IKError:
@@ -680,7 +680,7 @@ def sawyer_move_to(
 
                             if micro_path is not None:
                                 if micro_path != "direct":
-                                    # Execute path planning result
+
                                     micro_path.visualize()
                                     done_micro = False
                                     while not done_micro:
@@ -691,7 +691,7 @@ def sawyer_move_to(
                                             _move_to_log(f"[sawyer_move_to]   Task succeeded during micro-segment!")
                                             return obs, 1.0, True
                                 else:
-                                    # Direct joint interpolation already executed, just check success
+
                                     if _check_success(task):
                                         obs = task.get_observation()
                                         _move_to_log(f"[sawyer_move_to]   Task succeeded during direct interpolation!")
@@ -700,7 +700,7 @@ def sawyer_move_to(
                                 new_dist = np.linalg.norm(micro_target - np.array(arm.get_tip().get_position()))
                                 _move_to_log(f"[sawyer_move_to]     Micro {micro_completed}: OK step={used_step:.3f}m (remaining: {new_dist:.3f}m)")
                             else:
-                                # Debug: print detailed failure info
+
                                 _move_to_log(f"[sawyer_move_to]     Micro: All step sizes failed at remaining dist {remaining_dist:.3f}m")
                                 _move_to_log(f"[sawyer_move_to]     DEBUG: current_pos={current_pos_now}")
                                 _move_to_log(f"[sawyer_move_to]     DEBUG: micro_target={micro_target}")
@@ -718,34 +718,34 @@ def sawyer_move_to(
 
                                 break
 
-                        # Consider partial success - if we moved at least some distance, continue
+
                         final_pos = np.array(arm.get_tip().get_position())
                         final_dist_to_target = np.linalg.norm(end_pos - final_pos)
                         _move_to_log(f"[sawyer_move_to]   Segment {i}: Completed {micro_completed} micro-steps, dist to final target: {final_dist_to_target:.3f}m")
 
                         if micro_completed > 0:
-                            segment_path = True  # Mark as success to continue
+                            segment_path = True
                             _move_to_log(f"[sawyer_move_to]   Segment {i}: Partial progress made, continuing...")
 
                     if segment_path is not None:
-                        if segment_path is not True:  # Skip if already executed via micro-segments
-                            # Execute this segment
+                        if segment_path is not True:
+
                             segment_path.visualize()
                             done_moving = False
                             while not done_moving:
                                 done_moving = segment_path.step()
                                 scene.step()
 
-                                # Check task success during movement
+
                                 if _check_success(task):
                                     obs = task.get_observation()
                                     _move_to_log(f"[sawyer_move_to]   Task succeeded during segment {i}!")
                                     return obs, 1.0, True
 
-                            # segment_path already executed via step(), no need to accumulate configs
+
                             _move_to_log(f"[sawyer_move_to]   Segment {i}: Executed successfully")
 
-                        # Check task success after segment completion
+
                         if _check_success(task):
                             obs = task.get_observation()
                             _move_to_log(f"[sawyer_move_to]   Task succeeded after segment {i}!")
@@ -760,7 +760,7 @@ def sawyer_move_to(
                     obs = task.get_observation()
                     return obs, 0.0, False
                 else:
-                    # Check how close we got to the target
+
                     final_pos = np.array(arm.get_tip().get_position())
                     final_dist = np.linalg.norm(end_pos - final_pos)
                     initial_dist = np.linalg.norm(end_pos - start_pos)
@@ -769,7 +769,7 @@ def sawyer_move_to(
                     _move_to_log(f"[sawyer_move_to] Multi-waypoint partial: moved {progress*100:.1f}% of distance")
                     _move_to_log(f"[sawyer_move_to]   Initial dist: {initial_dist:.3f}m, Final dist: {final_dist:.3f}m")
 
-                    # If we made significant progress (>50%) or got within 10cm, consider it acceptable
+
                     if progress > 0.5 or final_dist < 0.10:
                         _move_to_log(f"[sawyer_move_to] Accepting partial progress - close enough to target")
                         obs = task.get_observation()
@@ -777,18 +777,18 @@ def sawyer_move_to(
                     else:
                         _move_to_log("[sawyer_move_to] Multi-waypoint path planning failed (insufficient progress)")
             else:
-                # Distance is very short (< 5cm), try direct movement with very small steps
+
                 _move_to_log(f"[sawyer_move_to] Distance very short ({distance:.4f}m), trying micro-step approach...")
 
-                # Try linear interpolation in joint space
+
                 try:
-                    # Get target joint configuration via IK (without path planning)
+
                     target_joint_pos = None
                     try:
                         target_joint_pos = arm.solve_ik_via_jacobian(target_pos, quaternion=current_quat)
                         _move_to_log(f"[sawyer_move_to] Target IK found: {target_joint_pos}")
                     except IKError:
-                        # Try without quaternion constraint
+
                         try:
                             target_joint_pos = arm.solve_ik_via_jacobian(target_pos)
                             _move_to_log(f"[sawyer_move_to] Target IK (no quat) found: {target_joint_pos}")
@@ -796,7 +796,7 @@ def sawyer_move_to(
                             _move_to_log(f"[sawyer_move_to] Could not solve IK for target: {e}")
 
                     if target_joint_pos is not None:
-                        # Move in small joint-space steps
+
                         current_joints = np.array(arm.get_joint_positions())
                         target_joints = np.array(target_joint_pos)
                         n_steps = 20
@@ -807,7 +807,7 @@ def sawyer_move_to(
                             arm.set_joint_positions(intermediate_joints.tolist())
                             scene.step()
 
-                            # Check task success
+
                             if _check_success(task):
                                 obs = task.get_observation()
                                 _move_to_log(f"[sawyer_move_to] Task succeeded during micro-step!")
@@ -827,7 +827,7 @@ def sawyer_move_to(
             import traceback
             traceback.print_exc()
 
-    # If all strategies failed, raise error
+
     if path is None:
         obs = task.get_observation()
         fd_error = FeedbackWithError(
@@ -840,7 +840,7 @@ def sawyer_move_to(
         )
         raise PathOutOfWorkspace(fd_error)
 
-    # Path 실행
+
     obs, reward, done = _execute_path(env, task, path, "sawyer_move_to", timeout_s, target_pos=target_pos)
 
     _move_to_log(f"[sawyer_move_to] Done. reward={reward}, done={done}")
@@ -877,7 +877,7 @@ def sawyer_align_gripper(
     arm = _get_arm(task)
     scene = _get_scene(env)
 
-    # 현재 position 유지
+
     current_pos = np.array(arm.get_tip().get_position())
     current_quat = arm.get_tip().get_quaternion()
     
@@ -886,7 +886,7 @@ def sawyer_align_gripper(
     if reference_quat is None and approach_direction is "down":
         yaw_mode = 'perpendicular'
 
-    # 목표 quaternion 계산
+
     target_quat = _compute_align_quaternion(approach_direction, reference_quat, yaw_mode)
 
     print(f"[sawyer_align_gripper] current_pos: {current_pos}")
@@ -897,7 +897,7 @@ def sawyer_align_gripper(
 
     path = None
 
-    # Strategy 1: Linear path
+
     try:
         print("[sawyer_align_gripper] Trying linear path...")
         path = arm.get_linear_path(
@@ -910,7 +910,7 @@ def sawyer_align_gripper(
     except (ConfigurationPathError, RuntimeError) as e:
         print(f"[sawyer_align_gripper] Linear path failed: {e}")
 
-    # Strategy 2: Linear path (ignore collisions)
+
     if path is None:
         try:
             print("[sawyer_align_gripper] Trying linear path (ignore collisions)...")
@@ -924,7 +924,7 @@ def sawyer_align_gripper(
         except (ConfigurationPathError, RuntimeError) as e:
             print(f"[sawyer_align_gripper] Linear path (ignore collisions) failed: {e}")
 
-    # Strategy 3: Nonlinear path
+
     if path is None:
         try:
             print("[sawyer_align_gripper] Trying nonlinear path...")
@@ -940,7 +940,7 @@ def sawyer_align_gripper(
         except (ConfigurationPathError, RuntimeError) as e:
             print(f"[sawyer_align_gripper] Nonlinear path failed: {e}")
 
-    # Strategy 4: Nonlinear path (ignore collisions)
+
     if path is None:
         try:
             print("[sawyer_align_gripper] Trying nonlinear path (ignore collisions)...")
@@ -956,18 +956,18 @@ def sawyer_align_gripper(
         except (ConfigurationPathError, RuntimeError) as e:
             print(f"[sawyer_align_gripper] Nonlinear path (ignore collisions) failed: {e}")
 
-    # Strategy 5: Direct joint interpolation with IK
+
     if path is None:
         print("[sawyer_align_gripper] Trying direct joint interpolation...")
         try:
-            # Get IK solution for target orientation
+
             target_joints = arm.solve_ik_via_jacobian(
                 current_pos.tolist(),
                 quaternion=target_quat
             )
             print(f"[sawyer_align_gripper] IK solution found: {target_joints}")
 
-            # Interpolate in joint space
+
             current_joints = np.array(arm.get_joint_positions())
             target_joints = np.array(target_joints)
             n_interp = 20
@@ -978,7 +978,7 @@ def sawyer_align_gripper(
                 arm.set_joint_positions(interp_joints.tolist())
                 scene.step()
 
-                # Check task success
+
                 if _check_success(task):
                     obs = task.get_observation()
                     print(f"[sawyer_align_gripper] Task succeeded during interpolation!")
@@ -994,17 +994,17 @@ def sawyer_align_gripper(
         except IKError as e:
             print(f"[sawyer_align_gripper] IK failed: {e}")
 
-    # Strategy 6: Incremental quaternion interpolation with micro-steps
+
     if path is None:
         print("[sawyer_align_gripper] Trying incremental quaternion interpolation...")
         from scipy.spatial.transform import Slerp
 
         try:
-            # Create quaternion interpolation
+
             current_quat_arr = np.array(current_quat)
             target_quat_arr = np.array(target_quat)
 
-            # scipy Rotation uses [x, y, z, w] format
+
             rotations = R.from_quat([current_quat_arr, target_quat_arr])
             slerp = Slerp([0, 1], rotations)
 
@@ -1015,7 +1015,7 @@ def sawyer_align_gripper(
                 alpha = step_i / n_steps
                 interp_quat = slerp(alpha).as_quat().tolist()
 
-                # Try to move to this intermediate orientation
+
                 micro_path = None
                 try:
                     micro_path = arm.get_linear_path(
@@ -1028,7 +1028,7 @@ def sawyer_align_gripper(
                     pass
 
                 if micro_path is None:
-                    # Try direct IK
+
                     try:
                         target_joints = arm.solve_ik_via_jacobian(
                             current_pos.tolist(),
@@ -1049,7 +1049,7 @@ def sawyer_align_gripper(
                         print(f"[sawyer_align_gripper]   Step {step_i}/{n_steps}: Failed")
                         break
                 else:
-                    # Execute micro path
+
                     micro_path.visualize()
                     done_micro = False
                     while not done_micro:
@@ -1058,7 +1058,7 @@ def sawyer_align_gripper(
                     success_steps += 1
                     print(f"[sawyer_align_gripper]   Step {step_i}/{n_steps}: OK (path)")
 
-                # Check task success
+
                 if _check_success(task):
                     obs = task.get_observation()
                     print(f"[sawyer_align_gripper] Task succeeded during step {step_i}!")
@@ -1075,7 +1075,7 @@ def sawyer_align_gripper(
         except Exception as e:
             print(f"[sawyer_align_gripper] Incremental interpolation error: {e}")
 
-    # If all strategies failed
+
     if path is None:
         obs = task.get_observation()
         fd_error = FeedbackWithError(
@@ -1088,7 +1088,7 @@ def sawyer_align_gripper(
         )
         raise PathOutOfWorkspace(fd_error)
 
-    # Path 실행
+
     obs, reward, done = _execute_path(env, task, path, "sawyer_align_gripper", timeout_s)
 
     print(f"[sawyer_align_gripper] Done. reward={reward}, done={done}")
@@ -1120,10 +1120,10 @@ def sawyer_open_gripper(
     gripper = _get_gripper(task)
     scene = _get_scene(env)
 
-    # amount 범위 제한
+
     amount = float(np.clip(amount, 0.0, 1.0))
 
-    # Gripper actuate
+
     done_gripper = False
     max_steps = 100
     step = 0
@@ -1133,7 +1133,7 @@ def sawyer_open_gripper(
         scene.step()
         step += 1
 
-        # Task success 체크
+
         if _check_success(task):
             obs = task.get_observation()
             print(f"[sawyer_open_gripper] Task success during gripper open.")
@@ -1176,10 +1176,10 @@ def sawyer_close_gripper(
     gripper = _get_gripper(task)
     scene = _get_scene(env)
 
-    # amount 범위 제한
+
     amount = float(np.clip(amount, 0.0, 1.0))
 
-    # Gripper actuate
+
     done_gripper = False
     max_steps = 300
     step = 0
@@ -1190,7 +1190,7 @@ def sawyer_close_gripper(
         scene.step()
         step += 1
 
-        # Task success 체크
+
         if _check_success(task):
             obs = task.get_observation()
             print(f"[sawyer_close_gripper] Task success during gripper close.")
@@ -1205,9 +1205,9 @@ def sawyer_close_gripper(
     return obs, reward, success
 
 
-# =============================================================================
-# Composite Skills (Pick and Place)
-# =============================================================================
+
+
+
 
 def sawyer_pick(
     env, task,
@@ -1236,14 +1236,14 @@ def sawyer_pick(
     """
     print("========== [sawyer_pick] START ==========")
     
-    # Get target position
+
     if target_pos is None:
         target_pos = np.array(target_object.get_position(), dtype=float)
     else:
         target_pos = np.asarray(target_pos, dtype=float)
     
-    # grasp_offset = np.asarray(grasp_offset, dtype=float)
-    # 임시 하드코딩..
+
+
     grasp_offset = np.array([0.0, 0.0, 0.0])
     velocity = 0.2
     
@@ -1256,24 +1256,24 @@ def sawyer_pick(
     print(f"[sawyer_pick] grasp_offset: {grasp_offset}")
     print(f"[sawyer_pick] grasp_pos: {grasp_pos}")
 
-    # Step 1: Move to grasp position
+
     print(f"[sawyer_pick] Moving to grasp position...")
     obs, reward, done = sawyer_move_to(env, task, grasp_pos)
     if done:
         return obs, reward, done
 
-    # Step 2: Close gripper
+
     print(f"[sawyer_pick] Closing gripper...")
     obs, reward, done = sawyer_close_gripper(env, task, amount=0.0, velocity=velocity)
     if done:
         return obs, reward, done
 
-    # Small delay for gripper to settle
+
     scene = _get_scene(env)
     for _ in range(10):
         scene.step()
 
-    # Step 3: Explicitly grasp the object (attach to gripper)
+
     print(f"[sawyer_pick] Attempting to grasp object...")
     gripper = _get_gripper(task)
     grasped = gripper.grasp(target_object)
@@ -1283,7 +1283,7 @@ def sawyer_pick(
     else:
         print(f"[sawyer_pick] WARNING: Failed to grasp object - not detected by proximity sensor")
 
-    # Check for task success
+
     obs = task.get_observation()
     success = _check_success(task)
     reward = 1.0 if success else 0.0
@@ -1327,29 +1327,29 @@ def sawyer_place(
     print(f"[sawyer_place] place_offset: {place_offset}")
     print(f"[sawyer_place] final_pos: {final_pos}")
 
-    # Step 1: Move to place position
+
     print(f"[sawyer_place] Moving to place position...")
     obs, reward, done = sawyer_move_to(env, task, final_pos)
     if done:
         return obs, reward, done
 
-    # Step 2: Release the object (detach from gripper)
+
     print(f"[sawyer_place] Releasing object from gripper...")
     gripper = _get_gripper(task)
     gripper.release()
 
-    # Small delay for object to settle
+
     scene = _get_scene(env)
     for _ in range(10):
         scene.step()
 
-    # Step 3: Open gripper
+
     print(f"[sawyer_place] Opening gripper...")
     obs, reward, done = sawyer_open_gripper(env, task)
     if done:
         return obs, reward, done
 
-    # Check for task success
+
     obs = task.get_observation()
     success = _check_success(task)
     reward = 1.0 if success else 0.0
