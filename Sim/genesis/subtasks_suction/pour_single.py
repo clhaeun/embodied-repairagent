@@ -32,7 +32,7 @@ def pour_single(env, source_name="beaker", target_name="mug", pour_angle=120):
     """
     print(f"[PourSingle] Pouring from {source_name} to {target_name}")
 
-    # Get positions
+
     source_pos = env.get_obj_pos(source_name)
     target_pos = env.get_obj_pos(target_name)
 
@@ -46,51 +46,51 @@ def pour_single(env, source_name="beaker", target_name="mug", pour_angle=120):
     print(f"[PourSingle] Source position: {source_pos}")
     print(f"[PourSingle] Target position: {target_pos}")
 
-    # Step 1: Move above source and attach with vacuum gripper
+
     approach_pos = source_pos.copy()
     approach_pos[2] += 0.15
     move_to_position(env, approach_pos, pointing_to="down")
 
-    # Lower to source top
+
     grasp_pos = source_pos.copy()
-    grasp_pos[2] += 0.08  # Top of container
+    grasp_pos[2] += 0.08
     move_to_position(env, grasp_pos, pointing_to="down")
 
-    # Activate vacuum to attach
+
     activate_vacuum(env)
 
-    # Step 2: Lift source
+
     move_parallel(env, "up", 0.12, pointing_to="down")
 
-    # Step 3: Move above target
+
     pour_pos = target_pos.copy()
-    pour_pos[2] += 0.20  # High above target
-    pour_pos[1] -= 0.05  # Slightly offset for pouring
+    pour_pos[2] += 0.20
+    pour_pos[1] -= 0.05
     move_to_position(env, pour_pos, pointing_to="down")
 
-    # Step 4: Tilt to pour
+
     rotate_gripper(env, angle=pour_angle, steps=60)
 
-    # Hold for liquid to pour
+
     for _ in range(100):
         env.env.step()
 
-    # Step 5: Return upright
+
     rotate_gripper(env, angle=-pour_angle, steps=60)
 
-    # Step 6: Place source back
+
     return_pos = source_pos.copy()
     return_pos[2] += 0.15
     move_to_position(env, return_pos, pointing_to="down")
 
-    # Lower
+
     return_pos[2] = source_pos[2] + 0.08
     move_to_position(env, return_pos, pointing_to="down")
 
-    # Release vacuum
+
     deactivate_vacuum(env)
 
-    # Move up to clear
+
     move_parallel(env, "up", 0.1, pointing_to="down")
 
     print(f"[PourSingle] Successfully poured from {source_name} to {target_name}")
