@@ -11,7 +11,7 @@
      drag_dir = (target0_pos - cube_pos).astype(np.float64)
      drag_dir[2] = 0.0
      drag_dir = normalize_vector(drag_dir)
-     prep_drag = grasp_end - 0.05 * drag_dir  # Adjusted to stay within workspace
+     prep_drag = grasp_end - 0.05 * drag_dir
      (obs, reward, done) = sawyer_move_to(env, task, target_pos=prep_drag)
      drag_pos = target0_pos + np.array([0.0, 0.2, 0.0])
      (obs, reward, done) = sawyer_place(env, task, place_pos=drag_pos, place_offset=[0.0, 0.0, 0.0])
