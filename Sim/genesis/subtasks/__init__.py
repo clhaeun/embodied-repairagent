@@ -20,10 +20,10 @@ import sys
 import importlib
 from typing import Optional
 
-# Default target robot
+
 _target_robot: str = "panda"
 
-# Module references
+
 _subtasks_module = None
 
 
@@ -62,25 +62,25 @@ def _reload_subtasks() -> None:
     except ImportError as e:
         raise ImportError(f"Failed to import {module_name}: {e}")
 
-    # Update this module's namespace with functions from the target module
+
     current_module = sys.modules[__name__]
 
-    # Get all exported names from the target module
+
     if hasattr(_subtasks_module, '__all__'):
         export_names = _subtasks_module.__all__
     else:
         export_names = [name for name in dir(_subtasks_module) if not name.startswith('_')]
 
-    # Export functions to this module's namespace
+
     for name in export_names:
         if hasattr(_subtasks_module, name):
             setattr(current_module, name, getattr(_subtasks_module, name))
 
 
-# Initialize with default robot (panda)
+
 _reload_subtasks()
 
-# Define __all__ dynamically
+
 def _get_all():
     if _subtasks_module and hasattr(_subtasks_module, '__all__'):
         return list(_subtasks_module.__all__) + ['set_target_robot', 'get_target_robot']
