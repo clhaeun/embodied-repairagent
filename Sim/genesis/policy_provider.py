@@ -774,7 +774,7 @@ class PolicyProvider:
             return None
 
         self.last_response_num_tokens = resp.get("num_tokens")
-        # Note: _save_subtask is called after merge in the main execution loop
+
         return new_code
 
 
@@ -849,7 +849,7 @@ class PolicyProvider:
             return None
 
         self.last_response_num_tokens = resp.get("num_tokens")
-        # Note: _save_subtask is called after merge in the main execution loop
+
         return new_code
 
 
@@ -1078,7 +1078,7 @@ class PolicyProvider:
             gen_duration = time.time() - start_time
             self._log_llm_call("GENERATE", subtask_name, gen_duration, self.last_response_num_tokens)
 
-            # Note: _save_subtask moved to after postprocess_initial_code
+
 
             if self.code_gen_only:
                 print(f"[CODE_GEN_ONLY] Skipping execution for {subtask_name}, assuming success")
@@ -1415,7 +1415,7 @@ class PolicyProvider:
                     revise_duration = time.time() - revise_start
                     self._log_llm_call("REVISE_FAILED", subtask_name, revise_duration, None)
 
-                    # Debug output for revise failure
+
                     print(f"[DEBUG][REVISE_FAILED] Exception type: {type(e).__name__}")
                     print(f"[DEBUG][REVISE_FAILED] Exception message: {str(e)}")
                     print(f"[DEBUG][REVISE_FAILED] Traceback:")
