@@ -24,14 +24,14 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import yaml
 
-# rlbench_loop에서 run_task_episode와 EpisodeResult 가져오기
+
 from rlbench_loop import run_task_episode, EpisodeResult
 from env import setup_environment, shutdown_environment
 
 
-# ============================================================================
-# NumPy Type Conversion
-# ============================================================================
+
+
+
 
 def convert_numpy_types(obj: Any) -> Any:
     """NumPy 타입을 JSON 직렬화 가능한 Python 타입으로 변환"""
@@ -50,9 +50,9 @@ def convert_numpy_types(obj: Any) -> Any:
     return obj
 
 
-# ============================================================================
-# Result Data Structures
-# ============================================================================
+
+
+
 
 class SubtaskResult:
     """서브태스크(에피소드) 실행 결과"""
@@ -64,8 +64,8 @@ class SubtaskResult:
         self.total_llm_time_sec: float = 0.0
         self.error: Optional[str] = None
         self.error_type: Optional[str] = None
-        # Exception 상세 정보
-        self.termination_reason: Optional[str] = None  # "success", "exception", "task_failure", "max_steps"
+
+        self.termination_reason: Optional[str] = None
         self.traceback: Optional[str] = None
         self.exception_log: List[Dict[str, Any]] = []
 
@@ -90,7 +90,7 @@ class TaskResult:
         self.task_id: str = ""
         self.difficulty: str = ""
         self.subtasks: List[SubtaskResult] = []
-        self.success: bool = False  # 모든 서브태스크 성공 시 True
+        self.success: bool = False
         self.subtask_success_rate: float = 0.0
         self.total_execution_time_sec: float = 0.0
         self.total_llm_time_sec: float = 0.0
@@ -162,9 +162,9 @@ class ExperimentResult:
         }
 
 
-# ============================================================================
-# File I/O
-# ============================================================================
+
+
+
 
 def load_experiment_tasks(yaml_path: str) -> List[Dict[str, Any]]:
     """experiment_tasks.yml 파일 로드"""
@@ -176,7 +176,7 @@ def load_experiment_tasks(yaml_path: str) -> List[Dict[str, Any]]:
 def save_result_json(result: Dict[str, Any], output_path: str):
     """결과를 JSON 파일로 저장"""
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    # NumPy 타입 변환
+
     result_converted = convert_numpy_types(result)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(result_converted, f, indent=2, ensure_ascii=False)
@@ -218,9 +218,9 @@ def load_checkpoint(checkpoint_path: str) -> Optional[ExperimentResult]:
     return None
 
 
-# ============================================================================
-# LLM Call Logger
-# ============================================================================
+
+
+
 
 class LLMCallLogger:
     """LLM 호출을 실시간으로 로깅하는 클래스"""
@@ -229,7 +229,7 @@ class LLMCallLogger:
         self.log_file = log_file
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
-        # 헤더 작성
+
         with open(self.log_file, "w", encoding="utf-8") as f:
             f.write("timestamp,task,subtask,action,duration_sec,num_tokens\n")
 
@@ -240,7 +240,7 @@ class LLMCallLogger:
         subtask = call_info.get("subtask", "")
         action = call_info.get("action", "")
         duration = call_info.get("duration_sec", 0.0)
-        num_tokens = call_info.get("num_tokens", "")  # 토큰 수 (없을 수 있음)
+        num_tokens = call_info.get("num_tokens", "")
 
         with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(f"{timestamp},{task},{subtask},{action},{duration:.3f},{num_tokens}\n")
@@ -249,30 +249,30 @@ class LLMCallLogger:
         print(f"[LLM_CALL] {task}/{subtask} - {action}: {duration:.2f}s{tokens_str}")
 
 
-# ============================================================================
-# Experiment Runner
-# ============================================================================
+
+
+
 from typing import Any, Dict, Optional
 
 def normalize_termination_reason_from_episode(episode_result) -> str:
-    # 0) 원본에 termination_reason이 있으면 그걸 우선 사용
+
     tr = getattr(episode_result, "termination_reason", None)
     if isinstance(tr, str) and tr.strip():
-        # 혹시 다른 문자열이 들어오면 4종으로 매핑
+
         if tr in ("success", "task_failure", "exception", "unknown"):
             return tr
-        # 흔한 케이스 매핑(원하시면 더 추가)
+
         if tr.lower() in ("fail", "failure", "task_fail", "task_failed"):
             return "task_failure"
         if "except" in tr.lower() or "error" in tr.lower():
             return "exception"
         return "unknown"
 
-    # 1) 성공이면 success
+
     if getattr(episode_result, "success", False):
         return "success"
 
-    # 2) 에러/트레이스백/exception_log가 있으면 exception
+
     err = getattr(episode_result, "error", None)
     err_type = getattr(episode_result, "error_type", None)
     tb = getattr(episode_result, "traceback", None)
@@ -281,8 +281,8 @@ def normalize_termination_reason_from_episode(episode_result) -> str:
     if err or err_type or tb or (isinstance(exlog, list) and len(exlog) > 0):
         return "exception"
 
-    # 3) 여기까지 왔는데 성공도 아니고 예외도 아니면: task_failure/unknown 중 택
-    # run_task_episode가 “미완료 but 예외 없음”을 별도 에러 필드 없이 반환하는 경우 대비
+
+
     return "task_failure"
 
 
@@ -328,21 +328,21 @@ def run_experiment(
     Returns:
         ExperimentResult: 실험 결과
     """
-    # 실험 ID 생성
+
     experiment_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # 출력 디렉토리 설정
+
     os.makedirs(output_dir, exist_ok=True)
 
-    # 파일 경로들
+
     checkpoint_path = os.path.join(output_dir, "checkpoint.json")
     final_result_path = os.path.join(output_dir, "final_result.json")
     llm_log_path = os.path.join(output_dir, "llm_calls.csv")
 
-    # LLM 로거 생성
+
     llm_logger = LLMCallLogger(llm_log_path)
 
-    # 체크포인트 로드 시도
+
     result = None
     completed_tasks = set()
 
@@ -359,7 +359,7 @@ def run_experiment(
         result.experiment_id = experiment_id
         result.start_time = datetime.now().isoformat()
 
-    # 설정 저장
+
     result.config = {
         "mode": mode,
         "source_robot": source_robot,
@@ -373,7 +373,7 @@ def run_experiment(
         "difficulty_filter": difficulty,
     }
 
-    # 태스크 필터링
+
     filtered_tasks = tasks_config
     if task_ids:
         filtered_tasks = [t for t in filtered_tasks if t.get("id") in task_ids]
@@ -386,13 +386,13 @@ def run_experiment(
     print(f"[EXPERIMENT] Output directory: {output_dir}")
     print(f"{'='*60}\n")
 
-    # 각 태스크 실행
+
     for task_idx, task_config in enumerate(filtered_tasks):
         task_id = task_config.get("id", f"task_{task_idx:03d}")
         task_difficulty = task_config.get("difficulty", "unknown")
         episodes = task_config.get("episodes", [])
 
-        # 이미 완료된 태스크는 스킵
+
         if task_id in completed_tasks:
             print(f"[SKIP] Task {task_id} already completed")
             continue
@@ -406,7 +406,7 @@ def run_experiment(
         task_result.task_id = task_id
         task_result.difficulty = task_difficulty
 
-        # 각 에피소드(서브태스크) 실행
+
         for ep_idx, episode_name in enumerate(episodes):
             print(f"\n[SUBTASK {ep_idx + 1}/{len(episodes)}] {episode_name}")
             print("-" * 40)
@@ -415,7 +415,7 @@ def run_experiment(
             subtask_result.episode_name = episode_name
 
             try:
-                # run_task_episode 실행
+
                 episode_result: EpisodeResult = run_task_episode(
                     task_name=episode_name,
                     mode=mode,
@@ -432,7 +432,7 @@ def run_experiment(
                     variation=variation,
                 )
 
-                # 결과 복사
+
                 subtask_result.success = episode_result.success
                 subtask_result.execution_time_sec = episode_result.execution_time
                 subtask_result.llm_calls = episode_result.llm_calls
@@ -441,19 +441,19 @@ def run_experiment(
                 )
                 subtask_result.error = episode_result.error
                 subtask_result.error_type = episode_result.error_type
-                # Exception 상세 정보 복사
-                # subtask_result.termination_reason = episode_result.termination_reason
+
+
                 subtask_result.termination_reason = normalize_termination_reason_from_episode(episode_result)
                 subtask_result.traceback = episode_result.traceback
                 subtask_result.exception_log = episode_result.exception_log
 
-                # grounded_skills 폴더에 최종 코드 저장
+
                 if episode_result.final_code:
                     grounded_skills_dir = os.path.join(output_dir, "grounded_skills")
                     os.makedirs(grounded_skills_dir, exist_ok=True)
 
-                    # 파일명: task_{task_번호}_{episode_이름}.py
-                    # task_id에서 번호 추출 (예: task_000 -> 000)
+
+
                     task_num = task_id.replace("task_", "") if task_id.startswith("task_") else task_id
                     skill_filename = f"task_{task_num}_{episode_name}.py"
                     skill_filepath = os.path.join(grounded_skills_dir, skill_filename)
@@ -462,7 +462,7 @@ def run_experiment(
                         f.write(episode_result.final_code)
                     print(f"  - Grounded skill saved to: {skill_filepath}")
 
-                # LLM에 전달된 프롬프트 저장
+
                 if hasattr(episode_result, 'prompts') and episode_result.prompts:
                     prompts_dir = os.path.join(output_dir, "prompts")
                     os.makedirs(prompts_dir, exist_ok=True)
@@ -474,7 +474,7 @@ def run_experiment(
                             f.write(f"[{i+1}] action={p.get('action', '?')}  subtask={p.get('subtask', '?')}\n")
                             f.write(f"{'='*80}\n")
                             f.write(p.get('prompt', '') + "\n\n")
-                            # hypothesis 프롬프트/응답 저장
+
                             hyp_prompt = p.get('hypothesis_prompt')
                             hyp_response = p.get('hypothesis_response')
                             if hyp_prompt or hyp_response:
@@ -512,7 +512,7 @@ def run_experiment(
 
             task_result.subtasks.append(subtask_result)
 
-        # 태스크 결과 저장
+
         task_result.compute_metrics()
         result.tasks.append(task_result)
 
@@ -522,20 +522,20 @@ def run_experiment(
         print(f"  - Total execution time: {task_result.total_execution_time_sec:.2f}s")
         print(f"  - Total LLM time: {task_result.total_llm_time_sec:.2f}s")
 
-        # 체크포인트 저장 (태스크 완료 후마다)
+
         save_result_json(result.to_dict(), checkpoint_path)
 
-    # 최종 결과 저장
+
     result.end_time = datetime.now().isoformat()
     result.compute_metrics()
     save_result_json(result.to_dict(), final_result_path)
 
-    # Exception 로그 별도 저장
+
     exception_log_path = os.path.join(output_dir, "exception_log.json")
     exception_summary = _generate_exception_summary(result)
     save_result_json(exception_summary, exception_log_path)
 
-    # 요약 출력
+
     print(f"\n{'='*60}")
     print("[EXPERIMENT COMPLETE]")
     print(f"  - Overall task success rate: {result.overall_success_rate:.2%}")
@@ -560,18 +560,18 @@ def _generate_exception_summary(result: ExperimentResult) -> Dict[str, Any]:
 
     for task in result.tasks:
         for subtask in task.subtasks:
-            # termination_reason 통계
+
             reason = subtask.termination_reason or "unknown"
             if reason in termination_stats:
                 termination_stats[reason] += 1
             else:
                 termination_stats["unknown"] += 1
 
-            # error_type 통계
+
             if subtask.error_type:
                 error_type_counts[subtask.error_type] = error_type_counts.get(subtask.error_type, 0) + 1
 
-            # exception 발생한 경우만 상세 기록
+
             if subtask.error or subtask.exception_log:
                 entry = {
                     "task_id": task.task_id,
@@ -594,9 +594,9 @@ def _generate_exception_summary(result: ExperimentResult) -> Dict[str, Any]:
     }
 
 
-# ============================================================================
-# Main
-# ============================================================================
+
+
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -702,12 +702,12 @@ def main():
 
     args = parser.parse_args()
 
-    # 출력 디렉토리 설정
+
     if args.output_dir is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         args.output_dir = f"./results/exp_{timestamp}"
 
-    # YAML 파일 로드
+
     if not os.path.exists(args.yaml_path):
         print(f"[ERROR] YAML file not found: {args.yaml_path}")
         sys.exit(1)
@@ -715,7 +715,7 @@ def main():
     tasks_config = load_experiment_tasks(args.yaml_path)
     print(f"[INFO] Loaded {len(tasks_config)} tasks from {args.yaml_path}")
 
-    # 실험 실행
+
     run_experiment(
         tasks_config=tasks_config,
         output_dir=args.output_dir,
