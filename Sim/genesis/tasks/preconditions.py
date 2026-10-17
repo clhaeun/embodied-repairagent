@@ -7,7 +7,7 @@ False if subtask needs to run, None if state cannot be determined.
 """
 
 
-# ============== Drawer Preconditions ==============
+
 
 def is_drawer_already_closed(env, drawer_type="bottom", threshold=0.05):
     """
@@ -63,7 +63,7 @@ def is_drawer_already_open(env, drawer_type="bottom", threshold=0.08):
     return dof_pos >= threshold
 
 
-# ============== Hinge Lid Preconditions ==============
+
 
 def is_hinge_lid_already_open(env, lid_name="hinge_lid", threshold=0.3):
     """
@@ -105,7 +105,7 @@ def is_hinge_lid_already_closed(env, lid_name="hinge_lid", threshold=0.1):
     return dof_pos < threshold
 
 
-# ============== Object Visibility/Existence Preconditions ==============
+
 
 def is_obj_visible(env, obj_name):
     """
