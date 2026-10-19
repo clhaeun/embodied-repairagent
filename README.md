@@ -1,42 +1,39 @@
-# RepairAgent for Robot Skill Transfer
+# Embodied RepairAgent
 
-Code generation and repair for transferring robot manipulation skills between different robot embodiments. Experiments were conducted in RLBench and Genesis.
+A code-generation and recovery baseline for transferring robot manipulation skills across embodiments. Developed as part of the research reported in [*Efficient Skill Grounding via Code Refactoring with Small Language Models* (ICML 2026)](https://arxiv.org/abs/2606.07999).
 
-Given a source-robot skill and a target scene, the agent generates Python control code for the target robot. The generated code is executed in simulation and updated when an action fails or the task remains incomplete.
+This repository contains the **RepairAgent baseline**, not the paper's proposed RECENT framework.
 
-## Execution
+## Approach
 
-The `code_agent` path uses three LLM requests:
+Given a skill written for a source robot and a target scene, the agent generates executable control code and evaluates it in simulation. Recovery distinguishes between:
 
-- **Generate:** produce initial target-robot code from the source code and scene information.
-- **Repair:** update the code after an execution error or skill failure, using the failure information and current scene.
-- **Revise:** generate additional code when execution ends before the task is completed.
+- **Generate:** write an initial target-robot program.
+- **Repair:** address execution errors or skill failures using the failure signal and current scene state.
+- **Revise:** continue from the current environment state if the program finishes without completing the task.
 
-Execution uses a bounded repair loop. RLBench runs generated statements through an AST-based executor; Genesis applies the same generate–repair–revise workflow at the subtask level.
+The key distinction is between code execution and task completion: syntactically valid, successfully executed code does not necessarily achieve the intended robot state. The RLBench implementation includes AST-based code execution and post-processing.
 
-## Code
+## Implementation
 
-| Component | Main files |
-|---|---|
-| RLBench experiment runner | [`rlbench_exp.py`](Sim/rlbench/rlbench_exp.py) |
-| RLBench execution and repair | [`rlbench_loop.py`](Sim/rlbench/rlbench_loop.py), [`policy_provider.py`](Sim/rlbench/policy_provider.py) |
-| Genesis experiment runner | [`genesis_experiment.py`](Sim/genesis/genesis_experiment.py) |
-| Genesis subtask execution and repair | [`genesis_loop.py`](Sim/genesis/genesis_loop.py), [`policy_provider.py`](Sim/genesis/policy_provider.py) |
+| Component | Source |
+| --- | --- |
+| RLBench runner | [`rlbench_exp.py`](Sim/rlbench/rlbench_exp.py) |
+| RLBench recovery loop | [`rlbench_loop.py`](Sim/rlbench/rlbench_loop.py), [`policy_provider.py`](Sim/rlbench/policy_provider.py) |
+| Genesis runner and loop | [`genesis_experiment.py`](Sim/genesis/genesis_experiment.py), [`genesis_loop.py`](Sim/genesis/genesis_loop.py) |
 | Inference servers | [RLBench](servers/rlbench_server.py), [Genesis](servers/genesis_server.py) |
-| Task code and prompts | `Sim/rlbench/tasks_*/`, `Sim/genesis/subtasks_*/`, `Sim/*/prompts/` |
+| Archived evaluation summaries | [RLBench](results/rlbench_archived_runs.csv), [Genesis](results/genesis_archived_runs.csv) |
 
-## Experiments
+## Selected experiments
 
-| Simulator | Transfer | Agent / execution mode | Task success | Subtask success |
-|---|---|---|---|---|
-| RLBench | Panda → Sawyer | `code_agent`, `failure` | 9/20 in each of 3 runs | 46/74, 43/74, 43/74 |
-| Genesis | Panda → Robotiq | `code_agent`, failure-based repair | 7/12 for seeds 42, 123, 2024 | 47/64, 48/64, 48/64 |
-| Genesis | Panda → Suction | `code_agent`, failure-based repair | 6/12 for seeds 42, 123, 2024 | 38/48, 38/48, 37/48 |
+| Environment and transfer | Task success | Subtask success |
+| --- | --- | --- |
+| RLBench, Panda → Sawyer | 9/20 in each of three archived runs | 46/74, 43/74, 43/74 |
+| Genesis, Panda → Robotiq | 7/12 for each of three recorded seeds | 47/64, 48/64, 48/64 |
+| Genesis, Panda → Suction | 6/12 for each of three recorded seeds | 38/48, 38/48, 37/48 |
 
-All these runs used `remote_llm`. 
+The archived runs used the `code_agent` execution mode with a remote LLM. In the **RLBench** records, seed numbers are inferred from folder names rather than verified in the result JSON; one launch script also disagrees with a folder label. The exact model checkpoint is not recorded in either archived summary. These results describe the baseline runs, **not** the paper's main-method performance.
 
-## Dependencies
+## Dependencies and scope
 
-- **RLBench / PyRep / CoppeliaSim:** the modified [RLBench fork](https://github.com/clhaeun/RLBench) is pinned as a Git submodule at `Sim/rlbench/RLBench`.
-- **Genesis:** the experiment code uses `genesis-world`; robot models and simulator assets are external dependencies and are not bundled.
-- **LLM server:** separate inference processes are implemented under `servers/`.
+The modified [RLBench fork](https://github.com/clhaeun/RLBench) is referenced as a Git submodule at `Sim/rlbench/RLBench`. RLBench/PyRep/CoppeliaSim, Genesis robot assets, and remote inference services are separate dependencies. This is an experimental research codebase rather than a packaged, standalone reproduction.
