@@ -583,53 +583,6 @@ def _drop_print_lines(body: str) -> str:
 
 _SKILL_CALL_RE = re.compile(r"\b(ur5_|open_ur5_ee|close_ur5_ee)\w*\s*\(")
 
-def debug_print_next_statements(
-    current_code: str,
-    current_lines: list[str],
-    executed_stmt_texts: list[str],
-    subtask_name: str,
-    k: int = 8,
-    tag: str = "AFTER_MERGE",
-    show_full: bool = False,
-):
-    """
-    merge 직후(또는 루프 시작 직후) 기준으로, 다음에 실행될 statement들을 미리 출력합니다.
-    """
-    try:
-        tree = ast.parse(current_code)
-    except Exception as e:
-
-        return
-
-    ex = RunTaskExtractor(subtask_name)
-    ex.visit(tree)
-
-    body = ex.subtask_name_body or []
-    next_index = len(executed_stmt_texts)
-    remaining = body[next_index:]
-
-
-
-    for i, stmt in enumerate(remaining[:k], start=next_index + 1):
-        try:
-            stmt_code = get_statement_code(stmt, current_lines).rstrip()
-        except Exception as e:
-            stmt_code = f"<failed to render stmt: {e}>"
-
-        kind = "RETURN" if isinstance(stmt, ast.Return) else type(stmt).__name__
-        head = stmt_code.splitlines()[0] if stmt_code else ""
-        lno = getattr(stmt, "lineno", None)
-        end = getattr(stmt, "end_lineno", lno)
-
-
-
-        if show_full:
-
-
-    if len(remaining) > k:
-
-
-
 class _ListAddToNpArray(ast.NodeTransformer):
     def visit_BinOp(self, node: ast.BinOp):
         node = self.generic_visit(node)

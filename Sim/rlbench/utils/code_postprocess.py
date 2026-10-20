@@ -16,7 +16,6 @@ from pyrep.objects.shape import Shape
 from pyrep.objects.joint import Joint
 from pyrep.objects.dummy import Dummy
 from pyrep.objects.proximity_sensor import ProximitySensor
-from env import setup_environment, shutdown_environment
 from rlbench.const import colors
 """
 
@@ -144,7 +143,6 @@ def remove_non_code_text(code: str) -> str:
     docstring을 보호하면서 LLM이 삽입한 불필요한 자연어(문장형 텍스트) 줄을 제거.
     """
     doc_lines = _get_docstring_line_indices(code)
-    print("doc_lines: ", doc_lines)
     lines = code.splitlines()
 
 
@@ -231,8 +229,7 @@ def fix_type_mismatches(code: str, type_map: Dict[str, str]) -> str:
             
             try:
                 expected_type = type_map.get(key_name)
-            except Exception as e:
-                print(e)
+            except Exception:
                 return self.generic_visit(node)
             
             if expected_type and isinstance(node.value, ast.Call):

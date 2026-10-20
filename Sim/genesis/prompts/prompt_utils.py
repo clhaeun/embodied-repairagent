@@ -381,9 +381,6 @@ def get_prompt(
     subtask_signature = "def run_task(env, task, descriptions=None, obs=None):"
     if subtask_name and subtask_name in SUBTASK_SIGNATURES:
         subtask_signature = SUBTASK_SIGNATURES[subtask_name][0]
-        print(f"[DEBUG][get_prompt] Using hardcoded signature for {subtask_name}: {subtask_signature}")
-    else:
-        print(f"[WARN][get_prompt] No hardcoded signature found for {subtask_name}, using default")
 
     prompt = base_template.format(
         obj_list_str=obj_list_str,

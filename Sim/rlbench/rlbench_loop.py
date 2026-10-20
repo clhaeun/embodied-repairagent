@@ -863,46 +863,6 @@ def postprocess_continuation_code(llm_generated: str) -> str:
     return body
 
 
-def debug_print_next_statements(
-    current_code: str,
-    current_lines: list[str],
-    executed_stmt_texts: list[str],
-    k: int = 8,
-    tag: str = "AFTER_MERGE",
-):
-    """
-    merge 직후(또는 루프 시작 직후) 기준으로,
-    다음에 실행될 statement들을 미리 출력합니다.
-    """
-    try:
-        tree = ast.parse(current_code)
-    except Exception as e:
-
-        return
-
-    extractor = RunSkillExtractor()
-    extractor.visit(tree)
-
-    next_index = len(executed_stmt_texts)
-    body = extractor.run_skill_body
-    remaining = body[next_index:]
-
-
-
-
-    for i, stmt in enumerate(remaining[:k], start=next_index + 1):
-        try:
-            stmt_code = get_statement_code(stmt, current_lines).rstrip()
-        except Exception as e:
-            stmt_code = f"<failed to render stmt: {e}>"
-
-        kind = "RETURN" if isinstance(stmt, ast.Return) else "STMT"
-        head = stmt_code.splitlines()[0] if stmt_code else ""
-
-
-    if len(remaining) > k:
-
-
 import textwrap
 
 class _ListAddToNpArray(ast.NodeTransformer):
@@ -1943,24 +1903,6 @@ def run_task_episode(
 
 
 
-        if isinstance(objects_info, dict):
-            for name in object_names[:3]:
-                info = objects_info.get(name, {})
-
-
-
-        elif isinstance(objects_info, list):
-            for i, info in enumerate(objects_info[:3]):
-
-                if isinstance(info, dict):
-
-                else:
-
-
-        else:
-
-
-        objects_info_str, objects_info, object_names = get_object_names(task, task_name)
 
 
 

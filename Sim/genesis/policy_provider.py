@@ -1,9 +1,4 @@
 """
-주석 처리하고 결과 내기
-        # Cache the generated code
-        self._code_cache[subtask_name] = code
-        print(f"[CACHE SAVE] Cached code for {subtask_name}")
-
 Policy Provider for Genesis Experiment.
 
 Handles code generation and repair via remote LLM server.
@@ -22,7 +17,7 @@ from exceptions import SubtaskFailure, SubtaskNotfinished, SubtaskSkip
 
 from remote_llm_socket_client import RemoteLLMSocketClient
 
-from postprocess import postprocess_initial_code, postprocess_continuation_code, debug_print_next_statements, merge_continuation_into_subtask
+from postprocess import postprocess_initial_code, postprocess_continuation_code, merge_continuation_into_subtask
 from prompts.prompt_utils import SUBTASK_SIGNATURES
 from scene_info import get_scene_info
 from prompts.prompt_utils import get_prompt
@@ -582,7 +577,6 @@ class PolicyProvider:
 
         Called lazily when a subtask is first executed.
 
-        TODO: Add caching/reuse policy for generated subtask code.
 
         Args:
             subtask_name: Name of the subtask (e.g., "pick_single").
@@ -599,12 +593,6 @@ class PolicyProvider:
             with open(subtask_path, "r", encoding="utf-8") as f:
                 return f.read()
 
-        """
-        # Check cache first
-        if subtask_name in self._code_cache:
-            print(f"[CACHE HIT] Using cached code for {subtask_name}")
-            return self._code_cache[subtask_name]
-        """
 
 
         assert self.client is not None
@@ -675,7 +663,6 @@ class PolicyProvider:
             "obj_name": obj_name,
             "target_name": target_name,
 
-            "debug_prompt": True
         })
 
 
@@ -692,7 +679,6 @@ class PolicyProvider:
         
         self.last_response_num_tokens = resp.get("num_tokens")
 
-        print(f"[POLICY_PROVIDER] Subtask code(before preprocessing):\n{code}")
 
 
 
@@ -756,7 +742,6 @@ class PolicyProvider:
                 "obj_name": obj_name,
                 "target_name": target_name,
             },
-            "debug_prompt": True
         })
 
         if resp.get("type") != "repair_result" or not resp.get("ok", False):
@@ -823,7 +808,6 @@ class PolicyProvider:
                 "scene": scene,
                 "last_step": last_step,
             },
-            "debug_prompt": True
         })
 
 
@@ -1115,7 +1099,6 @@ class PolicyProvider:
             robot_type=self.target_robot,
             run_task_interface=ref_sig,
         )
-        print(f"[POLICY_PROVIDER] Subtask code(after preprocessing_initial):\n{current_code}")
 
 
         self._save_subtask(subtask_name, current_code)
@@ -1375,7 +1358,6 @@ class PolicyProvider:
 
                     cont_body = postprocess_continuation_code(new_code, subtask_name=subtask_name)
 
-                    if not (cont_body or "").strip():
 
 
                     if not cont_body.strip():
@@ -1395,15 +1377,6 @@ class PolicyProvider:
                         executed_stmt_texts.pop()
 
 
-                    debug_print_next_statements(
-                        current_code=current_code,
-                        current_lines=current_code.split("\n"),
-                        executed_stmt_texts=executed_stmt_texts,
-                        subtask_name=subtask_name,
-                        k=5,
-                        tag="REVISE_AFTER_MERGE",
-                        show_full=True,
-                    )
                     continue
 
                 except Exception as e:
@@ -1576,18 +1549,12 @@ class PolicyProvider:
                             self._log_llm_call("REPAIR", subtask_name, repair_duration, self.last_response_num_tokens)
 
 
-                            raw_head = (new_code[:1200] + "\n...") if isinstance(new_code, str) and len(new_code) > 1200 else str(new_code)
-                            raw_tail = ("...\n" + new_code[-800:]) if isinstance(new_code, str) and len(new_code) > 2000 else ""
 
-                            if raw_tail:
 
 
 
                             cont_body = postprocess_continuation_code(new_code, subtask_name=subtask_name)
-                            cont_head = (cont_body[:1200] + "\n...") if len(cont_body) > 1200 else cont_body
-                            cont_tail = ("...\n" + cont_body[-800:]) if len(cont_body) > 2000 else ""
 
-                            if cont_tail:
 
 
 
@@ -1604,15 +1571,6 @@ class PolicyProvider:
                             )
 
 
-                            debug_print_next_statements(
-                                current_code=current_code,
-                                current_lines=current_code.split("\n"),
-                                executed_stmt_texts=executed_stmt_texts,
-                                subtask_name=subtask_name,
-                                k=5,
-                                tag="REPAIR_AFTER_MERGE",
-                                show_full=True,
-                            )
 
                             repair_needed = True
                             break
