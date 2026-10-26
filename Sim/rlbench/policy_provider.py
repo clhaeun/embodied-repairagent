@@ -146,14 +146,13 @@ class PolicyProvider:
             if self.client is None:
                 raise RuntimeError("RemoteLLM client is None. Check server is running and mode=='remote_llm'.")
             assert self.client is not None
-            assert self.reference_code is not None
 
             req = {
                 "type": "generate",
                 "task_name": self.task_name,
                 "robot_type": self.target_robot,
                 "prompt": self.initial_prompt,
-                "reference_code": self.reference_code,
+                
                 "available_objects": self.object_names,
                 "descriptions": self.descriptions,
                 "source_robot": self.source_robot,
@@ -215,7 +214,7 @@ class PolicyProvider:
                 "scene": scene,
                 "last_step": last_step_payload,
                 "grasp_guidance": self.grasp_guidance,
-                "reference_code": self.reference_code,
+                
 
             }
         }
@@ -294,7 +293,7 @@ class PolicyProvider:
                 "error": error_payload,
                 "scene": scene,
                 "grasp_guidance": self.grasp_guidance,
-                "reference_code": self.reference_code,
+                
                 "exploration_obs": exploration_obs,
             },
         }
@@ -378,7 +377,7 @@ class PolicyProvider:
                 "scene": scene,
                 "last_step": last_step_payload,
                 "grasp_guidance": self.grasp_guidance,
-                "reference_code": self.reference_code,
+                
                 "exploration_obs": exploration_obs,
 
             },

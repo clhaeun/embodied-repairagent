@@ -228,7 +228,6 @@ initial_prompt_dict = {
                 Available ROBOTIQ PRIMITIVES: move_gripper_to, move_to_position, move_parallel, open_robotiq85, close_robotiq85, grasp_handle_robotiq85, release_handle_robotiq85
                 \"\"\"
                 # IMPORTANT: You MUST ONLY use ROBOTIQ PRIMITIVES and UTILITIES strictly.
-                # IMPORTANT: Follow the indentation, parameters, UTILITIES and Args(find_place_position, use_smart_placement, etc.) shown in [REFERENCE CODE (TASK LOGIC SPEC)].
 
                 # First, get positions of the needed objects
         """),
@@ -317,7 +316,6 @@ initial_prompt_dict = {
                 Available SUCTION PRIMITIVES: move_gripper_to, move_to_position, move_parallel, activate_vacuum, deactivate_vacuum, attach_vacuum_handle, detach_vacuum_handle, rotate_gripper
                 \"\"\"
                 # IMPORTANT: You MUST ONLY use SUCTION PRIMITIVES and UTILITIES strictly.
-                # IMPORTANT: Follow the indentation, parameters, UTILITIES and Args(find_place_position, use_smart_placement, etc.) shown in [REFERENCE CODE (TASK LOGIC SPEC)].
 
                 # First, get positions of the needed objects
         """),

@@ -362,9 +362,7 @@ def get_revise_prompt(
 # Composition patterns (reference)
 # Example 1. pick then lift (do not use sawyer_align_gripper)
 # target = Shape('target_name'); target_pos = target.get_position()
-# success = ProximitySensor('success'); success_pos = success.get_position()
 # obs, reward, done = sawyer_pick(env, task, target_object=target, target_pos=target_pos, grasp_offset=np.array([0.0, 0.0, 0.0]))
-# obs, reward, done = sawyer_move_to(env, task, target_pos=success_pos, timeout_s=10.0)
 """
     else:
         skill_list = "move, pick, place, push, open_gripper, close_gripper, align_to_quaternion, align_two_axes"
@@ -408,7 +406,7 @@ def get_revise_prompt(
 # You MUST use the EXACT objects and skills provided. NO placeholders, NO new APIs.
 #
 ## Current state
-# REVISE: While in this state, the task is still not successful. The code executed so far is NOT sufficient (and may be wrong) because it did not achieve success. Your objective is to generate a corrected continuation from the CURRENT environment state: do NOT merely follow or extend the previously executed steps. Use the hypothesis, REFERENCE CODE, error signal, and observations to infer the most likely cause, then output ONLY a continuation patch to reach task success from the given resume point.
+# REVISE: While in this state, the task is still not successful. The code executed so far is NOT sufficient (and may be wrong) because it did not achieve success. Your objective is to generate a corrected continuation from the CURRENT environment state: do NOT merely follow or extend the previously executed steps. Use the hypothesis, error signal, and observations to infer the most likely cause, then output ONLY a continuation patch to reach task success from the given resume point.
 #
 # Available objects: {obj_list_str}
 # Available primitive skills: {skill_list}
@@ -501,10 +499,8 @@ def get_repair_prompt(
 # Composition patterns (reference)
 # Example 1. pick then lift (do not use sawyer_align_gripper)
 # target = Shape('target_name'); target_pos = target.get_position()
-# success = ProximitySensor('success'); success_pos = success.get_position()
 # above_target_pos = target_pos + [0.0, 0.0, 0.0]
 # obs, reward, done = sawyer_pick(env, task, target_object=target, target_pos=target_pos, grasp_offset=np.array([0.0, 0.0, 0.0]))
-# obs, reward, done = sawyer_move_to(env, task, target_pos=success_pos, timeout_s=10.0)
 """
 
     else: 
@@ -547,7 +543,7 @@ def get_repair_prompt(
 # You MUST use the EXACT objects and skills provided. NO placeholders, NO new APIs.
 #
 ## Current state
-# REPAIR: While in this state, execution failed at runtime. Your objective is to propose a localized fix that addresses the failure with minimal changes. Use the hypothesis, REFERENCE CODE, failed statement, error signal, and observations to infer the most likely cause, then output ONLY a continuation patch that fixes the issue and allows execution to proceed from the given resume point.
+# REPAIR: While in this state, execution failed at runtime. Your objective is to propose a localized fix that addresses the failure with minimal changes. Use the hypothesis, failed statement, error signal, and observations to infer the most likely cause, then output ONLY a continuation patch that fixes the issue and allows execution to proceed from the given resume point.
 #
 # Available objects: {obj_list_str}
 # Available primitive skills: {skill_list}
@@ -822,27 +818,6 @@ def build_generate_prompt(req: Dict[str, Any]) -> str:
 
 
     prompt = str(req.get("prompt", "") or "")
-    reference_code = str(req.get("reference_code", "") or "")
-
-    lines = reference_code.splitlines()
-
-
-    lines = [
-        l for l in lines
-        if not l.lstrip().startswith(("import ", "from "))
-    ]
-
-
-    filtered_code = []
-    record = False
-    for l in lines:
-        if l.lstrip().startswith("def run_skill"):
-            record = True
-        if record:
-            filtered_code.append(l)
-
-    preprocessed_reference_code = "\n".join(filtered_code).strip() + "\n"
-    reference_code = preprocessed_reference_code
     descriptions = str(req.get("descriptions", "") or "")
     available_objects = req.get("available_objects", []) or []
     grasp_guidance = req.get("grasp_guidance", None)
@@ -854,29 +829,9 @@ def build_generate_prompt(req: Dict[str, Any]) -> str:
 
 
 
-    if "# Composition patterns" in prompt:
-        insert_block = ""
-
-
-        if reference_code.strip():
-            ref_code_safe = _comment_out_run_skill_body(reference_code)
-            insert_block += "\n# REFERENCE CODE (oracle, body-only; do not copy)\n" + ref_code_safe.strip() + "\n# (end reference)\n\n"
-
-
-        robot_type_for_gg = str(req.get("robot_type", "ur5")).lower()
-        if grasp_guidance and grasp_guidance.strip() and robot_type_for_gg != "sawyer":
-            insert_block += "            # " + grasp_guidance.strip() + "\n\n"
-
-        if insert_block:
-            prompt = prompt.replace(
-                "# Composition patterns",
-                insert_block + "# Composition patterns",
-                1,
-            )
-    elif reference_code.strip():
-
-        ref_code_safe = _comment_out_run_skill_body(reference_code)
-        prompt = prompt.rstrip() + "\n\n# REFERENCE CODE (oracle, body-only; do not copy)\n" + ref_code_safe.strip() + "\n# (end reference)\n"
+    robot_type_for_gg = str(req.get("robot_type", "ur5")).lower()
+    if grasp_guidance and str(grasp_guidance).strip() and robot_type_for_gg != "sawyer":
+        prompt = prompt.rstrip() + "\n\n# Grasp guidance: " + str(grasp_guidance).strip() + "\n"
 
     parts = []
     if prompt.strip():
@@ -1013,23 +968,6 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             parts = [base_prompt.strip()]
 
 
-            reference_code = str(inputs.get("reference_code", "") or "")
-            if reference_code.strip():
-                ref_commented = _comment_out_run_skill_body(reference_code)
-                if ref_commented.strip():
-                    if len(ref_commented) > 20000:
-                        ref_commented = ref_commented[:20000] + "\n# ... (truncated)"
-
-
-                    if task_name.lower() in ["meatoffgrill", "meatongrill"]:
-                        parts.append("\n# ========================================")
-                        parts.append("# CRITICAL: You MUST follow the exact pattern in the reference code below.")
-                        parts.append("# ========================================")
-                        parts.append("\n# REFERENCE CODE (FOLLOW THIS PATTERN EXACTLY):\n" + ref_commented.strip() + "\n# (end reference)")
-                    else:
-                        parts.append("\n# REFERENCE CODE (oracle, body-only; do not copy)\n" + ref_commented.strip() + "\n# (end reference)")
-
-
             grasp_guidance = inputs.get("grasp_guidance", None)
             if grasp_guidance and str(grasp_guidance).strip() and robot_type.lower() != "sawyer":
                 parts.append(f"\n# Grasp guidance: {grasp_guidance}")
@@ -1072,25 +1010,16 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                 parts.append("\n" + "\n".join(compact_scene))
 
 
-            exploration_obs = inputs.get("exploration_obs", None)
-            if exploration_obs and isinstance(exploration_obs, dict):
+            exploration_obs = inputs.get("exploration_obs")
+            if isinstance(exploration_obs, dict):
                 import json
-
-                recommendation = exploration_obs.pop("recommendation", None)
-                obs_json = json.dumps(exploration_obs, ensure_ascii=False, separators=(',', ':'))
-                if len(obs_json) > 600:
-                    obs_json = obs_json[:600] + "...}"
-                parts.append(f"\n# Observation: {obs_json}")
-
-                if recommendation and isinstance(recommendation, dict):
-                    hint = recommendation.get("hint", "")
-                    place_pos = recommendation.get("place_pos", [])
-                    if hint:
-                        parts.append(f"# IMPORTANT: {hint}")
-                    if place_pos:
-                        parts.append(f"# Use success sensor position {place_pos} as place target.")
-
-
+                observed = {
+                    key: exploration_obs[key]
+                    for key in ("probe", "failed_action", "gripper", "nearby_objects")
+                    if key in exploration_obs
+                }
+                if observed:
+                    parts.append("# Observation: " + json.dumps(observed, ensure_ascii=False)[:600])
 
             _skill_map = {
                 "ur5": "ur5_move_to, ur5_grasp_at, ur5_release_at, ur5_align_gripper, close_ur5_ee, open_ur5_ee",
@@ -1202,23 +1131,6 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
             parts = [base_prompt.strip()]
 
 
-            reference_code = str(inputs.get("reference_code", "") or "")
-            if reference_code.strip():
-                ref_commented = _comment_out_run_skill_body(reference_code)
-                if ref_commented.strip():
-                    if len(ref_commented) > 20000:
-                        ref_commented = ref_commented[:20000] + "\n# ... (truncated)"
-
-
-                    if task_name.lower() in ["meatoffgrill", "meatongrill"]:
-                        parts.append("\n# ========================================")
-                        parts.append("# CRITICAL: For MeatOffGrill, you MUST follow the exact pattern in the reference code below.")
-                        parts.append("# ========================================")
-                        parts.append("\n# REFERENCE CODE (FOLLOW THIS PATTERN EXACTLY):\n" + ref_commented.strip() + "\n# (end reference)")
-                    else:
-                        parts.append("\n# REFERENCE CODE (oracle, body-only; do not copy)\n" + ref_commented.strip() + "\n# (end reference)")
-
-
             grasp_guidance = inputs.get("grasp_guidance", None)
             if grasp_guidance and str(grasp_guidance).strip() and robot_type.lower() != "sawyer":
                 parts.append(f"\n# Grasp guidance: {grasp_guidance}")
@@ -1285,24 +1197,16 @@ def handle_request(engine: LLMEngine, req: Dict[str, Any], addr=None) -> Dict[st
                 parts.append("\n" + "\n".join(compact_scene))
 
 
-            exploration_obs = inputs.get("exploration_obs", None)
-            if exploration_obs and isinstance(exploration_obs, dict):
+            exploration_obs = inputs.get("exploration_obs")
+            if isinstance(exploration_obs, dict):
                 import json
-
-                recommendation = exploration_obs.pop("recommendation", None)
-                obs_json = json.dumps(exploration_obs, ensure_ascii=False, separators=(',', ':'))
-                if len(obs_json) > 600:
-                    obs_json = obs_json[:600] + "...}"
-                parts.append(f"\n# Observation: {obs_json}")
-
-                if recommendation and isinstance(recommendation, dict):
-                    hint = recommendation.get("hint", "")
-                    place_pos = recommendation.get("place_pos", [])
-                    if hint:
-                        parts.append(f"# IMPORTANT: {hint}")
-                    if place_pos:
-                        parts.append(f"# Use success sensor position {place_pos} as place target.")
-
+                observed = {
+                    key: exploration_obs[key]
+                    for key in ("probe", "failed_action", "gripper", "nearby_objects")
+                    if key in exploration_obs
+                }
+                if observed:
+                    parts.append("# Observation: " + json.dumps(observed, ensure_ascii=False)[:600])
 
             _skill_map = {
                 "ur5": "ur5_move_to, ur5_grasp_at, ur5_release_at, ur5_align_gripper, close_ur5_ee, open_ur5_ee",

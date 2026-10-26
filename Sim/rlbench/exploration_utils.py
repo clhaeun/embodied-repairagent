@@ -1,13 +1,7 @@
-"""
-관찰-only 마이크로 탐색 모듈
-- 로봇을 움직이지 않고 현재 scene 상태만 관찰
-- 7B 모델 친화적 JSON 포맷으로 결과 반환
-"""
+"""Compact, task-independent observations from visible scene state."""
 
 import numpy as np
-from typing import Dict, Any, Optional, List
-from pyrep.objects.shape import Shape
-from pyrep.objects.proximity_sensor import ProximitySensor
+from typing import Any, Dict, Optional
 
 
 def compute_static_observation(
@@ -15,375 +9,46 @@ def compute_static_observation(
     scene_info: Dict[str, Any],
     failed_stmt_text: str,
 ) -> Optional[Dict[str, Any]]:
-    """
-    현재 scene 상태를 관찰하여 7B 친화적 JSON 반환
+    """Report local failure context without exposing hidden goal markers."""
+    gripper = scene_info.get("gripper") or {}
+    pos = gripper.get("position")
+    if not isinstance(pos, (tuple, list)) or len(pos) < 3:
+        return None
 
-    Args:
-        task_name: 태스크 이름 (예: MeatOnGrill)
-        scene_info: get_scene_info()에서 반환된 scene 정보
-        failed_stmt_text: 실패한 statement 코드
-
-    Returns:
-        {"probe": "static_goal_check", "targets": {...}, "dist": {...}, "decision": {...}}
-        또는 None (관찰 불가 시)
-    """
-
-
-    if task_name == "MeatOnGrill":
-        return _observe_meat_on_grill(scene_info, failed_stmt_text)
-
-
-    return _observe_generic_place_task(scene_info, failed_stmt_text)
-
-
-def _dist_tag(d: float) -> str:
-    """거리를 near/medium/far 등급으로 변환"""
-    if d < 0.03:
-        return "near"
-    elif d < 0.08:
-        return "medium"
+    action = (failed_stmt_text or "").lower()
+    if any(w in action for w in ("pick", "grasp", "close_gripper", "close_ee")):
+        kind = "grasp"
+    elif any(w in action for w in ("place", "release", "open_gripper", "open_ee")):
+        kind = "release"
+    elif any(w in action for w in ("move", "push", "align", "rotate")):
+        kind = "motion"
     else:
-        return "far"
-
-
-def _observe_meat_on_grill(
-    scene_info: Dict[str, Any],
-    failed_stmt_text: str,
-) -> Optional[Dict[str, Any]]:
-    """
-    MeatOnGrill 태스크 전용 관찰 (7B 친화 포맷)
-
-    포함 정보:
-    - 좌표: 2자리 소수점 + 단위(m)
-    - 관계: d(place_target, success), dz, xy_offset
-    - 등급화: near/medium/far 태그
-    - 임계값 기반 boolean: inside_success_radius 등
-    - chicken/steak 개별 추적
-    - grill ≠ success 일 때 명시적 recommendation
-    """
-
-    try:
-        objects = scene_info.get("objects", [])
-
-        grill_pos = None
-        success_pos = None
-        chicken_pos = None
-        steak_pos = None
-
-        for obj in objects:
-            name = obj.get("name", "")
-            pos = obj.get("position")
-
-            if pos is None:
-                continue
-
-            name_lower = name.lower()
-            if "grill" in name_lower and "success" not in name_lower:
-                grill_pos = np.array(pos)
-            elif "success" in name_lower:
-                success_pos = np.array(pos)
-            elif "chicken" in name_lower:
-                chicken_pos = np.array(pos)
-            elif "steak" in name_lower or "meat" in name_lower:
-                steak_pos = np.array(pos)
-
-        if grill_pos is None or success_pos is None:
-            return None
-
-
-
-        meat_pos = chicken_pos if chicken_pos is not None else steak_pos
-        if meat_pos is None:
-            gripper = scene_info.get("gripper", {})
-            meat_pos = np.array(gripper.get("position", [0, 0, 0]))
-
-
-        d_grill_success = float(np.linalg.norm(grill_pos - success_pos))
-        d_meat_grill = float(np.linalg.norm(meat_pos - grill_pos))
-        d_meat_success = float(np.linalg.norm(meat_pos - success_pos))
-
-
-        dz_grill_success = float(success_pos[2] - grill_pos[2])
-        xy_offset_grill_success = float(np.linalg.norm(grill_pos[:2] - success_pos[:2]))
-
-        dz_meat_success = float(meat_pos[2] - success_pos[2])
-        xy_offset_meat_success = float(np.linalg.norm(meat_pos[:2] - success_pos[:2]))
-
-
-        success_radius_m = 0.05
-        grill_in_success = d_grill_success < success_radius_m
-        meat_in_success = d_meat_success < success_radius_m
-        meat_closer_to = "success" if d_meat_success < d_meat_grill else "grill"
-
-        target_used = _infer_target_from_code(failed_stmt_text)
-
-
-        obj_section = {}
-        if chicken_pos is not None:
-            obj_section["chicken"] = [round(v, 2) for v in chicken_pos.tolist()]
-        if steak_pos is not None:
-            obj_section["steak"] = [round(v, 2) for v in steak_pos.tolist()]
-
-
-        observation = {
-            "probe": "static_goal_check",
-            "manipulated_object": "chicken" if chicken_pos is not None else "steak",
-            "targets": {
-                "grill": [round(v, 2) for v in grill_pos.tolist()],
-                "success": [round(v, 2) for v in success_pos.tolist()],
-            },
-            "obj": obj_section,
-            "dist": {
-                "grill_success": {"m": round(d_grill_success, 3), "tag": _dist_tag(d_grill_success)},
-                "chicken_grill": {"m": round(d_meat_grill, 3), "tag": _dist_tag(d_meat_grill)},
-                "chicken_success": {"m": round(d_meat_success, 3), "tag": _dist_tag(d_meat_success)},
-            },
-            "relation": {
-                "dz_grill_to_success_m": round(dz_grill_success, 3),
-                "xy_offset_grill_to_success_m": round(xy_offset_grill_success, 3),
-                "dz_chicken_to_success_m": round(dz_meat_success, 3),
-                "xy_offset_chicken_to_success_m": round(xy_offset_meat_success, 3),
-            },
-            "threshold": {
-                "success_radius_m": success_radius_m,
-                "grill_in_success": grill_in_success,
-                "chicken_in_success": meat_in_success,
-                "chicken_closer_to": meat_closer_to,
-            },
-            "target_used": target_used,
-        }
-
-
-        if d_grill_success > 0.08:
-            observation["recommendation"] = {
-                "place_target": "success",
-                "place_pos": [round(v, 2) for v in success_pos.tolist()],
-                "hint": "grill center is {:.3f}m from success sensor. Place chicken near success sensor position, not grill center.".format(d_grill_success),
-            }
-
-        return observation
-
-    except Exception as e:
-        print(f"[EXPLORATION] Failed to observe MeatOnGrill: {e}")
-        return None
-
-
-def _is_grasp_failure(failed_stmt_text: str) -> bool:
-    """실패 코드가 pick/grasp/lift 계열인지 판별"""
-    code_lower = failed_stmt_text.lower()
-    return any(kw in code_lower for kw in ("pick", "grasp", "lift", "close_gripper", "close_ee"))
-
-
-def _observe_generic_place_task(
-    scene_info: Dict[str, Any],
-    failed_stmt_text: str,
-) -> Optional[Dict[str, Any]]:
-    """
-    일반적인 place 태스크에 대한 관찰 (7B 친화 포맷)
-    (BasketballInHoop, PhoneOnBase 등)
-
-    - place 실패: 물체-success 관계 중심 (그리퍼 거리 제외)
-    - pick/grasp 실패: 그리퍼-물체 거리 포함
-    """
-
-    try:
-        objects = scene_info.get("objects", [])
-
-        success_pos = None
-
-        manipulated_obj_name = None
-        manipulated_obj_pos = None
-
-        named_targets = {}
-
-        for obj in objects:
-            name = obj.get("name", "")
-            pos = obj.get("position")
-
-            if pos is None:
-                continue
-
-            if "success" in name.lower():
-                success_pos = np.array(pos)
-            else:
-
-                name_lower = name.lower()
-                for kw in ("basketball", "phone", "umbrella", "money", "rubbish",
-                           "knife", "charger", "ball", "meat", "steak", "lamp", "button"):
-                    if kw in name_lower:
-                        named_targets[name] = np.array(pos)
-                        if manipulated_obj_name is None:
-                            manipulated_obj_name = name
-                            manipulated_obj_pos = np.array(pos)
-                        break
-
-        if success_pos is None:
-            return None
-
-        target_used = _infer_target_from_code(failed_stmt_text)
-        is_grasp = _is_grasp_failure(failed_stmt_text)
-
-        observation = {
-            "probe": "static_goal_check",
-            "targets": {
-                "success": [round(v, 2) for v in success_pos.tolist()],
-            },
-            "target_used": target_used,
-        }
-
-
-        if manipulated_obj_pos is not None:
-            d_obj_success = float(np.linalg.norm(manipulated_obj_pos - success_pos))
-            dz_obj_success = float(manipulated_obj_pos[2] - success_pos[2])
-            xy_offset_obj_success = float(np.linalg.norm(manipulated_obj_pos[:2] - success_pos[:2]))
-
-            success_radius_m = 0.05
-            obj_in_success = d_obj_success < success_radius_m
-
-            observation["obj"] = {
-                manipulated_obj_name: [round(v, 2) for v in manipulated_obj_pos.tolist()],
-            }
-            observation["dist"] = {
-                "obj_success": {"m": round(d_obj_success, 3), "tag": _dist_tag(d_obj_success)},
-            }
-            observation["relation"] = {
-                "dz_obj_to_success_m": round(dz_obj_success, 3),
-                "xy_offset_obj_to_success_m": round(xy_offset_obj_success, 3),
-            }
-            observation["threshold"] = {
-                "success_radius_m": success_radius_m,
-                "obj_in_success": obj_in_success,
-            }
-
-
-        if is_grasp and manipulated_obj_pos is not None:
-            gripper = scene_info.get("gripper", {})
-            gripper_pos = np.array(gripper.get("position", [0, 0, 0]))
-            d_gripper_obj = float(np.linalg.norm(gripper_pos - manipulated_obj_pos))
-
-            observation["gripper_to_obj"] = {
-                "d_m": round(d_gripper_obj, 3),
-                "tag": _dist_tag(d_gripper_obj),
-            }
-
-        return observation
-
-    except Exception:
-        return None
-
-
-def _infer_target_from_code(code: str) -> str:
-    """
-    실패한 코드에서 어떤 타깃을 사용했는지 추론
-
-    Returns:
-        "grill" | "success" | "unknown"
-    """
-    code_lower = code.lower()
-
-    if "success" in code_lower:
-        return "success"
-    elif "grill" in code_lower:
-        return "grill"
-    elif "hoop" in code_lower:
-        return "hoop"
-    elif "base" in code_lower:
-        return "base"
-    else:
-        return "unknown"
-
-
-def _decide_recommendation(
-    d_grill_success: float,
-    d_obj_grill: float,
-    d_obj_success: float,
-    target_used: str,
-) -> tuple[str, str]:
-    """
-    관찰 결과를 바탕으로 추천 타깃 결정
-
-    Args:
-        d_grill_success: grill과 success 사이 거리
-        d_obj_grill: 객체와 grill 사이 거리
-        d_obj_success: 객체와 success 사이 거리
-        target_used: 현재 코드가 사용한 타깃
-
-    Returns:
-        (recommend_target, reason) 튜플
-        recommend_target: "grill" | "success"
-        reason: "grill_success_far" | "near" | "ambiguous"
-    """
-
-
-
-
-
-    if d_grill_success > 0.1:
-
-        if d_obj_success < d_obj_grill:
-            return "success", "grill_success_far"
-        else:
-            return "grill", "near"
-
-
-    if d_obj_success < 0.05 and target_used == "success":
-        return "success", "near"
-    elif d_obj_grill < 0.05 and target_used == "grill":
-        return "grill", "near"
-
-
-    return "success", "ambiguous"
-
-
-
-
-
-
-def compute_minimal_observation(
-    task_name: str,
-    scene_info: Dict[str, Any],
-    failed_stmt_text: str,
-) -> Optional[Dict[str, Any]]:
-    """
-    초경량 관찰 (3개 feature만)
-    - d_grill_success
-    - target_used
-    - recommend_target
-    """
-
-    try:
-        objects = scene_info.get("objects", [])
-
-        grill_pos = None
-        success_pos = None
-
-        for obj in objects:
-            name = obj.get("name", "")
-            pos = obj.get("position")
-
-            if pos is None:
-                continue
-
-            if "grill" in name.lower() and "success" not in name.lower():
-                grill_pos = np.array(pos)
-            elif "success" in name.lower():
-                success_pos = np.array(pos)
-
-        if grill_pos is None or success_pos is None:
-            return None
-
-        d_grill_success = float(np.linalg.norm(grill_pos - success_pos))
-        target_used = _infer_target_from_code(failed_stmt_text)
-
-
-        recommend_target = "success" if d_grill_success > 0.1 else target_used
-
-        return {
-            "probe": "static_goal_check",
-            "d_grill_success": round(d_grill_success, 3),
-            "target_used": target_used,
-            "recommend_target": recommend_target
-        }
-
-    except Exception:
-        return None
+        kind = "unknown"
+
+    xyz = np.asarray(pos[:3], dtype=float)
+    nearby = []
+    for obj in scene_info.get("objects", []):
+        if not isinstance(obj, dict):
+            continue
+        name, location = obj.get("name"), obj.get("position")
+        if not name or not isinstance(location, (tuple, list)) or len(location) < 3:
+            continue
+        if obj.get("type") == "ProximitySensor" or any(
+            marker in name.lower() for marker in ("success", "goal_sensor", "waypoint", "boundary")
+        ):
+            continue
+        try:
+            distance = float(np.linalg.norm(np.asarray(location[:3], dtype=float) - xyz))
+        except (TypeError, ValueError):
+            continue
+        nearby.append({"name": name, "distance_m": round(distance, 3)})
+    nearby.sort(key=lambda item: item["distance_m"])
+    return {
+        "probe": "static_state_check",
+        "failed_action": kind,
+        "gripper": {
+            "position": [round(float(v), 3) for v in xyz],
+            "is_open": bool(gripper.get("is_open", True)),
+        },
+        "nearby_objects": nearby[:5],
+    }

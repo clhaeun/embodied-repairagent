@@ -653,7 +653,7 @@ class PolicyProvider:
 
             "prompt": prompt,
             
-            "reference_code": reference_code,
+            
             "available_objects": self.object_names,
             "descriptions": subtask_desc,
             "target_scene_info": (scene_info or self.scene_info or {}),
@@ -736,7 +736,7 @@ class PolicyProvider:
                 "executed_skill_texts": executed_skill_texts,
                 "failed_stmt_text": failed_stmt_text,
                 "failed_skill_text": failed_skill_text,
-                "reference_code": reference_code,
+                
                 "error": error_info,
                 "scene": scene,
                 "obj_name": obj_name,
@@ -804,7 +804,7 @@ class PolicyProvider:
             "inputs": {
 
                 "executed_skill_texts": executed_skill_texts,
-                "reference_code": reference_code,
+                
                 "scene": scene,
                 "last_step": last_step,
             },

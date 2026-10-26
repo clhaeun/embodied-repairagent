@@ -411,6 +411,8 @@ def get_scene_info(task, task_name: str = "", robot_type: str = "panda", include
         name = o.get_name()
         type_str = str(o.get_type())
         type_name = to_camel_case(type_str.split(".")[-1])
+        if type_name == "ProximitySensor" or name.lower().startswith("success") or "goal_sensor" in name.lower():
+            continue
 
 
         if any(sub in name for sub in ('waypoint', 'visual', 'spawn', 'wrap', 'topPlate', 'boundary', 'base', 'dynamic')):

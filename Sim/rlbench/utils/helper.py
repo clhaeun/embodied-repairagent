@@ -67,6 +67,8 @@ def object_names(env: TaskEnvironment, task_name: str = ""):
         name = o.get_name()
         type = str(o.get_type())
         type_name = to_camel_case(type.split(".")[-1])
+        if type_name == "ProximitySensor" or name.lower().startswith("success") or "goal_sensor" in name.lower():
+            continue
         
         if task_objects is not None:
             if name not in task_objects:

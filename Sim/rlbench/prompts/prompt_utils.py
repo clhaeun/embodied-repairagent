@@ -79,7 +79,7 @@ initial_prompt_dict = {
             # RULES (IMPORTANT)
             # - DO NOT use if done: / else branching or other control-flow constructs (e.g., while loops).
             # - Every primitive skill call MUST be written as: obs, reward, done = <skill>(...)
-            # - Never access env.scene or env.scene.objects (it does not exist). Follow the reference_code's object/attribute access patterns.
+            # - Never access env.scene or env.scene.objects (it does not exist). Use documented Shape and Joint access patterns.
             # - ur5_grasp_at/ur5_release_at already include moving/approach internally. Do NOT add extra ur5_move_to() unless truly needed.
             # - approach must be a DICT with 'axis' (STRING in {{'x','y','z','-x','-y','-z'}}) and 'distance' (FLOAT) (do NOT use AXIS.* or enums).
             # - Unless there is a specific reason, use only 'z' or '-z' for approach['axis'] (avoid 'x'/'y' approaches) for ur5_grasp_at.
@@ -109,13 +109,10 @@ initial_prompt_dict = {
             # Example 1. ur5_align_gripper, then ur5_grasp_at, then ur5_release_at
             # When GRASP_GUIDANCE is provided, always align before grasping:
             # obj = Shape('object_name')
-            # success = ProximitySensor('success')
             # obj_pos = obj.get_position()
-            # success_pos = success.get_position()
             #
             # Define the target positions for pick and place
             # pick_pos = obj_pos + [0.0, 0.0, 0.1]
-            # place_pos = success_pos + [0.0, 0.0, 0.15]
             #
             # Move to the pick position
             # obs, reward, done = ur5_move_to(env, task, target_pos=pick_pos, timeout_s=10.0)
@@ -126,7 +123,6 @@ initial_prompt_dict = {
             #
             # Grasp the obj
             # obs, reward, done = ur5_grasp_at(env, task, grasp_pos=pos, timeout_s=5.0)
-            # obs, reward, done = ur5_release_at(env, task, place_pos=success_pos, timeout_s=5.0)
 
             # Example 2. ur5_grasp_at then ur5_release_at
             # ball = Shape('ball')
@@ -189,8 +185,6 @@ initial_prompt_dict = {
             # Composition patterns (reference)
             # Example 1. pick then place (do not use sawyer_align_gripper)
             # obj = Shape('object_name'); pos = obj.get_position()
-            # success = ProximitySensor('success'); success_pos = success.get_position()
-            # above_place_pos = success_pos + [0.0, 0.0, 0.1]
             # obs, reward, done = sawyer_pick(env, task, target_object=obj, target_pos=pos, grasp_offset=np.array([0.0, 0.0, 0.0]))
             # obs, reward, done = sawyer_place(env, task, place_pos=above_place_pos)
 

@@ -324,7 +324,6 @@ def extract_docstring_from_ref(processed_ref: str) -> str:
 def build_generate_prompt(req: dict) -> str:
     """Build initial code generation prompt for Genesis."""
     prompt = req.get("prompt", "")
-    reference_code = req.get("reference_code", "")
     scene_info = req.get("target_scene_info", [])
     robot_type = req.get("target_robot", req.get("robot_type", "panda"))
 
@@ -334,11 +333,6 @@ def build_generate_prompt(req: dict) -> str:
         scene_info = {"objects": scene_info}
     elif not isinstance(scene_info, dict):
         scene_info = {}
-
-
-    processed_ref = ""
-    if reference_code:
-        processed_ref = preprocess_reference_code(reference_code)
 
 
     scene_context = ""
@@ -382,14 +376,6 @@ def build_generate_prompt(req: dict) -> str:
                     scene_lines.append(f"#   {obj_name}: can_grasp={can_grasp}{approach_str}")
         """
 
-        if processed_ref and processed_ref.strip():
-            scene_lines.append(f"\n# [REFERENCE CODE (TASK LOGIC SPEC)]")
-            scene_lines.append(f"# CRITICAL: You MUST follow this reference code's logic and helper functions EXACTLY.")
-            scene_lines.append(f"# - Copy the EXACT sequence of skills (move_gripper_to, move_parallel, use_smart_placement, find_place_position etc.)")
-            scene_lines.append(f"# - Preserve loop counts (e.g., 'for _ in range(3)' means repeat 3 times)")
-            scene_lines.append(f"# - Keep the same parameter and values (distances, directions, pointing_to)")
-            scene_lines.append(f"{processed_ref}")
-            scene_lines.append(f"# [REFERENCE CODE] end\n")
         if scene_lines:
             scene_context = "\n# [CURRENT SCENE]\n" + "\n".join(scene_lines) + "\n"
 
@@ -400,26 +386,12 @@ def build_generate_prompt(req: dict) -> str:
     full_prompt = prompt
 
 
-    if processed_ref:
-        ref_docstring = extract_docstring_from_ref(processed_ref)
-        if ref_docstring:
-
-            run_task_pos = full_prompt.find("def run_task")
-            if run_task_pos != -1:
-
-                first_quote_pos = full_prompt.find('"""', run_task_pos)
-                if first_quote_pos != -1:
-
-                    insert_pos = first_quote_pos + 3
-
-                    full_prompt = full_prompt[:insert_pos] + "\n" + ref_docstring + "\n" + full_prompt[insert_pos:]
-
     if req.get("debug_prompt", False):
 
 
 
 
-        for k in ["[REFERENCE CODE", "[CURRENT SCENE]", "[GRASP GUIDANCE]", "# RULES", "def run_task"]:
+        for k in ["[CURRENT SCENE]", "[GRASP GUIDANCE]", "# RULES", "def run_task"]:
 
         print("")
 
@@ -759,20 +731,6 @@ def build_repair_prompt(req: dict) -> str:
 
 
 
-    reference_code = str(inputs.get("reference_code", "") or "")
-    processed_ref = ""
-    if reference_code:
-        processed_ref = preprocess_reference_code(reference_code).strip()
-
-    if processed_ref:
-        parts.append("\n# [REFERENCE CODE (TASK LOGIC SPEC)]")
-        parts.append("# CRITICAL: Follow this reference code's logic and structure EXACTLY.")
-        parts.append("# - Copy the EXACT sequence of primitive calls")
-        parts.append("# - Preserve loop counts and parameter values")
-        parts.append(processed_ref)
-        parts.append("# [REFERENCE CODE] end\n")
-
-
     scene_desc = build_scene_description(
         scene=scene,
         gripper_state=inputs.get("gripper_state"),
@@ -840,7 +798,7 @@ def build_repair_prompt(req: dict) -> str:
         "# DO NOT output markdown fences.\n"
         "# From the GIVEN CURRENT STATE (scene/gripper/error context), write continuation code that COMPLETES the task.\n"
         "# DO NOT comment out code. Do NOT start lines with '#'. Output executable statements only.\n"
-        "# IMPORTANT: Follow the indentation, parameters, UTILITIES and Args(find_place_position, use_smart_placement, etc.) shown in [REFERENCE CODE (TASK LOGIC SPEC)].\n"
+        "# Use available skill APIs and observed environment state.\n"
         "\n# Now write the fixed continuation:\n"
     )
 
@@ -904,18 +862,6 @@ def build_revise_prompt(req: dict) -> str:
     parts.append(skills_hint)
 
 
-    reference_code = str(inputs.get("reference_code", "") or "")
-    processed_ref = ""
-    if reference_code:
-        processed_ref = preprocess_reference_code(reference_code).strip()
-
-    if processed_ref:
-        parts.append("\n# [REFERENCE CODE (TASK LOGIC SPEC)]")
-        parts.append("# CRITICAL: Follow this reference code's logic and structure EXACTLY.")
-        parts.append("# - Copy the EXACT sequence of primitive calls")
-        parts.append("# - Preserve loop counts and parameter values")
-        parts.append(processed_ref)
-        parts.append("# [REFERENCE CODE] end\n")
     parts.append("# OUTPUT ONLY VALID PYTHON CODE. NO JSON, NO MARKDOWN, NO EXPLANATIONS.\n")
 
 
